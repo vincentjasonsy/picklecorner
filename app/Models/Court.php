@@ -96,6 +96,19 @@ class Court extends Model
     }
 
     /**
+     * Static placeholder art per court (outdoor vs indoor + stable variety from id).
+     */
+    public function staticImageUrl(): string
+    {
+        $files = $this->environment === self::ENV_INDOOR
+            ? ['indoor-a.svg', 'indoor-b.svg']
+            : ['outdoor-a.svg', 'outdoor-b.svg'];
+        $i = abs(crc32((string) $this->id)) % count($files);
+
+        return asset('images/courts/'.$files[$i]);
+    }
+
+    /**
      * Schedule / manual-booking grids: outdoor courts first, then indoor; within each type by name (A–Z), then sort_order.
      *
      * @param  Collection<int, self>|\Illuminate\Database\Eloquent\Collection<int, self>  $courts

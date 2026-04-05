@@ -50,9 +50,19 @@
                     class="flex flex-col overflow-hidden rounded-2xl border-2 border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-900"
                 >
                     <header
-                        class="shrink-0 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-teal-50/50 px-4 py-3 dark:border-stone-700 dark:from-stone-800 dark:to-teal-950/40"
+                        class="flex shrink-0 items-center gap-3 border-b border-stone-200 bg-gradient-to-r from-stone-50 to-teal-50/50 px-4 py-3 dark:border-stone-700 dark:from-stone-800 dark:to-teal-950/40"
                     >
-                        <h3 class="font-display text-base font-bold text-stone-900 dark:text-white">
+                        <div
+                            class="h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-stone-200 bg-stone-100 dark:border-stone-600 dark:bg-stone-900"
+                        >
+                            <img
+                                src="{{ $court->staticImageUrl() }}"
+                                alt="{{ $court->name }}"
+                                class="size-full object-cover object-center"
+                                loading="lazy"
+                            />
+                        </div>
+                        <h3 class="font-display text-base font-bold leading-tight text-stone-900 dark:text-white">
                             {{ $court->name }}
                         </h3>
                     </header>

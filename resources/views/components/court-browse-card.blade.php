@@ -7,17 +7,6 @@
     use App\Support\Money;
 
     $client = $court->courtClient;
-    $cover = $client?->coverImageUrl();
-    $palettes = [
-        ['from-emerald-500', 'to-teal-700'],
-        ['from-teal-500', 'to-cyan-700'],
-        ['from-cyan-600', 'to-blue-800'],
-        ['from-lime-500', 'to-emerald-800'],
-        ['from-green-600', 'to-teal-900'],
-    ];
-    $pi = abs(crc32((string) $court->id)) % count($palettes);
-    $from = $palettes[$pi][0];
-    $to = $palettes[$pi][1];
     $rate = $court->effectiveHourlyRateCents();
     $currency = $client?->currency;
 @endphp
@@ -29,23 +18,12 @@
 >
     <a href="{{ route('book-now.court', $court) }}" wire:navigate class="block shrink-0">
         <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-            @if ($cover)
-                <img
-                    src="{{ $cover }}"
-                    alt=""
-                    class="size-full object-cover transition duration-300 group-hover:scale-105"
-                    loading="lazy"
-                />
-            @else
-                <div
-                    class="flex size-full items-center justify-center bg-gradient-to-br {{ $from }} {{ $to }}"
-                    aria-hidden="true"
-                >
-                    <span class="font-display text-2xl font-extrabold tracking-tight text-white/90">
-                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($court->name, 0, 2)) }}
-                    </span>
-                </div>
-            @endif
+            <img
+                src="{{ $court->staticImageUrl() }}"
+                alt="{{ $court->name }}"
+                class="size-full object-cover object-center transition duration-300 group-hover:scale-105"
+                loading="lazy"
+            />
             <div class="absolute left-3 top-3">
                 <span
                     class="rounded-full bg-white/95 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-800 shadow-sm dark:bg-zinc-950/90 dark:text-zinc-100"

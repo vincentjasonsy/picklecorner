@@ -4,15 +4,6 @@
 
     $c = $court;
     $client = $c->courtClient;
-    $cover = $client?->coverImageUrl();
-    $palettes = [
-        ['from-emerald-500', 'to-teal-700'],
-        ['from-teal-500', 'to-cyan-700'],
-        ['from-cyan-600', 'to-blue-800'],
-        ['from-lime-500', 'to-emerald-800'],
-        ['from-green-600', 'to-teal-900'],
-    ];
-    $pi = abs(crc32((string) $c->id)) % count($palettes);
     $rate = $c->effectiveHourlyRateCents();
     $bookBrowseUrl = auth()->check() && ! auth()->user()->usesStaffAppNav()
         ? route('account.book')
@@ -34,18 +25,12 @@
 
     <div class="mt-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
         <div class="relative aspect-[16/9] bg-zinc-100 dark:bg-zinc-800 sm:aspect-[2/1]">
-            @if ($cover)
-                <img src="{{ $cover }}" alt="" class="size-full object-cover" />
-            @else
-                <div
-                    class="flex size-full items-center justify-center bg-gradient-to-br {{ $palettes[$pi][0] }} {{ $palettes[$pi][1] }}"
-                    aria-hidden="true"
-                >
-                    <span class="font-display text-4xl font-extrabold text-white/90">
-                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($c->name, 0, 3)) }}
-                    </span>
-                </div>
-            @endif
+            <img
+                src="{{ $c->staticImageUrl() }}"
+                alt="{{ $c->name }}"
+                class="size-full object-cover object-center"
+                loading="eager"
+            />
         </div>
         <div class="p-6 sm:p-8">
             <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
