@@ -39,128 +39,170 @@
                         Super admin
                     </span>
                 </div>
-                <nav class="flex flex-col gap-1 p-3 text-sm font-medium" aria-label="Admin">
-                    <a
-                        href="{{ route('admin.dashboard') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.dashboard')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Overview
-                    </a>
-                    <a
-                        href="{{ route('admin.users.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.users.*')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Users
-                    </a>
-                    <a
-                        href="{{ route('admin.court-clients.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.court-clients.index', 'admin.court-clients.edit')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Court clients
-                    </a>
-                    <a
-                        href="{{ route('admin.court-change-requests') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.court-change-requests')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Court requests
-                    </a>
-                    <a
-                        href="{{ route('admin.manual-booking.hub') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.manual-booking.*') ||
-                            request()->routeIs('admin.court-clients.manual-booking')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Manual booking
-                    </a>
-                    <a
-                        href="{{ route('admin.gift-cards.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.gift-cards.*')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Gift cards
-                    </a>
-                    <a
-                        href="{{ route('admin.invoices.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.invoices.*')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Client invoices
-                    </a>
-                    <a
-                        href="{{ route('admin.reports') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.reports')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Reports
-                    </a>
-                    <a
-                        href="{{ route('admin.bookings.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.bookings.*')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Booking history
-                    </a>
-                    <a
-                        href="{{ route('admin.activity.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('admin.activity.*')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Activity log
-                    </a>
+                <nav class="flex flex-col gap-6 p-3 text-sm font-medium" aria-label="Admin">
+                    <div class="flex flex-col gap-1">
+                        <a
+                            href="{{ route('admin.dashboard') }}"
+                            wire:navigate
+                            @class([
+                                'rounded-lg px-3 py-2 transition-colors',
+                                request()->routeIs('admin.dashboard')
+                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                            ])
+                        >
+                            Overview
+                        </a>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Directory
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('admin.users.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.users.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Users
+                            </a>
+                            <a
+                                href="{{ route('admin.court-clients.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.court-clients.index', 'admin.court-clients.edit')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Court clients
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Bookings
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('admin.court-change-requests') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.court-change-requests')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Court requests
+                            </a>
+                            <a
+                                href="{{ route('admin.manual-booking.hub') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.manual-booking.*') ||
+                                    request()->routeIs('admin.court-clients.manual-booking')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Manual booking
+                            </a>
+                            <a
+                                href="{{ route('admin.bookings.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.bookings.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Booking history
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Revenue & reports
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('admin.gift-cards.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.gift-cards.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Gift cards
+                            </a>
+                            <a
+                                href="{{ route('admin.invoices.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.invoices.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Client invoices
+                            </a>
+                            <a
+                                href="{{ route('admin.reports') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.reports')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Reports
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            System
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('admin.activity.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.activity.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Activity log
+                            </a>
+                        </div>
+                    </div>
                 </nav>
                 <div class="border-t border-zinc-200 p-3 dark:border-zinc-800">
                     <form method="POST" action="{{ route('logout') }}">

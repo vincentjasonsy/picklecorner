@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\ImpersonationController;
+use App\Http\Controllers\Admin\InvoicePdfController;
 use App\Http\Controllers\ReportExportController;
 use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
@@ -86,6 +87,7 @@ Route::middleware(['auth', 'super_admin', 'admin_not_impersonating'])
         Route::livewire('/invoices', InvoiceIndex::class)->name('invoices.index');
         Route::livewire('/invoices/create', InvoiceCreate::class)->name('invoices.create');
         Route::livewire('/invoices/{invoice}', InvoiceShow::class)->name('invoices.show');
+        Route::get('/invoices/{invoice}/pdf', InvoicePdfController::class)->name('invoices.pdf');
         Route::livewire('/reports', 'admin-reports')->name('reports');
         Route::livewire('/bookings', BookingHistory::class)->name('bookings.index');
         Route::livewire('/bookings/{booking}', BookingShow::class)->name('bookings.show');
