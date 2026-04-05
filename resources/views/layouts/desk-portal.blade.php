@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        @include('partials.theme-init')
+
+        <title>{{ $title ?? 'Front desk' }} — {{ config('app.name') }}</title>
+
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link
+            href="https://fonts.bunny.net/css?family=barlow:600,700|dm-sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            .font-display {
+                font-family: 'Barlow', ui-sans-serif, system-ui, sans-serif;
+            }
+            .font-desk {
+                font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+            }
+        </style>
+
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @livewireStyles
+    </head>
+    @php
+        $deskUser = auth()->user();
+        $deskVenue = $deskUser?->deskCourtClient;
+        $deskTz = config('app.timezone', 'UTC');
+        $deskToday = $deskUser ? now()->timezone($deskTz)->isoFormat('dddd, MMMM D, YYYY') : '';
+    @endphp
+    <body
+        class="font-desk min-h-screen bg-stone-100 text-stone-900 antialiased transition-colors duration-200 dark:bg-stone-950 dark:text-stone-100"
+    >
+        @include('partials.flash-messages')
+        @include('partials.impersonation-banner')
+
+        @if ($deskUser)
+            <header
+                class="border-b border-teal-900/40 bg-gradient-to-br from-stone-800 via-stone-800 to-teal-950 px-4 py-4 text-stone-100 shadow-lg shadow-stone-900/20 md:px-8 md:py-5"
+            >
+                <div class="mx-auto flex max-w-[1600px] flex-wrap items-start justify-between gap-4">
+                    <div class="min-w-0">
+                        <p
+                            class="font-display text-[10px] font-bold uppercase tracking-[0.22em] text-teal-300/95"
+                        >
+                            Front desk
+                        </p>
+                        @if ($deskVenue)
+                            <h1 class="font-display mt-1 text-xl font-bold tracking-tight text-white md:text-2xl">
+                                {{ $deskVenue->name }}
+                            </h1>
+                            <p class="mt-1 text-sm text-stone-400">
+                                {{ $deskVenue->city ?? 'Venue counter' }}
+                            </p>
+                        @else
+                            <p class="mt-1 text-lg font-semibold text-stone-200">No venue assigned</p>
+                        @endif
+                        <p class="mt-2 text-xs text-stone-500">
+                            Signed in as <span class="font-medium text-stone-300">{{ $deskUser->name }}</span>
+                        </p>
+                    </div>
+                    <div
+                        class="overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-right backdrop-blur-sm"
+                    >
+                        <p class="text-xs font-medium uppercase tracking-wider text-teal-200/80">Today</p>
+                        <p class="mt-1 text-sm font-medium text-stone-200">{{ $deskToday }}</p>
+                        <p
+                            class="font-display mt-1 text-3xl font-bold tabular-nums tracking-tight text-white md:text-4xl"
+                            id="desk-front-clock"
+                            aria-live="polite"
+                        >
+                            —:—
+                        </p>
+                    </div>
+                </div>
+            </header>
+        @endif
+
+        <div
+            class="mx-auto flex min-h-0 max-w-[1600px] flex-1 flex-col md:min-h-[calc(100vh-9rem)] md:flex-row"
+        >
+            <aside
+                class="shrink-0 border-stone-200/80 bg-white/95 shadow-sm dark:border-stone-800 dark:bg-stone-900/95 md:w-72 md:border-r md:shadow-none"
+            >
+                <div class="border-b border-stone-200 px-4 py-4 dark:border-stone-800 md:px-5">
+                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                        Counter menu
+                    </p>
+                </div>
+                <nav class="flex flex-col gap-1.5 p-3 md:p-4" aria-label="Front desk">
+                    <a
+                        href="{{ route('desk.home') }}"
+                        wire:navigate
+                        @class([
+                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                            request()->routeIs('desk.home')
+                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                        ])
+                    >
+                        <span class="block">Home</span>
+                        <span
+                            @class([
+                                'mt-0.5 block text-xs font-normal',
+                                request()->routeIs('desk.home')
+                                    ? 'text-teal-100'
+                                    : 'text-stone-500 dark:text-stone-500',
+                            ])
+                        >
+                            Shift overview
+                        </span>
+                    </a>
+                    <a
+                        href="{{ route('desk.courts-live') }}"
+                        wire:navigate
+                        @class([
+                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                            request()->routeIs('desk.courts-live')
+                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                        ])
+                    >
+                        <span class="block">Courts live</span>
+                        <span
+                            @class([
+                                'mt-0.5 block text-xs font-normal',
+                                request()->routeIs('desk.courts-live')
+                                    ? 'text-teal-100'
+                                    : 'text-stone-500 dark:text-stone-500',
+                            ])
+                        >
+                            Who is on each court
+                        </span>
+                    </a>
+                    <a
+                        href="{{ route('desk.booking-request') }}"
+                        wire:navigate
+                        @class([
+                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                            request()->routeIs('desk.booking-request')
+                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                        ])
+                    >
+                        <span class="block">New booking request</span>
+                        <span
+                            @class([
+                                'mt-0.5 block text-xs font-normal',
+                                request()->routeIs('desk.booking-request')
+                                    ? 'text-teal-100'
+                                    : 'text-stone-500 dark:text-stone-500',
+                            ])
+                        >
+                            Walk-ins &amp; calls
+                        </span>
+                    </a>
+                    <a
+                        href="{{ route('desk.my-requests') }}"
+                        wire:navigate
+                        @class([
+                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                            request()->routeIs('desk.my-requests')
+                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                        ])
+                    >
+                        <span class="block">My requests</span>
+                        <span
+                            @class([
+                                'mt-0.5 block text-xs font-normal',
+                                request()->routeIs('desk.my-requests')
+                                    ? 'text-teal-100'
+                                    : 'text-stone-500 dark:text-stone-500',
+                            ])
+                        >
+                            Status &amp; history
+                        </span>
+                    </a>
+                </nav>
+                <div class="border-t border-stone-200 p-4 dark:border-stone-800">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="text-sm font-medium text-stone-600 underline decoration-stone-400/50 underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
+                        >
+                            Log out
+                        </button>
+                    </form>
+                </div>
+            </aside>
+
+            <div class="flex min-w-0 flex-1 flex-col bg-stone-50/80 dark:bg-stone-950/50">
+                <div
+                    class="flex shrink-0 items-center justify-between gap-4 border-b border-stone-200/80 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-stone-800 dark:bg-stone-900/50 md:px-8"
+                >
+                    <h2 class="font-display truncate text-lg font-bold text-stone-900 dark:text-white md:text-xl">
+                        {{ $title ?? 'Front desk' }}
+                    </h2>
+                    <x-theme-toggle />
+                </div>
+                <main class="flex-1 px-4 py-6 md:px-8 md:py-8">
+                    {{ $slot }}
+                </main>
+            </div>
+        </div>
+
+        @if ($deskUser)
+            <script>
+                (function () {
+                    var el = document.getElementById('desk-front-clock');
+                    if (!el) return;
+                    var tz = @json($deskTz);
+                    function tick() {
+                        try {
+                            el.textContent = new Intl.DateTimeFormat(undefined, {
+                                hour: 'numeric',
+                                minute: '2-digit',
+                                second: '2-digit',
+                                hour12: true,
+                                timeZone: tz,
+                            }).format(new Date());
+                        } catch (e) {
+                            el.textContent = new Date().toLocaleTimeString();
+                        }
+                    }
+                    tick();
+                    setInterval(tick, 1000);
+                })();
+            </script>
+        @endif
+
+        @livewireScripts
+    </body>
+</html>
