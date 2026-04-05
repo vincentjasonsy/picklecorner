@@ -170,7 +170,8 @@
                     >
                         <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Court admin</h2>
                         <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Exactly one court admin per venue.
+                            One court admin per venue, and each court admin manages one venue only. Only unassigned
+                            admins (or the current one) appear here.
                         </p>
                         <div class="mt-4">
                             <label

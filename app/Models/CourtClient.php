@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
+/**
+ * Each venue has exactly one court admin user ({@see $admin_user_id}); each court admin manages at most one venue.
+ *
+ * @property string $admin_user_id
+ */
 class CourtClient extends Model
 {
     /** @use HasFactory<CourtClientFactory> */

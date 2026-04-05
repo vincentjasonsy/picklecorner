@@ -14,6 +14,16 @@ class CourtClientFactory extends Factory
 {
     protected $model = CourtClient::class;
 
+    public function configure(): static
+    {
+        return $this->afterMaking(function (CourtClient $client): void {
+            if ($client->admin_user_id !== null) {
+                return;
+            }
+            $client->admin_user_id = User::factory()->courtAdmin()->create()->id;
+        });
+    }
+
     public function definition(): array
     {
         $name = fake()->company().' Pickleball';

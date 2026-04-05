@@ -11,12 +11,11 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\ActivityLogger;
-use App\Services\CourtSlotPricing;
 use App\Support\PesosMoneyForm;
 use App\Support\VenueScheduleHours;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -862,10 +861,19 @@ class CourtClientEdit extends Component
 
     public function render(): View
     {
+        $venueId = $this->courtClient->id;
+
         return view('livewire.admin.court-client-edit', [
             'courtAdmins' => User::query()
                 ->with('userType')
                 ->whereHas('userType', fn ($q) => $q->where('slug', UserType::SLUG_COURT_ADMIN))
+                ->where(function ($q) use ($venueId) {
+                    $q->whereDoesntHave('administeredCourtClient')
+                        ->orWhereHas(
+                            'administeredCourtClient',
+                            fn ($q2) => $q2->where('court_clients.id', $venueId),
+                        );
+                })
                 ->orderBy('name')
                 ->get(),
             'dayLabels' => VenueWeeklyHour::DAY_LABELS,

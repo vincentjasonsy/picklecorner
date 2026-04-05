@@ -38,7 +38,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'home-page')->name('home');
-Route::livewire('/about', 'about-page')->name('about');
+Route::get('/about', function () {
+    return redirect()->route('home')->withFragment('about');
+})->name('about');
 Route::livewire('/book-now', BookNowPage::class)->name('book-now');
 Route::livewire('/book-now/courts/{court}', PublicCourtShow::class)->name('book-now.court');
 Route::livewire('/book-now/venues/{courtClient:slug}/book', VenueBookingPage::class)->name('book-now.venue.book');

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,16 @@
         <title>{{ $title ?? config('app.name') }}</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <link
+            href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600|oswald:500,600,700"
+            rel="stylesheet"
+        />
+        <style>
+            .font-display {
+                font-family: 'Oswald', 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+                letter-spacing: 0.04em;
+            }
+        </style>
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @livewireStyles
@@ -25,7 +34,7 @@
                 class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-900/90"
             >
                 <div
-                    class="mx-auto flex h-14 max-w-5xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+                    class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
                 >
                     <a
                         href="{{ route('home') }}"
@@ -53,16 +62,22 @@
                             Home
                         </a>
                         <a
-                            href="{{ route('about') }}"
-                            wire:navigate
-                            @class([
-                                'transition-colors',
-                                request()->routeIs('about')
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
-                            ])
+                            href="{{ url('/#about') }}"
+                            class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
                         >
                             About
+                        </a>
+                        <a
+                            href="{{ url('/#reviews') }}"
+                            class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        >
+                            Reviews
+                        </a>
+                        <a
+                            href="{{ url('/#contact') }}"
+                            class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                        >
+                            Contact
                         </a>
                         <a
                             href="{{ route('book-now') }}"
@@ -138,11 +153,20 @@
                 {{ $slot }}
             </main>
 
-            <footer class="border-t border-zinc-200 py-8 dark:border-zinc-800">
+            <footer class="border-t border-zinc-200 bg-zinc-100/80 py-10 dark:border-zinc-800 dark:bg-zinc-900/40">
                 <div
-                    class="mx-auto max-w-5xl px-4 text-center text-xs text-zinc-500 dark:text-zinc-400 sm:px-6 lg:px-8"
+                    class="mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 text-center sm:px-6 lg:px-8"
                 >
-                    &copy; {{ date('Y') }} {{ config('app.name') }}
+                    <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400" aria-label="Footer">
+                        <a href="{{ route('home') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
+                        <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
+                        <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
+                        <a href="{{ url('/#contact') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
+                        <a href="{{ route('book-now') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Book now</a>
+                    </nav>
+                    <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                        &copy; {{ date('Y') }} {{ config('app.name') }}
+                    </p>
                 </div>
             </footer>
         </div>

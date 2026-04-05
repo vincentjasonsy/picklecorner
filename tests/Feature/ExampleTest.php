@@ -17,5 +17,11 @@ class ExampleTest extends TestCase
         $response->assertStatus(200);
         $response->assertSee('images/slider/slide-1.jpg', false);
         $response->assertSee('Featured visuals', false);
+        $response->assertSee('From the court', false);
+    }
+
+    public function test_legacy_about_url_redirects_to_home_about_section(): void
+    {
+        $this->get('/about')->assertRedirect(route('home').'#about');
     }
 }
