@@ -74,6 +74,28 @@ class BookNowPage extends Component
         return $q->get();
     }
 
+    /**
+     * Active venues that have at least one court matching current browse filters, with counts.
+     *
+     * @return Collection<int, array{venue: CourtClient, court_count: int}>
+     */
+    public function browseVenueRows(): Collection
+    {
+        $courts = $this->filteredCourts();
+        $counts = $courts->countBy('court_client_id');
+
+        return $courts
+            ->map(fn (Court $c) => $c->courtClient)
+            ->filter()
+            ->unique('id')
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->map(fn (CourtClient $venue) => [
+                'venue' => $venue,
+                'court_count' => (int) ($counts->get($venue->id) ?? 0),
+            ]);
+    }
+
     /** @return Collection<int, string> */
     public function cityPills(): Collection
     {
@@ -140,6 +162,13 @@ class BookNowPage extends Component
             ->map(fn (string $id) => $courts->get($id))
             ->filter()
             ->values();
+    }
+
+    public function venueBookUrl(CourtClient $courtClient): string
+    {
+        return request()->routeIs('account.book')
+            ? route('account.book.venue', $courtClient)
+            : route('book-now.venue.book', $courtClient);
     }
 
     public function render(): View

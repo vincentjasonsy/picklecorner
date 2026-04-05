@@ -75,6 +75,50 @@
         </div>
     </div>
 
+    @if ($this->browseVenueRows()->isNotEmpty())
+        <section class="mt-12" aria-labelledby="venues-heading">
+            <h2 id="venues-heading" class="font-display text-lg font-bold text-zinc-900 dark:text-white">
+                Book by venue
+            </h2>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                Pick a partner club, then choose court and time on the availability grid.
+            </p>
+            <ul
+                class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                role="list"
+            >
+                @foreach ($this->browseVenueRows() as $row)
+                    @php($venue = $row['venue'])
+                    <li
+                        wire:key="browse-venue-{{ $venue->id }}"
+                        class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                    >
+                        <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            Venue
+                        </p>
+                        <h3 class="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-white">
+                            {{ $venue->name }}
+                        </h3>
+                        @if ($venue->city)
+                            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $venue->city }}</p>
+                        @endif
+                        <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                            {{ $row['court_count'] }} {{ \Illuminate\Support\Str::plural('court', $row['court_count']) }}
+                            match filters
+                        </p>
+                        <a
+                            href="{{ $this->venueBookUrl($venue) }}"
+                            wire:navigate
+                            class="mt-4 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                        >
+                            Pick a time
+                        </a>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
     @if ($this->recentlyViewedCourts()->isNotEmpty())
         <section class="mt-12" aria-labelledby="recently-viewed-heading">
             <div class="flex items-baseline justify-between gap-4">

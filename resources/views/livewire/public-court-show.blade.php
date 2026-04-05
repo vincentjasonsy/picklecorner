@@ -17,6 +17,10 @@
     $bookBrowseUrl = auth()->check() && ! auth()->user()->usesStaffAppNav()
         ? route('account.book')
         : route('book-now');
+    $canUseMemberVenueGrid = $client && (! auth()->check() || ! auth()->user()->usesStaffAppNav());
+    $venuePickTimeUrl = $client && auth()->check() && ! auth()->user()->usesStaffAppNav()
+        ? route('account.book.venue', $client)
+        : ($client ? route('book-now.venue.book', $client) : null);
 @endphp
 
 <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -78,10 +82,24 @@
                 </p>
             @endif
             <div class="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-                <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                    Ready to play? Contact <strong>{{ $client?->name ?? 'the venue' }}</strong> directly to reserve this
-                    court. Staff will confirm availability and add the booking to your account when it’s confirmed.
-                </p>
+                @if ($canUseMemberVenueGrid && $venuePickTimeUrl)
+                    <a
+                        href="{{ $venuePickTimeUrl }}"
+                        wire:navigate
+                        class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                    >
+                        Pick a time at {{ $client->name }}
+                    </a>
+                    <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Opens the live availability grid for this club (sign in if prompted). You can choose this court
+                        or another at the same venue.
+                    </p>
+                @else
+                    <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Ready to play? Contact <strong>{{ $client?->name ?? 'the venue' }}</strong> directly to reserve this
+                        court, or use your venue portal if you manage this club.
+                    </p>
+                @endif
                 @guest
                     <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
                         <a
