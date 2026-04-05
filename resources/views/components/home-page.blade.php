@@ -21,8 +21,8 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
         <div
             class="mx-auto mt-10 max-w-md rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 to-teal-50 p-6 text-center shadow-sm dark:border-emerald-900/50 dark:from-emerald-950/40 dark:to-teal-950/30"
         >
-            <p class="text-2xl" aria-hidden="true">🏓</p>
-            <p class="mt-3 text-base font-semibold text-zinc-900 dark:text-zinc-100">
+            <x-icon name="squares-2x2" class="mx-auto size-10 text-emerald-600 dark:text-emerald-400" />
+            <p class="mt-4 text-base font-semibold text-zinc-900 dark:text-zinc-100">
                 @if ($homeUser->usesStaffAppNav())
                     You’re signed in — jump back into operations anytime.
                 @else

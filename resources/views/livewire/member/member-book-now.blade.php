@@ -18,8 +18,8 @@
         <div
             class="rounded-2xl border border-dashed border-zinc-300 bg-white/80 p-10 text-center dark:border-zinc-700 dark:bg-zinc-900/60"
         >
-            <p class="text-2xl" aria-hidden="true">🏟️</p>
-            <p class="mt-3 font-medium text-zinc-800 dark:text-zinc-200">No venues listed yet</p>
+            <x-icon name="building-office-2" class="mx-auto size-12 text-zinc-400 dark:text-zinc-500" />
+            <p class="mt-4 font-medium text-zinc-800 dark:text-zinc-200">No venues listed yet</p>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                 Check back soon — new clubs join Pickle Corner all the time.
             </p>
