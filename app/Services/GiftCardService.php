@@ -214,4 +214,31 @@ final class GiftCardService
             'note' => null,
         ]);
     }
+
+    /**
+     * Split a total gift discount across booking lines by gross share (same as manual / public checkout).
+     *
+     * @param  list<int>  $grossCentsPerLine
+     * @return list<int>
+     */
+    public static function allocateAppliedCentsAcrossLines(int $totalApplied, array $grossCentsPerLine): array
+    {
+        $n = count($grossCentsPerLine);
+        if ($n === 0) {
+            return [];
+        }
+        $G = array_sum($grossCentsPerLine);
+        if ($G <= 0 || $totalApplied <= 0) {
+            return array_fill(0, $n, 0);
+        }
+        $out = [];
+        $assigned = 0;
+        for ($i = 0; $i < $n - 1; $i++) {
+            $out[$i] = (int) floor($totalApplied * $grossCentsPerLine[$i] / $G);
+            $assigned += $out[$i];
+        }
+        $out[$n - 1] = max(0, $totalApplied - $assigned);
+
+        return $out;
+    }
 }

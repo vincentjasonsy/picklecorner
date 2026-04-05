@@ -6,10 +6,13 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\CourtDateSlotBlock;
+use App\Models\GiftCard;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\CourtSlotPricing;
+use App\Services\GiftCardService;
 use App\Services\PublicVenueBookingSubmission;
+use App\Support\Money;
 use App\Support\VenueScheduleHours;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
@@ -40,11 +43,11 @@ class VenueBookingPage extends Component
     /** times | review */
     public string $step = 'times';
 
-    public string $bookingNotes = '';
-
     public string $paymentMethod = Booking::PAYMENT_GCASH;
 
     public string $paymentReference = '';
+
+    public string $giftCardCode = '';
 
     /** @var mixed */
     public $paymentProof = null;
@@ -81,12 +84,14 @@ class VenueBookingPage extends Component
         $this->selectedSlots = is_array($slots)
             ? array_values(array_filter(array_map('strval', $slots)))
             : [];
-        $this->bookingNotes = is_string($draft['booking_notes'] ?? null) ? $draft['booking_notes'] : '';
         if (is_string($draft['payment_method'] ?? null)) {
             $this->paymentMethod = $draft['payment_method'];
         }
         if (is_string($draft['payment_reference'] ?? null)) {
             $this->paymentReference = $draft['payment_reference'];
+        }
+        if (is_string($draft['gift_card_code'] ?? null)) {
+            $this->giftCardCode = $draft['gift_card_code'];
         }
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
     }
@@ -97,9 +102,9 @@ class VenueBookingPage extends Component
             'court_client_id' => $this->courtClient->id,
             'booking_calendar_date' => $this->bookingCalendarDate,
             'selected_slots' => $this->selectedSlots,
-            'booking_notes' => $this->bookingNotes,
             'payment_method' => $this->paymentMethod,
             'payment_reference' => $this->paymentReference,
+            'gift_card_code' => $this->giftCardCode,
             'step' => 'review',
         ]);
         session()->put(self::AFTER_LOGIN_SESSION_KEY, true);
@@ -571,6 +576,42 @@ class VenueBookingPage extends Component
         return (int) array_sum(array_column($this->buildSpecsForSubmit(), 'gross_cents'));
     }
 
+    /**
+     * Best-effort preview (no row lock); submit re-validates.
+     */
+    #[Computed]
+    public function reviewGiftEstimateCents(): int
+    {
+        $raw = trim($this->giftCardCode);
+        if ($raw === '' || $this->step !== 'review') {
+            return 0;
+        }
+        $specs = $this->buildSpecsForSubmit();
+        if ($specs === []) {
+            return 0;
+        }
+        $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
+        $normalized = GiftCardService::normalizeCode($raw);
+        $card = GiftCard::query()
+            ->where('code', $normalized)
+            ->where(function ($q): void {
+                $q->where('court_client_id', $this->courtClient->id)
+                    ->orWhereNull('court_client_id');
+            })
+            ->first();
+        if ($card === null || ! $card->redeemableNow()) {
+            return 0;
+        }
+
+        return GiftCardService::computeAppliedCents($card, $totalGross);
+    }
+
+    #[Computed]
+    public function reviewBalanceAfterGiftCents(): int
+    {
+        return max(0, $this->reviewEstimateCents - $this->reviewGiftEstimateCents);
+    }
+
     public function submitRequest(): void
     {
         if (! auth()->check()) {
@@ -588,13 +629,14 @@ class VenueBookingPage extends Component
         $this->step = 'review';
 
         $rules = [
-            'bookingNotes' => ['nullable', 'string', 'max:2000'],
             'paymentMethod' => ['nullable', 'string', Rule::in(Booking::paymentMethodOptions())],
             'paymentReference' => ['nullable', 'string', 'max:128'],
             'paymentProof' => ['nullable', 'image', 'max:5120'],
+            'giftCardCode' => ['nullable', 'string', 'max:48'],
         ];
         $this->validate($rules, [], [
             'paymentReference' => 'payment reference',
+            'giftCardCode' => 'gift card code',
         ]);
 
         $specs = $this->buildSpecsForSubmit();
@@ -614,13 +656,20 @@ class VenueBookingPage extends Component
                 $this->courtClient,
                 $booker,
                 $specs,
-                $this->bookingNotes !== '' ? $this->bookingNotes : null,
+                null,
                 $this->paymentMethod,
                 $this->paymentReference,
                 $this->paymentProof,
+                $this->giftCardCode,
             );
         } catch (\InvalidArgumentException $e) {
-            $this->addError('submit', $e->getMessage());
+            if ($e->getMessage() === 'No time slots to book.') {
+                $this->addError('selectedSlots', 'Your selection is no longer available. Adjust the grid and try again.');
+            } elseif (trim($this->giftCardCode) !== '') {
+                $this->addError('giftCardCode', $e->getMessage());
+            } else {
+                $this->addError('submit', $e->getMessage());
+            }
 
             return;
         }
@@ -632,11 +681,16 @@ class VenueBookingPage extends Component
         $deskPolicy = $result['desk_policy'];
 
         $this->selectedSlots = [];
-        $this->bookingNotes = '';
         $this->paymentProof = null;
         $this->paymentReference = '';
         $this->paymentMethod = Booking::PAYMENT_GCASH;
+        $this->giftCardCode = '';
         $this->step = 'times';
+
+        $giftTotal = (int) array_sum(array_filter(array_map(
+            fn (Booking $b) => $b->gift_card_redeemed_cents,
+            $bookings,
+        )));
 
         $flash = match ($deskPolicy) {
             CourtClient::DESK_BOOKING_POLICY_AUTO_APPROVE => count($bookings) === 1
@@ -649,6 +703,9 @@ class VenueBookingPage extends Component
                 ? 'Request sent. The venue will review your booking.'
                 : count($bookings).' requests sent. The venue will review your bookings.',
         };
+        if ($giftTotal > 0) {
+            $flash .= ' Gift card applied: '.Money::formatMinor($giftTotal).' total.';
+        }
 
         session()->flash('status', $flash);
 

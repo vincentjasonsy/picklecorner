@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
+use App\Models\GiftCard;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use Illuminate\Support\Str;
 class PublicVenueBookingSubmission
 {
     /**
-     * Create bookings for a member self-serve request (venue desk policy, no gift card, no desk_submitted_by).
+     * Create bookings for a member self-serve request (venue desk policy; optional gift card; no desk_submitted_by).
      *
      * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>}>  $specs
      * @return array{bookings: list<Booking>, desk_policy: string}
@@ -26,6 +27,7 @@ class PublicVenueBookingSubmission
         ?string $paymentMethod,
         ?string $paymentReference,
         mixed $paymentProof,
+        ?string $giftCardCodeRaw = null,
     ): array {
         if ($specs === []) {
             throw new \InvalidArgumentException('No time slots to book.');
@@ -65,6 +67,7 @@ class PublicVenueBookingSubmission
 
         $pm = $paymentMethod !== null && $paymentMethod !== '' ? $paymentMethod : null;
         $pref = trim((string) $paymentReference);
+        $giftCodeRaw = trim((string) $giftCardCodeRaw);
 
         $bookings = DB::transaction(function () use (
             $specs,
@@ -75,15 +78,50 @@ class PublicVenueBookingSubmission
             $pm,
             $pref,
             $proofPath,
+            $giftCodeRaw,
         ) {
+            $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
+
+            $giftCardId = null;
+            $giftAppliedTotal = null;
+            $lockedGiftCard = null;
+            if ($giftCodeRaw !== '') {
+                $lockedGiftCard = GiftCardService::lockCardForDebit(
+                    $courtClient->id,
+                    $giftCodeRaw,
+                );
+                $giftAppliedTotal = GiftCardService::computeAppliedCents($lockedGiftCard, $totalGross);
+                if ($giftAppliedTotal <= 0) {
+                    throw new \InvalidArgumentException('Nothing to apply from this gift card.');
+                }
+                $giftCardId = $lockedGiftCard->id;
+            }
+
+            $grosses = array_column($specs, 'gross_cents');
+            $giftSlices = $giftAppliedTotal !== null
+                ? GiftCardService::allocateAppliedCentsAcrossLines($giftAppliedTotal, $grosses)
+                : array_fill(0, count($specs), 0);
+
+            if ($lockedGiftCard !== null && $giftCardId !== null) {
+                $nWithGift = count(array_filter($giftSlices, fn (int $s): bool => $s > 0));
+                if ($nWithGift > 0) {
+                    GiftCardService::assertRedemptionLimits(
+                        $lockedGiftCard,
+                        $booker->id,
+                        $nWithGift,
+                    );
+                }
+            }
+
             $created = [];
-            foreach ($specs as $spec) {
+            foreach ($specs as $i => $spec) {
                 /** @var Court $court */
                 $court = $spec['court'];
                 $gross = (int) $spec['gross_cents'];
-                $netCents = $gross > 0 ? $gross : null;
+                $slice = $giftSlices[$i] ?? 0;
+                $netCents = max(0, $gross - $slice);
 
-                $created[] = Booking::query()->create([
+                $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
                     'court_id' => $court->id,
                     'user_id' => $booker->id,
@@ -91,15 +129,35 @@ class PublicVenueBookingSubmission
                     'starts_at' => $spec['starts'],
                     'ends_at' => $spec['ends'],
                     'status' => $deskStatus,
-                    'amount_cents' => $netCents,
+                    'amount_cents' => $netCents > 0 ? $netCents : null,
                     'currency' => $courtClient->currency ?? 'PHP',
                     'notes' => $bookingNotesForCreate,
-                    'gift_card_id' => null,
-                    'gift_card_redeemed_cents' => null,
+                    'gift_card_id' => $slice > 0 ? $giftCardId : null,
+                    'gift_card_redeemed_cents' => $slice > 0 ? $slice : null,
                     'payment_method' => $pm,
                     'payment_reference' => $pref !== '' ? $pref : null,
                     'payment_proof_path' => $proofPath,
                 ]);
+
+                if ($slice > 0 && $giftCardId !== null) {
+                    GiftCardService::recordBookingRedemption($booking, $giftCardId, $slice);
+                }
+
+                $created[] = $booking;
+            }
+
+            if ($giftAppliedTotal !== null && $giftCardId !== null && $giftAppliedTotal > 0) {
+                $card = GiftCard::query()->find($giftCardId);
+                ActivityLogger::log(
+                    'gift_card.redeemed',
+                    [
+                        'amount_cents' => $giftAppliedTotal,
+                        'booking_ids' => array_map(fn (Booking $b) => $b->id, $created),
+                        'source' => 'member_public',
+                    ],
+                    $card,
+                    $card ? "Gift card {$card->code} applied to member booking request" : 'Gift card applied to member booking request',
+                );
             }
 
             return $created;

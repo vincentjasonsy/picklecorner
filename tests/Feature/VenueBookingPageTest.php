@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Livewire\BookNow\VenueBookingPage;
+use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
+use App\Models\GiftCard;
 use App\Models\User;
+use App\Services\GiftCardService;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -117,7 +120,6 @@ class VenueBookingPageTest extends TestCase
             'court_client_id' => $client->id,
             'booking_calendar_date' => now()->format('Y-m-d'),
             'selected_slots' => [$court->id.'-9'],
-            'booking_notes' => '',
             'payment_method' => 'gcash',
             'payment_reference' => '',
             'step' => 'review',
@@ -128,5 +130,53 @@ class VenueBookingPageTest extends TestCase
             ->test(VenueBookingPage::class, ['courtClient' => $client])
             ->assertSet('step', 'review')
             ->assertSet('bookingCalendarDate', now()->format('Y-m-d'));
+    }
+
+    public function test_player_can_submit_venue_booking_with_gift_card(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create([
+            'is_active' => true,
+            'slug' => 'gift-venue',
+            'hourly_rate_cents' => 10_000,
+        ]);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        GiftCardService::issue(
+            $client,
+            GiftCard::VALUE_FIXED,
+            5_000,
+            null,
+            null,
+            null,
+            null,
+            null,
+            'MEMBER-GC',
+        );
+
+        $player = User::factory()->player()->create();
+
+        Livewire::actingAs($player)
+            ->test(VenueBookingPage::class, ['courtClient' => $client])
+            ->set('bookingCalendarDate', now()->format('Y-m-d'))
+            ->set('selectedSlots', [$court->id.'-9'])
+            ->set('step', 'review')
+            ->set('giftCardCode', 'MEMBER-GC')
+            ->call('submitRequest')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $booking = Booking::query()->where('court_id', $court->id)->first();
+        $this->assertNotNull($booking);
+        $this->assertSame(5_000, (int) $booking->gift_card_redeemed_cents);
+        $this->assertSame(5_000, (int) $booking->amount_cents);
+        $this->assertNotNull($booking->gift_card_id);
     }
 }

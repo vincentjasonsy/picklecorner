@@ -371,24 +371,132 @@
                                 These times are no longer all available. Go back and adjust your selection.
                             </p>
                         @endif
-                        <ul class="mt-3 space-y-2 text-sm text-zinc-800 dark:text-zinc-200">
-                            @foreach ($reviewSpecs as $spec)
-                                <li class="flex flex-wrap justify-between gap-2 border-b border-zinc-100 pb-2 last:border-0 dark:border-zinc-800">
-                                    <span class="font-medium">{{ $spec['court']->name }}</span>
-                                    <span class="text-zinc-600 dark:text-zinc-400">
-                                        {{ $spec['starts']->format('g:i A') }} – {{ $spec['ends']->format('g:i A') }}
-                                    </span>
-                                    <span class="w-full text-xs text-zinc-500 sm:w-auto sm:text-sm">
-                                        {{ Money::formatMinor($spec['gross_cents'], $currency) }}
-                                    </span>
-                                </li>
-                            @endforeach
-                        </ul>
-                        <p class="mt-4 flex flex-wrap items-baseline justify-between gap-2 border-t border-zinc-200 pt-4 text-base font-bold text-zinc-900 dark:border-zinc-700 dark:text-white">
-                            <span>Estimated total</span>
-                            <span>{{ Money::formatMinor($this->reviewEstimateCents, $currency) }}</span>
-                        </p>
-                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                        @php($giftEst = $this->reviewGiftEstimateCents)
+                        @php($grossTotal = $this->reviewEstimateCents)
+                        <div class="mt-3 overflow-x-auto">
+                            <table class="w-full min-w-[18rem] border-collapse text-left text-sm text-zinc-800 dark:text-zinc-200">
+                                <thead>
+                                    <tr
+                                        class="border-b border-zinc-200 dark:border-zinc-700"
+                                    >
+                                        <th
+                                            scope="col"
+                                            class="py-2 pr-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                        >
+                                            Court
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            class="py-2 pr-3 text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                        >
+                                            Time
+                                        </th>
+                                        <th
+                                            scope="col"
+                                            class="w-[1%] whitespace-nowrap py-2 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                        >
+                                            Amount
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                    @foreach ($reviewSpecs as $spec)
+                                        <tr wire:key="vb-review-{{ $spec['court']->id }}-{{ $spec['starts']->timestamp }}">
+                                            <td class="py-2.5 pr-3 align-top font-medium">
+                                                {{ $spec['court']->name }}
+                                            </td>
+                                            <td class="py-2.5 pr-3 align-top text-zinc-600 dark:text-zinc-400">
+                                                {{ $spec['starts']->format('g:i A') }} – {{ $spec['ends']->format('g:i A') }}
+                                            </td>
+                                            <td class="py-2.5 text-right align-top tabular-nums">
+                                                {{ Money::formatMinor($spec['gross_cents'], $currency) }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                                <tfoot>
+                                    <tr class="border-t border-zinc-200 dark:border-zinc-700">
+                                        <td
+                                            colspan="2"
+                                            class="pt-3 text-sm font-bold text-zinc-900 dark:text-white"
+                                        >
+                                            Subtotal
+                                        </td>
+                                        <td class="pt-3 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
+                                            {{ Money::formatMinor($grossTotal, $currency) }}
+                                        </td>
+                                    </tr>
+                                    @if ($giftEst > 0)
+                                        <tr>
+                                            <td colspan="2" class="pt-1 text-sm text-zinc-700 dark:text-zinc-300">
+                                                Gift card
+                                                <span class="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                                    Estimated at submit; limits may apply.
+                                                </span>
+                                            </td>
+                                            <td class="pt-1 text-right text-sm tabular-nums text-emerald-700 dark:text-emerald-400">
+                                                −{{ Money::formatMinor($giftEst, $currency) }}
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td
+                                                colspan="2"
+                                                class="pt-2 text-base font-bold text-zinc-900 dark:text-white"
+                                            >
+                                                Estimated balance
+                                            </td>
+                                            <td class="pt-2 text-right text-base font-bold tabular-nums text-zinc-900 dark:text-white">
+                                                {{ Money::formatMinor($this->reviewBalanceAfterGiftCents, $currency) }}
+                                            </td>
+                                        </tr>
+                                    @endif
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div
+                            class="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-700"
+                            x-data="{}"
+                        >
+                            <div
+                                class="flex max-w-md items-stretch overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-950"
+                            >
+                                <input
+                                    x-ref="giftCardInput"
+                                    type="text"
+                                    wire:model.live.debounce.400ms="giftCardCode"
+                                    class="min-w-0 flex-1 border-0 bg-transparent px-3 py-2 font-mono text-sm uppercase text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-0 dark:text-zinc-100 dark:placeholder:text-zinc-500"
+                                    placeholder="Gift card code (optional)"
+                                    aria-label="Gift card code"
+                                    autocomplete="off"
+                                />
+                                <button
+                                    type="button"
+                                    class="flex shrink-0 items-center justify-center border-l border-zinc-200 px-3 text-zinc-500 transition hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-600 dark:hover:bg-zinc-800/80 dark:hover:text-zinc-200"
+                                    @click="$refs.giftCardInput.focus(); $refs.giftCardInput.select()"
+                                    title="Edit gift card code"
+                                >
+                                    <span class="sr-only">Edit gift card code</span>
+                                    <svg
+                                        class="size-5 shrink-0"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke-width="2"
+                                        stroke="currentColor"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                            @error('giftCardCode')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
                             The venue confirms the final amount when they review your request.
                         </p>
                     </div>
@@ -397,26 +505,13 @@
                         class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
                     >
                         <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
-                            Notes &amp; payment (optional)
+                            Payment (optional)
                         </h3>
                         <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Add anything the venue should know. Payment reference helps match your transfer if you have
-                            one.
+                            Add a payment reference or proof if you have already paid—this helps the venue match your
+                            transfer.
                         </p>
                         <div class="mt-4 space-y-4">
-                            <div>
-                                <label
-                                    class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                >
-                                    Notes
-                                </label>
-                                <textarea
-                                    wire:model="bookingNotes"
-                                    rows="2"
-                                    class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                    placeholder="e.g. doubles, need parking info"
-                                ></textarea>
-                            </div>
                             <div class="grid gap-3 sm:grid-cols-2">
                                 <div class="sm:col-span-2 sm:max-w-xs">
                                     <label

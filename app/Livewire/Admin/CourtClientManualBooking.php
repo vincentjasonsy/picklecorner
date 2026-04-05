@@ -474,23 +474,7 @@ class CourtClientManualBooking extends Component
      */
     protected function allocateGiftCentsAcrossBookings(int $totalApplied, array $grosses): array
     {
-        $n = count($grosses);
-        if ($n === 0) {
-            return [];
-        }
-        $G = array_sum($grosses);
-        if ($G <= 0 || $totalApplied <= 0) {
-            return array_fill(0, $n, 0);
-        }
-        $out = [];
-        $assigned = 0;
-        for ($i = 0; $i < $n - 1; $i++) {
-            $out[$i] = (int) floor($totalApplied * $grosses[$i] / $G);
-            $assigned += $out[$i];
-        }
-        $out[$n - 1] = max(0, $totalApplied - $assigned);
-
-        return $out;
+        return GiftCardService::allocateAppliedCentsAcrossLines($totalApplied, $grosses);
     }
 
     public function slotHourLabel(int $hour): string
