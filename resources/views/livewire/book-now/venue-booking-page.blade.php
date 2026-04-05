@@ -249,17 +249,7 @@
                                                     <th
                                                         class="min-w-[7.5rem] px-2 py-2 text-center text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-300"
                                                     >
-                                                        <div
-                                                            class="mx-auto mb-1.5 h-11 w-full max-w-[5.5rem] overflow-hidden rounded-lg border border-zinc-200 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800"
-                                                        >
-                                                            <img
-                                                                src="{{ $court->staticImageUrl() }}"
-                                                                alt="{{ $court->name }}"
-                                                                class="size-full object-cover object-center"
-                                                                loading="lazy"
-                                                            />
-                                                        </div>
-                                                        <span class="line-clamp-2">{{ $court->name }}</span>
+                                                        <span class="line-clamp-3">{{ $court->name }}</span>
                                                     </th>
                                                 @endforeach
                                             </tr>

@@ -1,21 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none" aria-hidden="true">
   <defs>
-    <linearGradient id="ia-wall" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="ia-void" x1="400" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+    <linearGradient id="ia-floor" x1="400" y1="280" x2="400" y2="500" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#475569"/>
       <stop offset="100%" stop-color="#1e293b"/>
     </linearGradient>
-    <linearGradient id="ia-floor" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="ia-court" x1="300" y1="70" x2="500" y2="440" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#64748b"/>
       <stop offset="100%" stop-color="#334155"/>
     </linearGradient>
+    <linearGradient id="ia-gloss" x1="280" y1="100" x2="520" y2="400" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.14"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.06"/>
+    </linearGradient>
   </defs>
-  <rect width="800" height="500" fill="url(#ia-wall)"/>
-  <rect x="40" y="180" width="720" height="280" rx="6" fill="url(#ia-floor)"/>
-  <rect x="60" y="200" width="680" height="240" fill="none" stroke="#94a3b8" stroke-width="5" opacity="0.85"/>
-  <line x1="400" y1="200" x2="400" y2="440" stroke="#cbd5e1" stroke-width="4" opacity="0.9"/>
-  <circle cx="400" cy="320" r="68" stroke="#cbd5e1" stroke-width="4" fill="none" opacity="0.85"/>
-  <line x1="60" y1="320" x2="180" y2="320" stroke="#94a3b8" stroke-width="4" opacity="0.75"/>
-  <line x1="620" y1="320" x2="740" y2="320" stroke="#94a3b8" stroke-width="4" opacity="0.75"/>
-  <rect x="0" y="0" width="800" height="120" fill="#0f172a" opacity="0.35"/>
-  <rect x="120" y="40" width="560" height="14" rx="4" fill="#64748b" opacity="0.5"/>
+  <rect width="800" height="500" fill="url(#ia-void)"/>
+  <g opacity="0.4">
+    <line x1="80" y1="40" x2="720" y2="40" stroke="#64748b" stroke-width="2"/>
+    <line x1="120" y1="70" x2="680" y2="70" stroke="#94a3b8" stroke-width="3" opacity="0.6"/>
+    <line x1="160" y1="100" x2="640" y2="100" stroke="#64748b" stroke-width="2"/>
+  </g>
+  <rect x="100" y="115" width="600" height="10" rx="2" fill="#e2e8f0" opacity="0.35"/>
+  <rect x="150" y="118" width="80" height="6" rx="1" fill="#f8fafc" opacity="0.5"/>
+  <rect x="280" y="118" width="80" height="6" rx="1" fill="#f8fafc" opacity="0.45"/>
+  <rect x="410" y="118" width="80" height="6" rx="1" fill="#f8fafc" opacity="0.5"/>
+  <rect x="540" y="118" width="80" height="6" rx="1" fill="#f8fafc" opacity="0.45"/>
+  <rect width="800" height="220" y="280" fill="url(#ia-floor)"/>
+  <rect x="300" y="70" width="200" height="370" rx="3" fill="url(#ia-court)"/>
+  <rect x="300" y="70" width="200" height="370" rx="3" fill="url(#ia-gloss)"/>
+  <rect x="300" y="70" width="200" height="370" rx="3" fill="none" stroke="#94a3b8" stroke-width="4" opacity="0.85"/>
+  <line x1="300" y1="255" x2="500" y2="255" stroke="#e2e8f0" stroke-width="9" opacity="0.75"/>
+  <line x1="300" y1="255" x2="500" y2="255" stroke="#64748b" stroke-width="2" opacity="0.5"/>
+  <line x1="300" y1="170" x2="500" y2="170" stroke="#cbd5e1" stroke-width="3" opacity="0.9"/>
+  <line x1="300" y1="340" x2="500" y2="340" stroke="#cbd5e1" stroke-width="3" opacity="0.9"/>
+  <line x1="400" y1="70" x2="400" y2="170" stroke="#cbd5e1" stroke-width="3" opacity="0.9"/>
+  <line x1="400" y1="340" x2="400" y2="440" stroke="#cbd5e1" stroke-width="3" opacity="0.9"/>
+  <circle cx="400" cy="255" r="38" stroke="#cbd5e1" stroke-width="3" fill="none" opacity="0.85"/>
+  <rect x="250" y="40" width="300" height="4" rx="2" fill="#334155" opacity="0.6"/>
 </svg>

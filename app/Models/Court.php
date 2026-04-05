@@ -101,8 +101,8 @@ class Court extends Model
     public function staticImageUrl(): string
     {
         $files = $this->environment === self::ENV_INDOOR
-            ? ['indoor-a.svg', 'indoor-b.svg']
-            : ['outdoor-a.svg', 'outdoor-b.svg'];
+            ? ['indoor-a.jpg', 'indoor-b.jpg']
+            : ['outdoor-a.jpg', 'outdoor-b.jpg'];
         $i = abs(crc32((string) $this->id)) % count($files);
 
         return asset('images/courts/'.$files[$i]);

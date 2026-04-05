@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 640" fill="none" aria-hidden="true">
+  <defs>
+    <linearGradient id="s1-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0ea5e9"/>
+      <stop offset="55%" stop-color="#bae6fd"/>
+      <stop offset="100%" stop-color="#f0f9ff"/>
+    </linearGradient>
+    <linearGradient id="s1-grass" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22c55e"/>
+      <stop offset="100%" stop-color="#15803d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="640" fill="url(#s1-sky)"/>
+  <ellipse cx="1350" cy="120" rx="90" ry="90" fill="#fde047" opacity="0.95"/>
+  <rect x="80" y="220" width="1440" height="360" rx="12" fill="url(#s1-grass)"/>
+  <rect x="120" y="260" width="1360" height="280" fill="none" stroke="#ecfccb" stroke-width="8" opacity="0.9"/>
+  <line x1="800" y1="260" x2="800" y2="540" stroke="#ecfccb" stroke-width="7"/>
+  <circle cx="800" cy="400" r="100" stroke="#ecfccb" stroke-width="6" fill="none"/>
+  <text x="800" y="140" text-anchor="middle" fill="#0c4a6e" font-family="system-ui,sans-serif" font-size="52" font-weight="800">Play outdoors</text>
+</svg>

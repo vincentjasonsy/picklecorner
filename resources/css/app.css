@@ -20,4 +20,8 @@
     html.dark {
         color-scheme: dark;
     }
+
+    [x-cloak] {
+        display: none !important;
+    }
 }

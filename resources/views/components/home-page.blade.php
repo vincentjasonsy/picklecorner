@@ -7,7 +7,12 @@ use Livewire\Component;
 new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
 ?>
 
-<div class="mx-auto max-w-5xl px-4 py-16 text-center sm:px-6 sm:py-24 lg:px-8">
+<div>
+    <div class="mx-auto max-w-5xl px-4 pt-8 pb-6 sm:px-6 sm:pt-10 sm:pb-8 lg:px-8">
+        <x-hero-slider />
+    </div>
+
+    <div class="mx-auto max-w-5xl px-4 py-10 text-center sm:px-6 sm:py-16 lg:px-8">
     <h1 class="text-3xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-4xl">
         {{ config('app.name') }}
     </h1>
@@ -74,4 +79,5 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
             </a>
         </div>
     @endauth
+    </div>
 </div>

@@ -15,5 +15,7 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
+        $response->assertSee('images/slider/slide-1.jpg', false);
+        $response->assertSee('Featured visuals', false);
     }
 }
