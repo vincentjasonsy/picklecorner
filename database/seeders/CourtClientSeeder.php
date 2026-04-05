@@ -45,6 +45,12 @@ class CourtClientSeeder extends Seeder
             ['hourly' => 28000, 'peak' => 40000],
         ];
 
+        $ratings = [
+            ['avg' => 4.8, 'count' => 214],
+            ['avg' => 4.6, 'count' => 156],
+            ['avg' => 4.9, 'count' => 302],
+        ];
+
         foreach ($venues as $index => $venue) {
             $client = CourtClient::query()->updateOrCreate(
                 ['slug' => Str::slug($venue['name'])],
@@ -56,6 +62,8 @@ class CourtClientSeeder extends Seeder
                     'hourly_rate_cents' => $pricing[$index]['hourly'],
                     'peak_hourly_rate_cents' => $pricing[$index]['peak'],
                     'currency' => 'PHP',
+                    'public_rating_average' => $ratings[$index]['avg'],
+                    'public_rating_count' => $ratings[$index]['count'],
                 ]
             );
 

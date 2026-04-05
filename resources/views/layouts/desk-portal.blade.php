@@ -180,12 +180,12 @@
                         </span>
                     </a>
                 </nav>
-                <div class="border-t border-stone-200 p-4 dark:border-stone-800">
+                <div class="shrink-0 border-t border-stone-200 p-3 dark:border-stone-800 md:p-4">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button
                             type="submit"
-                            class="text-sm font-medium text-stone-600 underline decoration-stone-400/50 underline-offset-2 hover:text-stone-900 dark:text-stone-400 dark:hover:text-stone-200"
+                            class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-stone-600 transition-colors hover:bg-stone-100 dark:text-stone-400 dark:hover:bg-stone-800/80"
                         >
                             Log out
                         </button>

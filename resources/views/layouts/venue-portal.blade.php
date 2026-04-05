@@ -147,12 +147,12 @@
                         Reports
                     </a>
                 </nav>
-                <div class="border-t border-zinc-200 p-3 dark:border-zinc-800">
+                <div class="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button
                             type="submit"
-                            class="text-sm text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                            class="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
                         >
                             Log out
                         </button>

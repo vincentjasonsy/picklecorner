@@ -64,6 +64,18 @@
                         >
                             About
                         </a>
+                        <a
+                            href="{{ route('book-now') }}"
+                            wire:navigate
+                            @class([
+                                'transition-colors',
+                                request()->routeIs('book-now*')
+                                    ? 'text-emerald-600 dark:text-emerald-400'
+                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+                            ])
+                        >
+                            Book Now
+                        </a>
                         @auth
                             @php
                                 $guestNavUser = auth()->user();

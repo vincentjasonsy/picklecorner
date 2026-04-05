@@ -28,6 +28,9 @@ class CourtClientFactory extends Factory
             'hourly_rate_cents' => fake()->numberBetween(250, 550) * 100,
             'peak_hourly_rate_cents' => null,
             'currency' => 'PHP',
+            'cover_image_path' => null,
+            'public_rating_average' => round(fake()->randomFloat(1, 35, 50) / 10, 1),
+            'public_rating_count' => fake()->numberBetween(8, 400),
         ];
     }
 

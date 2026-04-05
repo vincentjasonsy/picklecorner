@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Storage;
 
 class CourtClient extends Model
 {
@@ -31,6 +32,9 @@ class CourtClient extends Model
         'peak_hourly_rate_cents',
         'currency',
         'desk_booking_policy',
+        'cover_image_path',
+        'public_rating_average',
+        'public_rating_count',
     ];
 
     protected function casts(): array
@@ -39,7 +43,18 @@ class CourtClient extends Model
             'is_active' => 'boolean',
             'hourly_rate_cents' => 'integer',
             'peak_hourly_rate_cents' => 'integer',
+            'public_rating_average' => 'decimal:1',
+            'public_rating_count' => 'integer',
         ];
+    }
+
+    public function coverImageUrl(): ?string
+    {
+        if ($this->cover_image_path === null || $this->cover_image_path === '') {
+            return null;
+        }
+
+        return Storage::disk('public')->url($this->cover_image_path);
     }
 
     public function admin(): BelongsTo

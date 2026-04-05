@@ -15,6 +15,7 @@ use App\Livewire\Admin\InvoiceIndex;
 use App\Livewire\Admin\InvoiceShow;
 use App\Livewire\Admin\ManualBookingHub;
 use App\Livewire\Admin\UserForm;
+use App\Livewire\BookNowPage;
 use App\Livewire\Desk\DeskCourtsLive;
 use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
@@ -23,6 +24,7 @@ use App\Livewire\Member\MemberBookingHistory;
 use App\Livewire\Member\MemberBookNow;
 use App\Livewire\Member\MemberDashboard;
 use App\Livewire\Member\MemberProfileSettings;
+use App\Livewire\PublicCourtShow;
 use App\Livewire\Venue\VenueBookingApprovals;
 use App\Livewire\Venue\VenueBookingHistory;
 use App\Livewire\Venue\VenueBookingShow;
@@ -37,6 +39,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::livewire('/', 'home-page')->name('home');
 Route::livewire('/about', 'about-page')->name('about');
+Route::livewire('/book-now', BookNowPage::class)->name('book-now');
+Route::livewire('/book-now/courts/{court}', PublicCourtShow::class)->name('book-now.court');
 
 Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
