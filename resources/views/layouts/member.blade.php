@@ -84,75 +84,93 @@
                     </div>
 
                     <nav
-                        class="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto p-3 text-sm font-semibold"
+                        class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
                         aria-label="Member"
                     >
-                        <p
-                            class="mb-1 px-3 pt-1 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                        >
-                            Your account
-                        </p>
-                        <a
-                            href="{{ route('account.dashboard') }}"
-                            wire:navigate
-                            @class([
-                                'rounded-lg px-3 py-2 transition-colors',
-                                request()->routeIs('account.dashboard')
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                            ])
-                        >
-                            Home court
-                        </a>
-                        <a
-                            href="{{ route('account.bookings') }}"
-                            wire:navigate
-                            @class([
-                                'rounded-lg px-3 py-2 transition-colors',
-                                request()->routeIs('account.bookings')
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                            ])
-                        >
-                            My games
-                        </a>
-                        <a
-                            href="{{ route('account.settings') }}"
-                            wire:navigate
-                            @class([
-                                'rounded-lg px-3 py-2 transition-colors',
-                                request()->routeIs('account.settings')
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                            ])
-                        >
-                            Profile
-                        </a>
-                        <a
-                            href="{{ route('account.book') }}"
-                            wire:navigate
-                            @class([
-                                'rounded-lg px-3 py-2 transition-colors',
-                                request()->routeIs('account.book')
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                            ])
-                        >
-                            Book now
-                        </a>
+                        <div>
+                            <p
+                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                            >
+                                Your court
+                            </p>
+                            <div class="flex flex-col gap-1">
+                                <a
+                                    href="{{ route('account.dashboard') }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-3 py-2 transition-colors',
+                                        request()->routeIs('account.dashboard')
+                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                    ])
+                                >
+                                    Home court
+                                </a>
+                                <a
+                                    href="{{ route('account.book') }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-3 py-2 transition-colors',
+                                        request()->routeIs('account.book')
+                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                    ])
+                                >
+                                    Book now
+                                </a>
+                                <a
+                                    href="{{ route('account.bookings') }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-3 py-2 transition-colors',
+                                        request()->routeIs('account.bookings')
+                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                    ])
+                                >
+                                    My games
+                                </a>
+                            </div>
+                        </div>
 
-                        <p
-                            class="mb-1 mt-5 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                        >
-                            Elsewhere
-                        </p>
-                        <a
-                            href="{{ route('home') }}"
-                            wire:navigate
-                            class="rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
-                        >
-                            Back to site
-                        </a>
+                        <div>
+                            <p
+                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                            >
+                                Account
+                            </p>
+                            <div class="flex flex-col gap-1">
+                                <a
+                                    href="{{ route('account.settings') }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-3 py-2 transition-colors',
+                                        request()->routeIs('account.settings')
+                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                    ])
+                                >
+                                    Profile
+                                </a>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p
+                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                            >
+                                Elsewhere
+                            </p>
+                            <div class="flex flex-col gap-1">
+                                <a
+                                    href="{{ route('home') }}"
+                                    wire:navigate
+                                    class="rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
+                                >
+                                    Back to site
+                                </a>
+                            </div>
+                        </div>
                     </nav>
 
                     <div class="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">

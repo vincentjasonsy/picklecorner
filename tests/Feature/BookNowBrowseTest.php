@@ -46,6 +46,15 @@ class BookNowBrowseTest extends TestCase
         $this->actingAs($user)->get(route('book-now'))->assertOk();
     }
 
+    public function test_member_account_book_uses_same_browse_ui(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $user = \App\Models\User::factory()->player()->create();
+
+        $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('All courts', false);
+    }
+
     public function test_inactive_venue_court_not_listed_and_detail_404(): void
     {
         $this->seed(UserTypeSeeder::class);

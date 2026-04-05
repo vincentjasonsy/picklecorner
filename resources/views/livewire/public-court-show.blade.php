@@ -14,11 +14,14 @@
     ];
     $pi = abs(crc32((string) $c->id)) % count($palettes);
     $rate = $c->effectiveHourlyRateCents();
+    $bookBrowseUrl = auth()->check() && ! auth()->user()->usesStaffAppNav()
+        ? route('account.book')
+        : route('book-now');
 @endphp
 
 <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
     <a
-        href="{{ route('book-now') }}"
+        href="{{ $bookBrowseUrl }}"
         wire:navigate
         class="text-sm font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
     >

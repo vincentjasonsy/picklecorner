@@ -30,122 +30,157 @@
 
         <div class="flex min-h-screen flex-col md:flex-row">
             <aside
-                class="shrink-0 border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 md:w-64 md:border-r"
+                class="flex shrink-0 flex-col border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 md:sticky md:top-0 md:h-screen md:w-64 md:border-r"
             >
                 <div
-                    class="flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 md:px-5"
+                    class="flex h-14 shrink-0 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 md:px-5"
                 >
                     <span class="font-display text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Venue portal
                     </span>
                 </div>
-                <nav class="flex flex-col gap-1 p-3 text-sm font-medium" aria-label="Venue">
-                    <a
-                        href="{{ route('venue.home') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.home')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Overview
-                    </a>
-                    <a
-                        href="{{ route('venue.settings') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.settings')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Settings &amp; schedule
-                    </a>
-                    <a
-                        href="{{ route('venue.manual-booking') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.manual-booking')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Manual booking
-                    </a>
-                    <a
-                        href="{{ route('venue.bookings.pending') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.bookings.pending')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        <span class="block">Manual booking requests</span>
-                        <span
+                <nav
+                    class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
+                    aria-label="Venue"
+                >
+                    <div class="flex flex-col gap-1">
+                        <a
+                            href="{{ route('venue.home') }}"
+                            wire:navigate
                             @class([
-                                'mt-0.5 block text-[11px] font-normal normal-case',
-                                request()->routeIs('venue.bookings.pending')
-                                    ? 'text-emerald-700/80 dark:text-emerald-300/80'
-                                    : 'text-zinc-500 dark:text-zinc-400',
+                                'rounded-lg px-3 py-2 transition-colors',
+                                request()->routeIs('venue.home')
+                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                             ])
                         >
-                            Desk queue &amp; auto rules
-                        </span>
-                    </a>
-                    <a
-                        href="{{ route('venue.bookings.history') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.bookings.history', 'venue.bookings.show')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Booking history
-                    </a>
-                    <a
-                        href="{{ route('venue.courts') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.courts')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Courts
-                    </a>
-                    <a
-                        href="{{ route('venue.gift-cards.index') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.gift-cards.*')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Gift cards
-                    </a>
-                    <a
-                        href="{{ route('venue.reports') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-lg px-3 py-2 transition-colors',
-                            request()->routeIs('venue.reports')
-                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                        ])
-                    >
-                        Reports
-                    </a>
+                            Overview
+                        </a>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Operations
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('venue.manual-booking') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.manual-booking')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Manual booking
+                            </a>
+                            <a
+                                href="{{ route('venue.bookings.pending') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.bookings.pending')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                <span class="block">Manual booking requests</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-[11px] font-normal normal-case',
+                                        request()->routeIs('venue.bookings.pending')
+                                            ? 'text-emerald-700/80 dark:text-emerald-300/80'
+                                            : 'text-zinc-500 dark:text-zinc-400',
+                                    ])
+                                >
+                                    Desk queue &amp; auto rules
+                                </span>
+                            </a>
+                            <a
+                                href="{{ route('venue.bookings.history') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.bookings.history', 'venue.bookings.show')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Booking history
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Venue setup
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('venue.settings') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.settings')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Settings &amp; schedule
+                            </a>
+                            <a
+                                href="{{ route('venue.courts') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.courts')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Courts
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Revenue &amp; reports
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('venue.gift-cards.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.gift-cards.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Gift cards
+                            </a>
+                            <a
+                                href="{{ route('venue.reports') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.reports')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Reports
+                            </a>
+                        </div>
+                    </div>
                 </nav>
                 <div class="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
                     <form method="POST" action="{{ route('logout') }}">

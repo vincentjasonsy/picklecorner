@@ -6,12 +6,8 @@ use App\Models\Court;
 use App\Models\CourtClient;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('layouts::guest')]
-#[Title('Book now')]
 class BookNowPage extends Component
 {
     /** all | indoor | outdoor */
@@ -148,6 +144,12 @@ class BookNowPage extends Component
 
     public function render(): View
     {
-        return view('livewire.book-now-page');
+        $view = view('livewire.book-now-page');
+
+        if (request()->routeIs('account.book')) {
+            return $view->layout('layouts::member')->title('Book now');
+        }
+
+        return $view->layout('layouts::guest')->title('Book now');
     }
 }

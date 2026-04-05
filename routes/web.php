@@ -21,7 +21,6 @@ use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
 use App\Livewire\Desk\DeskMyRequests;
 use App\Livewire\Member\MemberBookingHistory;
-use App\Livewire\Member\MemberBookNow;
 use App\Livewire\Member\MemberDashboard;
 use App\Livewire\Member\MemberProfileSettings;
 use App\Livewire\PublicCourtShow;
@@ -50,7 +49,7 @@ Route::middleware('guest')->group(function (): void {
 Route::middleware('auth')->group(function (): void {
     Route::prefix('account')->name('account.')->group(function (): void {
         Route::livewire('/', MemberDashboard::class)->name('dashboard');
-        Route::livewire('/book', MemberBookNow::class)->name('book');
+        Route::livewire('/book', BookNowPage::class)->name('book');
         Route::livewire('/bookings', MemberBookingHistory::class)->name('bookings');
         Route::livewire('/settings', MemberProfileSettings::class)->name('settings');
     });
