@@ -184,7 +184,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         aria-hidden="true"
                     ></div>
                     <div class="relative">
-                        <span class="text-2xl" aria-hidden="true">🎯</span>
+                        <x-icon name="flag" class="size-8 text-emerald-600 dark:text-emerald-400" />
                         <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">Mission</h3>
                         <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                             Make court time as easy to reserve as it is to play—transparent, fast, and fair for everyone
@@ -200,7 +200,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         aria-hidden="true"
                     ></div>
                     <div class="relative">
-                        <span class="text-2xl" aria-hidden="true">⚡</span>
+                        <x-icon name="bolt" class="size-8 text-teal-600 dark:text-teal-400" />
                         <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">Stack</h3>
                         <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                             Crafted with Laravel {{ app()->version() }} and Livewire—modern, maintainable, and ready to
@@ -216,7 +216,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         aria-hidden="true"
                     ></div>
                     <div class="relative">
-                        <span class="text-2xl" aria-hidden="true">🏟️</span>
+                        <x-icon name="building-office-2" class="size-8 text-amber-600 dark:text-amber-400" />
                         <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">Roadmap</h3>
                         <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                             Booking is chapter one. We’re shaping leagues, payments, and deeper venue analytics next—tell

@@ -50,8 +50,8 @@
             <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $client->city }}</p>
         @endif
         @if ($client && $client->public_rating_average !== null)
-            <p class="mt-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                <span class="text-amber-500 dark:text-amber-400">★</span>
+            <p class="mt-2 inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                <x-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
                 {{ number_format((float) $client->public_rating_average, 1) }}
                 @if ($client->public_rating_count > 0)
                     <span class="font-normal text-zinc-500 dark:text-zinc-400">

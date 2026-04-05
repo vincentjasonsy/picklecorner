@@ -31,94 +31,240 @@
 
         <div class="flex min-h-screen flex-col">
             <header
+                x-data="{ mobileNavOpen: false }"
+                @keydown.escape.window="mobileNavOpen = false"
                 class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-900/90"
             >
+                @auth
+                    @php
+                        $guestNavUser = auth()->user();
+                        $staffAppUrl = $guestNavUser->staffAppHomeUrl();
+                        $memberHomeUrl = $guestNavUser->memberHomeUrl();
+                        $guestNavAppActive = $staffAppUrl !== null
+                            ? ($guestNavUser->isSuperAdmin() && request()->routeIs('admin.*'))
+                            || ($guestNavUser->isCourtAdmin() && request()->routeIs('venue.*'))
+                            || ($guestNavUser->isCourtClientDesk() && request()->routeIs('desk.*'))
+                            : request()->routeIs('account.*');
+                    @endphp
+                @endauth
                 <div
-                    class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8"
+                    class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8"
                 >
                     <a
                         href="{{ route('home') }}"
                         wire:navigate
-                        class="text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
+                        class="min-w-0 shrink truncate text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
                     >
                         {{ config('app.name') }}
                     </a>
-                    <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-2 sm:gap-x-5">
+                    <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                         <x-theme-toggle />
+                        {{-- Desktop / large tablet navigation --}}
                         <nav
-                            class="flex flex-wrap items-center justify-end gap-x-6 gap-y-2 text-sm font-medium"
+                            class="hidden items-center gap-1 text-sm font-medium lg:flex"
                             aria-label="Primary"
                         >
+                            <a
+                                href="{{ route('home') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-2.5 py-2 transition-colors',
+                                    request()->routeIs('home')
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+                                ])
+                            >
+                                Home
+                            </a>
+                            <a
+                                href="{{ url('/#about') }}"
+                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                            >
+                                About
+                            </a>
+                            <a
+                                href="{{ url('/#reviews') }}"
+                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                            >
+                                Reviews
+                            </a>
+                            <a
+                                href="{{ url('/#contact') }}"
+                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                            >
+                                Contact
+                            </a>
+                            <a
+                                href="{{ route('book-now') }}"
+                                wire:navigate
+                                @class([
+                                    'font-display ml-1 inline-flex items-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500 hover:shadow-lg dark:shadow-emerald-950/40',
+                                    request()->routeIs('book-now*')
+                                        ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900'
+                                        : '',
+                                ])
+                            >
+                                Book now
+                            </a>
+                            @auth
+                                <a
+                                    href="{{ $staffAppUrl ?? $memberHomeUrl }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-2.5 py-2 transition-colors',
+                                        $guestNavAppActive
+                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+                                    ])
+                                >
+                                    {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
+                                </a>
+                                <form method="POST" action="{{ route('logout') }}" class="inline">
+                                    @csrf
+                                    <button
+                                        type="submit"
+                                        class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                                    >
+                                        Log out
+                                    </button>
+                                </form>
+                            @else
+                                <a
+                                    href="{{ route('login') }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-2.5 py-2 transition-colors',
+                                        request()->routeIs('login')
+                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+                                    ])
+                                >
+                                    Log in
+                                </a>
+                                <a
+                                    href="{{ route('register') }}"
+                                    wire:navigate
+                                    class="rounded-lg border border-emerald-600/30 bg-emerald-50/80 px-3 py-2 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
+                                >
+                                    Register
+                                </a>
+                            @endauth
+                        </nav>
+                        {{-- Mobile menu toggle --}}
+                        <button
+                            type="button"
+                            class="inline-flex size-10 items-center justify-center rounded-lg border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800 lg:hidden"
+                            aria-controls="guest-mobile-nav"
+                            :aria-expanded="mobileNavOpen.toString()"
+                            @click="mobileNavOpen = ! mobileNavOpen"
+                        >
+                            <span class="sr-only" x-text="mobileNavOpen ? 'Close menu' : 'Open menu'"></span>
+                            <svg
+                                x-show="! mobileNavOpen"
+                                class="size-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                            <svg
+                                x-show="mobileNavOpen"
+                                x-cloak
+                                class="size-6"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="1.5"
+                                stroke="currentColor"
+                                aria-hidden="true"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                {{-- Mobile / small tablet panel --}}
+                <div
+                    id="guest-mobile-nav"
+                    x-show="mobileNavOpen"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 -translate-y-1"
+                    x-transition:enter-end="opacity-100 translate-y-0"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100 translate-y-0"
+                    x-transition:leave-end="opacity-0 -translate-y-1"
+                    x-cloak
+                    class="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:hidden"
+                >
+                    <nav class="flex max-h-[min(70vh,calc(100dvh-3.5rem))] flex-col gap-0.5 overflow-y-auto px-4 py-3 text-base font-medium" aria-label="Primary mobile">
                         <a
                             href="{{ route('home') }}"
                             wire:navigate
+                            @click="mobileNavOpen = false"
                             @class([
-                                'transition-colors',
+                                'rounded-lg px-3 py-3 transition-colors',
                                 request()->routeIs('home')
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                    : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800',
                             ])
                         >
                             Home
                         </a>
                         <a
                             href="{{ url('/#about') }}"
-                            class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mobileNavOpen = false"
                         >
                             About
                         </a>
                         <a
                             href="{{ url('/#reviews') }}"
-                            class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mobileNavOpen = false"
                         >
                             Reviews
                         </a>
                         <a
                             href="{{ url('/#contact') }}"
-                            class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                            @click="mobileNavOpen = false"
                         >
                             Contact
                         </a>
                         <a
                             href="{{ route('book-now') }}"
                             wire:navigate
+                            @click="mobileNavOpen = false"
                             @class([
-                                'transition-colors',
+                                'font-display mt-1 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-center text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-900/25 transition',
                                 request()->routeIs('book-now*')
-                                    ? 'text-emerald-600 dark:text-emerald-400'
-                                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+                                    ? 'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900'
+                                    : '',
                             ])
                         >
-                            Book Now
+                            Book now
                         </a>
                         @auth
-                            @php
-                                $guestNavUser = auth()->user();
-                                $staffAppUrl = $guestNavUser->staffAppHomeUrl();
-                                $memberHomeUrl = $guestNavUser->memberHomeUrl();
-                                $guestNavAppActive = $staffAppUrl !== null
-                                    ? ($guestNavUser->isSuperAdmin() && request()->routeIs('admin.*'))
-                                    || ($guestNavUser->isCourtAdmin() && request()->routeIs('venue.*'))
-                                    || ($guestNavUser->isCourtClientDesk() && request()->routeIs('desk.*'))
-                                    : request()->routeIs('account.*');
-                            @endphp
                             <a
                                 href="{{ $staffAppUrl ?? $memberHomeUrl }}"
                                 wire:navigate
+                                @click="mobileNavOpen = false"
                                 @class([
-                                    'transition-colors',
+                                    'rounded-lg px-3 py-3 transition-colors',
                                     $guestNavAppActive
-                                        ? 'text-emerald-600 dark:text-emerald-400'
-                                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                        : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800',
                                 ])
                             >
                                 {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
                             </a>
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                            <form method="POST" action="{{ route('logout') }}" class="contents">
                                 @csrf
                                 <button
                                     type="submit"
-                                    class="text-zinc-600 transition-colors hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"
+                                    class="w-full rounded-lg px-3 py-3 text-left text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
                                 >
                                     Log out
                                 </button>
@@ -127,11 +273,12 @@
                             <a
                                 href="{{ route('login') }}"
                                 wire:navigate
+                                @click="mobileNavOpen = false"
                                 @class([
-                                    'transition-colors',
+                                    'rounded-lg px-3 py-3 transition-colors',
                                     request()->routeIs('login')
-                                        ? 'text-emerald-600 dark:text-emerald-400'
-                                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
+                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                        : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800',
                                 ])
                             >
                                 Log in
@@ -139,13 +286,13 @@
                             <a
                                 href="{{ route('register') }}"
                                 wire:navigate
-                                class="rounded-lg bg-emerald-600 px-3 py-1.5 text-white transition-colors hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+                                @click="mobileNavOpen = false"
+                                class="rounded-lg border border-emerald-600/30 bg-emerald-50/80 px-3 py-3 text-center font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
                             >
                                 Register
                             </a>
                         @endauth
-                        </nav>
-                    </div>
+                    </nav>
                 </div>
             </header>
 
