@@ -33,7 +33,7 @@
             <header
                 x-data="{ mobileNavOpen: false }"
                 @keydown.escape.window="mobileNavOpen = false"
-                class="sticky top-0 z-20 border-b border-zinc-200/80 bg-white/90 backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-900/90"
+                class="sticky top-0 z-20 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900"
             >
                 @auth
                     @php
@@ -70,27 +70,27 @@
                                 @class([
                                     'rounded-lg px-2.5 py-2 transition-colors',
                                     request()->routeIs('home')
-                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                        : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+                                        ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                        : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                 ])
                             >
                                 Home
                             </a>
                             <a
                                 href="{{ url('/#about') }}"
-                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
                             >
                                 About
                             </a>
                             <a
                                 href="{{ url('/#reviews') }}"
-                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
                             >
                                 Reviews
                             </a>
                             <a
                                 href="{{ url('/#contact') }}"
-                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
                             >
                                 Contact
                             </a>
@@ -113,8 +113,8 @@
                                     @class([
                                         'rounded-lg px-2.5 py-2 transition-colors',
                                         $guestNavAppActive
-                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+                                            ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                            : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                     ])
                                 >
                                     {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
@@ -123,7 +123,7 @@
                                     @csrf
                                     <button
                                         type="submit"
-                                        class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
+                                        class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
                                     >
                                         Log out
                                     </button>
@@ -135,8 +135,8 @@
                                     @class([
                                         'rounded-lg px-2.5 py-2 transition-colors',
                                         request()->routeIs('login')
-                                            ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                            : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-100',
+                                            ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                            : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                     ])
                                 >
                                     Log in
@@ -153,7 +153,7 @@
                         {{-- Mobile menu toggle --}}
                         <button
                             type="button"
-                            class="inline-flex size-10 items-center justify-center rounded-lg border border-zinc-200 text-zinc-700 transition hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800 lg:hidden"
+                            class="inline-flex size-10 items-center justify-center rounded-lg border border-zinc-200 text-zinc-700 transition hover:text-emerald-700 dark:border-zinc-600 dark:text-zinc-200 dark:hover:text-emerald-400 lg:hidden"
                             aria-controls="guest-mobile-nav"
                             :aria-expanded="mobileNavOpen.toString()"
                             @click="mobileNavOpen = ! mobileNavOpen"
@@ -206,29 +206,29 @@
                             @class([
                                 'rounded-lg px-3 py-3 transition-colors',
                                 request()->routeIs('home')
-                                    ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                    : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800',
+                                    ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                    : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                             ])
                         >
                             Home
                         </a>
                         <a
                             href="{{ url('/#about') }}"
-                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
                             @click="mobileNavOpen = false"
                         >
                             About
                         </a>
                         <a
                             href="{{ url('/#reviews') }}"
-                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
                             @click="mobileNavOpen = false"
                         >
                             Reviews
                         </a>
                         <a
                             href="{{ url('/#contact') }}"
-                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
                             @click="mobileNavOpen = false"
                         >
                             Contact
@@ -254,8 +254,8 @@
                                 @class([
                                     'rounded-lg px-3 py-3 transition-colors',
                                     $guestNavAppActive
-                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                        : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800',
+                                        ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                        : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                                 ])
                             >
                                 {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
@@ -264,7 +264,7 @@
                                 @csrf
                                 <button
                                     type="submit"
-                                    class="w-full rounded-lg px-3 py-3 text-left text-zinc-800 transition-colors hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                                    class="w-full rounded-lg px-3 py-3 text-left text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
                                 >
                                     Log out
                                 </button>
@@ -277,8 +277,8 @@
                                 @class([
                                     'rounded-lg px-3 py-3 transition-colors',
                                     request()->routeIs('login')
-                                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
-                                        : 'text-zinc-800 hover:bg-zinc-100 dark:text-zinc-100 dark:hover:bg-zinc-800',
+                                        ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                        : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                                 ])
                             >
                                 Log in

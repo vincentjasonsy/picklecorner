@@ -93,7 +93,12 @@
         </aside>
 
         {{-- Booking panel --}}
-        <div class="min-w-0 flex-1 space-y-6">
+        <div
+            @class([
+                'min-w-0 flex-1 space-y-6',
+                'max-lg:pb-28' => $step === 'times',
+            ])
+        >
             <div class="flex flex-wrap items-center gap-2 text-sm">
                 <span
                     @class([
@@ -324,11 +329,26 @@
                         </div>
                     @endif
 
-                    <div class="flex flex-wrap justify-end gap-3">
+                    <div class="hidden flex-wrap justify-end gap-3 lg:flex">
                         <button
                             type="button"
                             wire:click="goToReview"
                             class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-teal-900/20 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500"
+                        >
+                            Continue to review
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Sticky CTA: mobile & tablet --}}
+                <div
+                    class="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/90 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.12)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-950/95 dark:shadow-black/40 lg:hidden"
+                >
+                    <div class="mx-auto max-w-7xl">
+                        <button
+                            type="button"
+                            wire:click="goToReview"
+                            class="w-full rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700 active:scale-[0.99] dark:bg-teal-600 dark:hover:bg-teal-500"
                         >
                             Continue to review
                         </button>
