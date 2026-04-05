@@ -1,0 +1,87 @@
+@php
+    use App\Models\Booking;
+    use App\Support\Money;
+
+    $tz = config('app.timezone', 'UTC');
+@endphp
+
+<div class="space-y-6">
+    <div>
+        <h1 class="font-display text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">My games</h1>
+        <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+            Every court you’ve booked — newest first. Nice work keeping the rallies going.
+        </p>
+    </div>
+
+    <div
+        class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80"
+    >
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-left text-sm">
+                <thead class="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
+                    <tr class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                        <th class="px-4 py-3">When</th>
+                        <th class="px-4 py-3">Venue</th>
+                        <th class="px-4 py-3">Court</th>
+                        <th class="px-4 py-3">Status</th>
+                        <th class="px-4 py-3 text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                    @forelse ($bookings as $b)
+                        <tr wire:key="mb-{{ $b->id }}" class="text-zinc-800 dark:text-zinc-200">
+                            <td class="whitespace-nowrap px-4 py-3">
+                                <span class="font-medium">{{ $b->starts_at?->timezone($tz)->format('M j, Y') }}</span>
+                                <span class="block text-xs text-zinc-500 dark:text-zinc-400">
+                                    {{ $b->starts_at?->timezone($tz)->format('g:i A') }}
+                                    –
+                                    {{ $b->ends_at?->timezone($tz)->format('g:i A') }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3">
+                                <span class="font-medium">{{ $b->courtClient?->name ?? '—' }}</span>
+                                @if ($b->courtClient?->city)
+                                    <span class="block text-xs text-zinc-500 dark:text-zinc-400">
+                                        {{ $b->courtClient->city }}
+                                    </span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">
+                                {{ $b->court?->name ?? '—' }}
+                            </td>
+                            <td class="px-4 py-3">
+                                <span
+                                    class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200"
+                                >
+                                    {{ Booking::statusDisplayLabel($b->status) }}
+                                </span>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-3 text-right font-semibold">
+                                @if ($b->amount_cents !== null)
+                                    {{ Money::formatMinor($b->amount_cents, $b->currency) }}
+                                @else
+                                    <span class="text-zinc-400">—</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="px-4 py-16 text-center">
+                                <p class="text-lg" aria-hidden="true">🎯</p>
+                                <p class="mt-2 font-medium text-zinc-700 dark:text-zinc-300">No bookings yet</p>
+                                <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+                                    When you reserve court time, your matches will appear in this log.
+                                </p>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        @if ($bookings->hasPages())
+            <div class="border-t border-zinc-200 px-4 py-3 dark:border-zinc-800">
+                {{ $bookings->links() }}
+            </div>
+        @endif
+    </div>
+</div>

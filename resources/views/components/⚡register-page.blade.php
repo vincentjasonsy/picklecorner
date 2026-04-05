@@ -46,7 +46,7 @@ new #[Layout('layouts::auth'), Title('Create account')] class extends Component
 
         ActivityLogger::log('auth.registered', ['email' => $user->email], $user, 'New account registered');
 
-        $this->redirect(route('home'), navigate: true);
+        $this->redirect($user->memberHomeUrl(), navigate: true);
     }
 };
 ?>

@@ -68,14 +68,15 @@
                             @php
                                 $guestNavUser = auth()->user();
                                 $staffAppUrl = $guestNavUser->staffAppHomeUrl();
+                                $memberHomeUrl = $guestNavUser->memberHomeUrl();
                                 $guestNavAppActive = $staffAppUrl !== null
                                     ? ($guestNavUser->isSuperAdmin() && request()->routeIs('admin.*'))
                                     || ($guestNavUser->isCourtAdmin() && request()->routeIs('venue.*'))
                                     || ($guestNavUser->isCourtClientDesk() && request()->routeIs('desk.*'))
-                                    : request()->routeIs('home');
+                                    : request()->routeIs('account.*');
                             @endphp
                             <a
-                                href="{{ $staffAppUrl ?? route('home') }}"
+                                href="{{ $staffAppUrl ?? $memberHomeUrl }}"
                                 wire:navigate
                                 @class([
                                     'transition-colors',
@@ -84,7 +85,7 @@
                                         : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100',
                                 ])
                             >
-                                {{ $staffAppUrl !== null ? 'Go to app' : 'My account' }}
+                                {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
                             </a>
                             <form method="POST" action="{{ route('logout') }}" class="inline">
                                 @csrf

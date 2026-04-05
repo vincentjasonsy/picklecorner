@@ -42,7 +42,12 @@ new #[Layout('layouts::auth'), Title('Sign in')] class extends Component
 
         ActivityLogger::log('auth.login', [], Auth::user(), 'Signed in');
 
-        $this->redirectIntended(default: route('home'), navigate: true);
+        $user = Auth::user();
+        $default = $user->usesStaffAppNav()
+            ? (string) $user->staffAppHomeUrl()
+            : $user->memberHomeUrl();
+
+        $this->redirectIntended(default: $default, navigate: true);
     }
 
     protected function ensureIsNotRateLimited(): void

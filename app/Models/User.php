@@ -131,4 +131,10 @@ class User extends Authenticatable
 
         return null;
     }
+
+    /** Player / coach dashboard on the public site (bookings & profile). */
+    public function memberHomeUrl(): string
+    {
+        return route('account.dashboard');
+    }
 }
