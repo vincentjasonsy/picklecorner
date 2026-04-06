@@ -37,7 +37,13 @@
                                 {{ $b->courtClient?->name }} · {{ $b->starts_at?->timezone($tz)->format('M j, g:i A') }}
                             </span>
                             <span class="text-xs font-semibold text-violet-800 dark:text-violet-200">
-                                {{ $row->status === OpenPlayParticipant::STATUS_ACCEPTED ? 'Confirmed' : 'Pending' }}
+                                @if ($row->status === OpenPlayParticipant::STATUS_ACCEPTED)
+                                    Confirmed
+                                @elseif ($row->status === OpenPlayParticipant::STATUS_WAITING_LIST)
+                                    Waiting list
+                                @else
+                                    Pending
+                                @endif
                             </span>
                         </li>
                     @endif

@@ -60,7 +60,11 @@ class MemberCourtOpenPlayJoin extends Component
             ->where('user_id', $user->id)
             ->first();
 
-        if ($p === null || ! in_array($p->status, [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED], true)) {
+        if ($p === null || ! in_array($p->status, [
+            OpenPlayParticipant::STATUS_PENDING,
+            OpenPlayParticipant::STATUS_ACCEPTED,
+            OpenPlayParticipant::STATUS_WAITING_LIST,
+        ], true)) {
             return;
         }
 
@@ -101,25 +105,44 @@ class MemberCourtOpenPlayJoin extends Component
 
                 return;
             }
-            if (in_array($existing->status, [OpenPlayParticipant::STATUS_REJECTED, OpenPlayParticipant::STATUS_CANCELLED], true)) {
-                if (! $this->booking->allowsOpenPlayJoinRequests()) {
+            if ($existing->status === OpenPlayParticipant::STATUS_WAITING_LIST) {
+                $this->addError('join', 'You’re already on the waiting list for this game.');
+
+                return;
+            }
+            if (in_array($existing->status, [
+                OpenPlayParticipant::STATUS_REJECTED,
+                OpenPlayParticipant::STATUS_CANCELLED,
+                OpenPlayParticipant::STATUS_REMOVED_BY_HOST,
+            ], true)) {
+                $target = $this->resolveTargetJoinStatus($this->booking);
+                if ($target === null) {
                     $this->addError('join', 'No spots left or the host isn’t accepting requests yet.');
 
                     return;
                 }
-                $existing->status = OpenPlayParticipant::STATUS_PENDING;
+                $existing->status = $target;
                 $existing->joiner_note = $this->joinerNote !== '' ? $this->joinerNote : null;
                 $trimRef = trim($this->gcashReference);
                 $existing->gcash_reference = $trimRef !== '' ? $trimRef : null;
                 $existing->paid_at = null;
+                $existing->host_closure_reason = null;
+                $existing->host_closure_message = null;
+                $existing->host_closed_at = null;
                 $existing->save();
-                session()->flash('status', 'Request sent again.');
+                session()->flash(
+                    'status',
+                    $target === OpenPlayParticipant::STATUS_WAITING_LIST
+                        ? 'You’re on the waiting list — the host will reach out if a spot opens.'
+                        : 'Request sent again.',
+                );
 
                 return;
             }
         }
 
-        if (! $this->booking->allowsOpenPlayJoinRequests()) {
+        $target = $this->resolveTargetJoinStatus($this->booking);
+        if ($target === null) {
             $this->addError('join', 'No spots left or the venue hasn’t confirmed this booking yet.');
 
             return;
@@ -130,12 +153,32 @@ class MemberCourtOpenPlayJoin extends Component
         OpenPlayParticipant::query()->create([
             'booking_id' => $this->booking->id,
             'user_id' => $user->id,
-            'status' => OpenPlayParticipant::STATUS_PENDING,
+            'status' => $target,
             'joiner_note' => $this->joinerNote !== '' ? $this->joinerNote : null,
             'gcash_reference' => $trimRef !== '' ? $trimRef : null,
         ]);
 
-        session()->flash('status', 'Request sent to the host.');
+        session()->flash(
+            'status',
+            $target === OpenPlayParticipant::STATUS_WAITING_LIST
+                ? 'You’re on the waiting list — the host will reach out if a spot opens.'
+                : 'Request sent to the host.',
+        );
+    }
+
+    /**
+     * Pending when joiner slots remain; waiting list when full but the session still accepts interest.
+     */
+    protected function resolveTargetJoinStatus(Booking $booking): ?string
+    {
+        if ($booking->allowsOpenPlayJoinRequests()) {
+            return OpenPlayParticipant::STATUS_PENDING;
+        }
+        if ($booking->allowsOpenPlayWaitlistRequests()) {
+            return OpenPlayParticipant::STATUS_WAITING_LIST;
+        }
+
+        return null;
     }
 
     public function leaveOpenPlay(): void
@@ -154,7 +197,11 @@ class MemberCourtOpenPlayJoin extends Component
             return;
         }
 
-        if (! in_array($p->status, [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED], true)) {
+        if (! in_array($p->status, [
+            OpenPlayParticipant::STATUS_PENDING,
+            OpenPlayParticipant::STATUS_ACCEPTED,
+            OpenPlayParticipant::STATUS_WAITING_LIST,
+        ], true)) {
             return;
         }
 

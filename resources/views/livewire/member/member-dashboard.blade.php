@@ -122,7 +122,13 @@
                                 <span
                                     class="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-violet-900 shadow-sm dark:bg-violet-950 dark:text-violet-200"
                                 >
-                                    {{ $row->status === OpenPlayParticipant::STATUS_ACCEPTED ? 'In' : 'Pending' }}
+                                    @if ($row->status === OpenPlayParticipant::STATUS_ACCEPTED)
+                                        In
+                                    @elseif ($row->status === OpenPlayParticipant::STATUS_WAITING_LIST)
+                                        Waitlist
+                                    @else
+                                        Pending
+                                    @endif
                                 </span>
                                 <a
                                     href="{{ route('account.court-open-plays.join', $b) }}"

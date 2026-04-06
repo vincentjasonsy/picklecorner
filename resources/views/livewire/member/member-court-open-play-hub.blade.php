@@ -58,7 +58,13 @@
                                     · Booking {{ Booking::statusDisplayLabel($b->status) }}
                                     · Your request:
                                     <span class="font-semibold text-emerald-800 dark:text-emerald-200">
-                                        {{ $row->status === OpenPlayParticipant::STATUS_ACCEPTED ? 'Accepted' : 'Pending' }}
+                                        @if ($row->status === OpenPlayParticipant::STATUS_ACCEPTED)
+                                            Accepted
+                                        @elseif ($row->status === OpenPlayParticipant::STATUS_WAITING_LIST)
+                                            Waiting list
+                                        @else
+                                            Pending
+                                        @endif
                                     </span>
                                 </p>
                                 <p class="mt-2 text-sm font-medium text-zinc-800 dark:text-zinc-200">
@@ -80,11 +86,29 @@
                                         <p class="mt-1 whitespace-pre-wrap">{{ $b->open_play_public_notes }}</p>
                                     </div>
                                 @endif
+                                @if ($b->open_play_refund_policy)
+                                    <div class="mt-3 rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                                            Refund policy
+                                        </span>
+                                        <p class="mt-1 whitespace-pre-wrap">{{ $b->open_play_refund_policy }}</p>
+                                    </div>
+                                @endif
                                 @if ($row->status === OpenPlayParticipant::STATUS_ACCEPTED && $b->open_play_host_payment_details)
                                     <div class="mt-3 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950/80">
                                         <span class="text-xs font-bold uppercase tracking-wider text-zinc-500">Payment (host)</span>
                                         <p class="mt-1 whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">
                                             {{ $b->open_play_host_payment_details }}
+                                        </p>
+                                    </div>
+                                @endif
+                                @if ($b->open_play_external_contact)
+                                    <div class="mt-3 rounded-lg border border-violet-200/80 bg-violet-50/60 px-3 py-2 text-sm dark:border-violet-900/40 dark:bg-violet-950/25">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                                            Refund / contact
+                                        </span>
+                                        <p class="mt-1 whitespace-pre-wrap text-violet-950 dark:text-violet-100">
+                                            {{ $b->open_play_external_contact }}
                                         </p>
                                     </div>
                                 @endif

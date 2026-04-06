@@ -21,7 +21,7 @@ class PublicVenueBookingSubmission
      */
     /**
      * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>, coach_fee_cents?: int}>  $specs
-     * @param  array{max_slots: int, public_notes?: string|null, host_payment_details: string}|null  $openPlay
+     * @param  array{max_slots: int, public_notes?: string|null, host_payment_details: string, external_contact?: string|null, refund_policy?: string|null}|null  $openPlay
      */
     public static function submit(
         CourtClient $courtClient,
@@ -140,6 +140,8 @@ class PublicVenueBookingSubmission
                 $useOpenPlay = $openPlay !== null && count($specs) === 1;
                 $publicNotes = $useOpenPlay ? trim((string) ($openPlay['public_notes'] ?? '')) : '';
                 $hostPay = $useOpenPlay ? trim((string) ($openPlay['host_payment_details'] ?? '')) : '';
+                $extContact = $useOpenPlay ? trim((string) ($openPlay['external_contact'] ?? '')) : '';
+                $refundPolicy = $useOpenPlay ? trim((string) ($openPlay['refund_policy'] ?? '')) : '';
 
                 $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
@@ -163,6 +165,8 @@ class PublicVenueBookingSubmission
                     'open_play_max_slots' => $useOpenPlay ? (int) $openPlay['max_slots'] : null,
                     'open_play_public_notes' => $useOpenPlay && $publicNotes !== '' ? $publicNotes : null,
                     'open_play_host_payment_details' => $useOpenPlay && $hostPay !== '' ? $hostPay : null,
+                    'open_play_external_contact' => $useOpenPlay && $extContact !== '' ? $extContact : null,
+                    'open_play_refund_policy' => $useOpenPlay && $refundPolicy !== '' ? $refundPolicy : null,
                 ]);
 
                 if ($slice > 0 && $giftCardId !== null) {

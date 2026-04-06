@@ -40,7 +40,11 @@ class MemberDashboard extends Component
     {
         return OpenPlayParticipant::query()
             ->where('user_id', auth()->id())
-            ->whereIn('status', [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED])
+            ->whereIn('status', [
+                OpenPlayParticipant::STATUS_PENDING,
+                OpenPlayParticipant::STATUS_ACCEPTED,
+                OpenPlayParticipant::STATUS_WAITING_LIST,
+            ])
             ->whereHas('booking', function ($q): void {
                 $q->where('starts_at', '>=', now()->subHour())
                     ->whereNotIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_DENIED]);

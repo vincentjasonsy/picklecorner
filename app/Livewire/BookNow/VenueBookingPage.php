@@ -69,6 +69,12 @@ class VenueBookingPage extends Component
     /** How joiners pay you (e.g. GCash number). Shown to accepted players. */
     public string $openPlayHostPaymentDetails = '';
 
+    /** Optional line for refunds / coordination (Viber, email, etc.). Shown to joiners. */
+    public string $openPlayExternalContact = '';
+
+    /** Refund expectations (e.g. partial refunds, host discretion). Shown to joiners. */
+    public string $openPlayRefundPolicy = '';
+
     /** @var mixed */
     public $paymentProof = null;
 
@@ -131,6 +137,12 @@ class VenueBookingPage extends Component
         if (is_string($draft['open_play_host_payment_details'] ?? null)) {
             $this->openPlayHostPaymentDetails = $draft['open_play_host_payment_details'];
         }
+        if (is_string($draft['open_play_external_contact'] ?? null)) {
+            $this->openPlayExternalContact = $draft['open_play_external_contact'];
+        }
+        if (is_string($draft['open_play_refund_policy'] ?? null)) {
+            $this->openPlayRefundPolicy = $draft['open_play_refund_policy'];
+        }
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
     }
 
@@ -149,6 +161,8 @@ class VenueBookingPage extends Component
             'open_play_max_slots' => $this->openPlayMaxSlots,
             'open_play_public_notes' => $this->openPlayPublicNotes,
             'open_play_host_payment_details' => $this->openPlayHostPaymentDetails,
+            'open_play_external_contact' => $this->openPlayExternalContact,
+            'open_play_refund_policy' => $this->openPlayRefundPolicy,
             'step' => 'review',
         ]);
         session()->put(self::AFTER_LOGIN_SESSION_KEY, true);
@@ -448,6 +462,8 @@ class VenueBookingPage extends Component
         if (! $value) {
             $this->openPlayPublicNotes = '';
             $this->openPlayHostPaymentDetails = '';
+            $this->openPlayExternalContact = '';
+            $this->openPlayRefundPolicy = '';
             $this->openPlayMaxSlots = 4;
         }
     }
@@ -910,6 +926,8 @@ class VenueBookingPage extends Component
             $rules['openPlayMaxSlots'] = ['required', 'integer', 'min:1', 'max:48'];
             $rules['openPlayPublicNotes'] = ['nullable', 'string', 'max:5000'];
             $rules['openPlayHostPaymentDetails'] = ['required', 'string', 'min:3', 'max:5000'];
+            $rules['openPlayExternalContact'] = ['nullable', 'string', 'max:5000'];
+            $rules['openPlayRefundPolicy'] = ['nullable', 'string', 'max:5000'];
         }
 
         $this->validate($rules, [], [
@@ -919,6 +937,8 @@ class VenueBookingPage extends Component
             'openPlayMaxSlots' => 'player slots',
             'openPlayPublicNotes' => 'open play notes',
             'openPlayHostPaymentDetails' => 'payment details for players',
+            'openPlayExternalContact' => 'refund / contact line',
+            'openPlayRefundPolicy' => 'refund policy',
         ]);
 
         $specs = $this->buildSpecsForSubmit();
@@ -950,6 +970,8 @@ class VenueBookingPage extends Component
                 'max_slots' => $this->openPlayMaxSlots,
                 'public_notes' => $this->openPlayPublicNotes !== '' ? $this->openPlayPublicNotes : null,
                 'host_payment_details' => $this->openPlayHostPaymentDetails,
+                'external_contact' => $this->openPlayExternalContact !== '' ? $this->openPlayExternalContact : null,
+                'refund_policy' => $this->openPlayRefundPolicy !== '' ? $this->openPlayRefundPolicy : null,
             ];
         }
 
@@ -1000,6 +1022,8 @@ class VenueBookingPage extends Component
         $this->openPlayMaxSlots = 4;
         $this->openPlayPublicNotes = '';
         $this->openPlayHostPaymentDetails = '';
+        $this->openPlayExternalContact = '';
+        $this->openPlayRefundPolicy = '';
         $this->step = 'times';
 
         $giftTotal = (int) array_sum(array_filter(array_map(

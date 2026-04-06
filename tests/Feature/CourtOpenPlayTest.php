@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\Member\MemberCourtOpenPlayHost;
+use App\Livewire\Member\MemberCourtOpenPlayJoin;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\OpenPlayParticipant;
 use App\Models\User;
-use App\Livewire\Member\MemberCourtOpenPlayHost;
-use App\Livewire\Member\MemberCourtOpenPlayJoin;
 use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,5 +120,132 @@ class CourtOpenPlayTest extends TestCase
         ]);
 
         $this->actingAs($other)->get(route('account.court-open-plays.host', $booking))->assertForbidden();
+    }
+
+    public function test_host_decline_and_remove_record_reason_and_keep_row(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $host = User::factory()->player()->create();
+        $joiner = User::factory()->player()->create();
+        $client = CourtClient::factory()->create(['is_active' => true]);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $starts = Carbon::now(config('app.timezone'))->addDays(3)->setHour(10)->setMinute(0)->setSecond(0);
+        $booking = Booking::query()->create([
+            'court_client_id' => $client->id,
+            'court_id' => $court->id,
+            'user_id' => $host->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 1000_00,
+            'currency' => 'PHP',
+            'is_open_play' => true,
+            'open_play_max_slots' => 4,
+            'open_play_host_payment_details' => 'GCash 09xx',
+            'open_play_external_contact' => 'Viber +639171234567',
+        ]);
+
+        OpenPlayParticipant::query()->create([
+            'booking_id' => $booking->id,
+            'user_id' => $joiner->id,
+            'status' => OpenPlayParticipant::STATUS_PENDING,
+        ]);
+
+        $participant = OpenPlayParticipant::query()
+            ->where('booking_id', $booking->id)
+            ->where('user_id', $joiner->id)
+            ->firstOrFail();
+
+        Livewire::actingAs($host)
+            ->test(MemberCourtOpenPlayHost::class, ['booking' => $booking])
+            ->call('openClosureModal', $participant->id, 'reject')
+            ->call('submitClosure')
+            ->assertHasErrors(['closureReason']);
+
+        Livewire::actingAs($host)
+            ->test(MemberCourtOpenPlayHost::class, ['booking' => $booking])
+            ->call('openClosureModal', $participant->id, 'reject')
+            ->set('closureReason', OpenPlayParticipant::CLOSURE_WRONG_TRANSACTION)
+            ->call('submitClosure')
+            ->assertHasNoErrors();
+
+        $participant->refresh();
+        $this->assertSame(OpenPlayParticipant::STATUS_REJECTED, $participant->status);
+        $this->assertSame(OpenPlayParticipant::CLOSURE_WRONG_TRANSACTION, $participant->host_closure_reason);
+        $this->assertNotNull($participant->host_closed_at);
+
+        $participant->status = OpenPlayParticipant::STATUS_ACCEPTED;
+        $participant->host_closure_reason = null;
+        $participant->host_closure_message = null;
+        $participant->host_closed_at = null;
+        $participant->save();
+
+        Livewire::actingAs($host)
+            ->test(MemberCourtOpenPlayHost::class, ['booking' => $booking])
+            ->call('openClosureModal', $participant->id, 'remove')
+            ->set('closureReason', OpenPlayParticipant::CLOSURE_FULL_SLOTS)
+            ->call('submitClosure')
+            ->assertHasNoErrors();
+
+        $participant->refresh();
+        $this->assertSame(OpenPlayParticipant::STATUS_REMOVED_BY_HOST, $participant->status);
+        $this->assertSame(OpenPlayParticipant::CLOSURE_FULL_SLOTS, $participant->host_closure_reason);
+    }
+
+    public function test_joiner_goes_to_waiting_list_when_joiner_slots_full(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $host = User::factory()->player()->create();
+        $joiner1 = User::factory()->player()->create();
+        $joiner2 = User::factory()->player()->create();
+        $client = CourtClient::factory()->create(['is_active' => true]);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $starts = Carbon::now(config('app.timezone'))->addDays(3)->setHour(10)->setMinute(0)->setSecond(0);
+        $booking = Booking::query()->create([
+            'court_client_id' => $client->id,
+            'court_id' => $court->id,
+            'user_id' => $host->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 500_00,
+            'currency' => 'PHP',
+            'is_open_play' => true,
+            'open_play_max_slots' => 1,
+            'open_play_host_payment_details' => 'GCash 09xx',
+        ]);
+
+        OpenPlayParticipant::query()->create([
+            'booking_id' => $booking->id,
+            'user_id' => $joiner1->id,
+            'status' => OpenPlayParticipant::STATUS_ACCEPTED,
+        ]);
+
+        Livewire::actingAs($joiner2)
+            ->test(MemberCourtOpenPlayJoin::class, ['booking' => $booking])
+            ->call('requestJoin')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('open_play_participants', [
+            'booking_id' => $booking->id,
+            'user_id' => $joiner2->id,
+            'status' => OpenPlayParticipant::STATUS_WAITING_LIST,
+        ]);
     }
 }

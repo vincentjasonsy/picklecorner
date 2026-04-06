@@ -97,6 +97,8 @@ class Booking extends Model
         'open_play_max_slots',
         'open_play_public_notes',
         'open_play_host_payment_details',
+        'open_play_external_contact',
+        'open_play_refund_policy',
     ];
 
     protected function casts(): array
@@ -185,6 +187,26 @@ class Booking extends Model
         }
 
         return $this->openPlaySlotsRemaining() > 0;
+    }
+
+    /**
+     * Confirmed future open play — joiners can queue on the waiting list when accepted slots are full.
+     */
+    public function allowsOpenPlayWaitlistRequests(): bool
+    {
+        if (! $this->is_open_play || $this->open_play_max_slots === null) {
+            return false;
+        }
+
+        if ($this->status !== self::STATUS_CONFIRMED) {
+            return false;
+        }
+
+        if ($this->starts_at === null || $this->starts_at->lte(now())) {
+            return false;
+        }
+
+        return true;
     }
 
     /** Invoices that include this booking (each booking may appear on at most one invoice). */

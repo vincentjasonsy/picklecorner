@@ -729,6 +729,53 @@
                                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
+                                    <div>
+                                        <label
+                                            class="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
+                                            for="open-play-external-contact"
+                                        >
+                                            Refund / contact line
+                                            <span class="font-normal normal-case text-zinc-400">(optional)</span>
+                                        </label>
+                                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                                            How players can reach you for refunds or questions — e.g. Viber, email, or
+                                            phone. Shown on the join page.
+                                        </p>
+                                        <textarea
+                                            id="open-play-external-contact"
+                                            wire:model="openPlayExternalContact"
+                                            rows="2"
+                                            class="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                            placeholder="Viber +63… · refunds@…"
+                                        ></textarea>
+                                        @error('openPlayExternalContact')
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                    <div>
+                                        <label
+                                            class="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
+                                            for="open-play-refund-policy"
+                                        >
+                                            Refund policy
+                                            <span class="font-normal normal-case text-zinc-400">(optional)</span>
+                                        </label>
+                                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+                                            Set expectations so players pay with confidence — e.g. partial refunds only
+                                            (50%), processing fees, or that you’re not obliged to refund the full amount.
+                                            Shown on the join page.
+                                        </p>
+                                        <textarea
+                                            id="open-play-refund-policy"
+                                            wire:model="openPlayRefundPolicy"
+                                            rows="3"
+                                            class="mt-1 w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                            placeholder="e.g. If you cancel after paying, refunds are up to 50% of the fee at the host’s discretion. No full refund guaranteed."
+                                        ></textarea>
+                                        @error('openPlayRefundPolicy')
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
                                 </div>
                             @endif
                         </div>

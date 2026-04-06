@@ -30,7 +30,11 @@ class MemberCourtOpenPlayHub extends Component
 
         $joined = OpenPlayParticipant::query()
             ->where('user_id', auth()->id())
-            ->whereIn('status', [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED])
+            ->whereIn('status', [
+                OpenPlayParticipant::STATUS_PENDING,
+                OpenPlayParticipant::STATUS_ACCEPTED,
+                OpenPlayParticipant::STATUS_WAITING_LIST,
+            ])
             ->whereHas('booking', function ($q): void {
                 $q->where('is_open_play', true)
                     ->where('starts_at', '>=', now()->subHour())
