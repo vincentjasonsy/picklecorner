@@ -8,10 +8,17 @@
     $bookBrowseUrl = auth()->check() && ! auth()->user()->usesStaffAppNav()
         ? route('account.book')
         : route('book-now');
-    $canUseMemberVenueGrid = $client && (! auth()->check() || ! auth()->user()->usesStaffAppNav());
-    $venuePickTimeUrl = $client && auth()->check() && ! auth()->user()->usesStaffAppNav()
-        ? route('account.book.venue', $client)
-        : ($client ? route('book-now.venue.book', $client) : null);
+
+    $venuePickTimeUrl = null;
+    if ($client) {
+        if (auth()->check() && auth()->user()->usesStaffAppNav()) {
+            $venuePickTimeUrl = null;
+        } elseif (auth()->check()) {
+            $venuePickTimeUrl = route('account.book.venue', $client);
+        } else {
+            $venuePickTimeUrl = route('book-now.venue.book', $client);
+        }
+    }
 @endphp
 
 <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
@@ -67,17 +74,18 @@
                 </p>
             @endif
             <div class="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-                @if ($canUseMemberVenueGrid && $venuePickTimeUrl)
+                @if ($venuePickTimeUrl)
                     <a
                         href="{{ $venuePickTimeUrl }}"
                         wire:navigate
-                        class="inline-flex w-full items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                        class="inline-flex w-full flex-col items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-center text-sm font-bold text-white shadow-sm hover:bg-emerald-700 sm:w-auto dark:bg-emerald-600 dark:hover:bg-emerald-500"
                     >
-                        Pick a time at {{ $client->name }}
+                        <span>Proceed to book</span>
+                        <span class="mt-0.5 text-xs font-semibold text-emerald-100">{{ $client->name }}</span>
                     </a>
                     <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                        Opens the live availability grid for this club (sign in if prompted). You can choose this court
-                        or another at the same venue.
+                        Opens the live availability grid for this club (sign in if prompted to complete your request). You
+                        can choose this court or another at the same venue.
                     </p>
                 @else
                     <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">

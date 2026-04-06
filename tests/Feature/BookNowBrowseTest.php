@@ -32,7 +32,10 @@ class BookNowBrowseTest extends TestCase
 
         $this->get(route('book-now'))->assertOk()->assertSee('Book now', false)->assertSee('Court Alpha');
 
-        $this->get(route('book-now.court', $court))->assertOk()->assertSee('Court Alpha');
+        $this->get(route('book-now.court', $court))
+            ->assertOk()
+            ->assertSee('Court Alpha')
+            ->assertSee('Proceed to book', false);
 
         $this->get(route('book-now'))->assertOk()->assertSee('Recently viewed', false);
     }
