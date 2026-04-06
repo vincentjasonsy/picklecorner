@@ -3,7 +3,7 @@
 ])
 
 @php
-    $paginatorClasses = 'text-sm text-zinc-500 dark:text-zinc-400';
+    $paginatorClasses = 'flex justify-center text-sm text-zinc-600 sm:justify-start dark:text-zinc-400';
 @endphp
 
 <div {{ $attributes->merge(['class' => 'space-y-6']) }}>

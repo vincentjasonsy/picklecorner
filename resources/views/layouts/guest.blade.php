@@ -101,13 +101,13 @@
                                 href="{{ route('open-play.about') }}"
                                 wire:navigate
                                 @class([
-                                    'rounded-lg px-2.5 py-2 transition-colors',
+                                    'inline-flex items-center gap-1 rounded-lg px-2.5 py-2 transition-colors',
                                     request()->routeIs('open-play.about')
                                         ? 'font-semibold text-emerald-700 dark:text-emerald-400'
                                         : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                 ])
                             >
-                                PickleGameQ
+                                <x-picklegameq-mark compact />
                             </a>
                             <a
                                 href="{{ route('book-now') }}"
@@ -267,13 +267,13 @@
                             wire:navigate
                             @click="mobileNavOpen = false"
                             @class([
-                                'rounded-lg px-3 py-3 transition-colors',
+                                'inline-flex items-center gap-1 rounded-lg px-3 py-3 transition-colors',
                                 request()->routeIs('open-play.about')
                                     ? 'font-semibold text-emerald-700 dark:text-emerald-400'
                                     : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                             ])
                         >
-                            PickleGameQ
+                            <x-picklegameq-mark compact />
                         </a>
                         <a
                             href="{{ route('book-now') }}"
@@ -361,7 +361,13 @@
                         <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
                         <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
                         <a href="{{ url('/#contact') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
-                        <a href="{{ route('open-play.about') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">PickleGameQ</a>
+                        <a
+                            href="{{ route('open-play.about') }}"
+                            wire:navigate
+                            class="inline-flex items-center gap-1 normal-case hover:text-emerald-600 dark:hover:text-emerald-400"
+                        >
+                            <x-picklegameq-mark compact />
+                        </a>
                         <a href="{{ route('book-now') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Book now</a>
                     </nav>
                     <p class="text-xs text-zinc-500 dark:text-zinc-400">

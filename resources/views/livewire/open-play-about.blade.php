@@ -5,8 +5,10 @@
                 <p class="text-sm font-medium text-sky-700 dark:text-sky-400">
                     Free for members
                 </p>
-                <h1 class="font-display mt-3 text-3xl font-bold uppercase tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl lg:text-5xl">
-                    PickleGameQ
+                <h1
+                    class="font-display mt-3 flex flex-wrap items-center justify-center gap-2 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl lg:justify-start lg:text-5xl"
+                >
+                    <x-picklegameq-mark />
                 </h1>
                 <p class="mx-auto mt-5 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400 xl:mx-0 xl:max-w-none xl:text-xl">
                     Run casual sessions at the club: who’s on court, who’s waiting, and scores — without spreadsheets or group chats.

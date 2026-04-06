@@ -8,7 +8,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::guest')]
-#[Title('PickleGameQ · Live')]
+#[Title('PickleGameQ · Live (Beta)')]
 class OpenPlayWatch extends Component
 {
     public OpenPlayShare $openPlayShare;

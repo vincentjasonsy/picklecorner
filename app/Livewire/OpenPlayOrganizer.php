@@ -7,7 +7,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::tool-focus')]
-#[Title('PickleGameQ')]
+#[Title('PickleGameQ (Beta)')]
 class OpenPlayOrganizer extends Component
 {
     public function render()

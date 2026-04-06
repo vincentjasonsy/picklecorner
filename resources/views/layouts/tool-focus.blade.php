@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'PickleGameQ' }} — {{ config('app.name') }}</title>
+        <title>{{ $title ?? 'PickleGameQ (Beta)' }} — {{ config('app.name') }}</title>
 
         @include('partials.favicon')
 
@@ -69,8 +69,15 @@
                     ← Home
                 </a>
                 <div class="min-w-0 flex-1 text-center">
-                    <p class="font-display truncate text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-white">
-                        {{ $title ?? 'PickleGameQ' }}
+                    <p
+                        class="font-display flex items-center justify-center gap-1 truncate text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-white"
+                    >
+                        @php($t = $title ?? '')
+                        @if (in_array($t, ['', 'PickleGameQ', 'PickleGameQ (Beta)'], true))
+                            <x-picklegameq-mark compact class="min-w-0 shrink" />
+                        @else
+                            <span class="truncate">{{ $t }}</span>
+                        @endif
                     </p>
                     <p class="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
                         Session queue

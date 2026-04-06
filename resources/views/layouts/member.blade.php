@@ -73,9 +73,29 @@
         @endauth
 
         <div class="flex min-h-screen flex-col">
-            <div class="flex min-h-0 flex-1 flex-col md:flex-row">
+            <div
+                class="flex min-h-0 flex-1 flex-col lg:flex-row"
+                x-data="{ portalNavOpen: false }"
+                @keydown.escape.window="portalNavOpen = false"
+            >
+                <div
+                    x-show="portalNavOpen"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0"
+                    x-transition:enter-end="opacity-100"
+                    x-transition:leave="transition ease-in duration-150"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                    @click="portalNavOpen = false"
+                    class="fixed inset-0 z-40 bg-zinc-900/50 backdrop-blur-[1px] dark:bg-black/60 lg:hidden"
+                    x-cloak
+                    aria-hidden="true"
+                ></div>
+
                 <aside
-                    class="flex shrink-0 flex-col border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 md:sticky md:top-0 md:h-screen md:w-64 md:border-b-0 md:border-r"
+                    id="member-sidebar"
+                    class="fixed inset-y-0 left-0 z-50 flex w-64 max-w-[min(100vw-1rem,20rem)] shrink-0 flex-col border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:max-w-none lg:translate-x-0 lg:border-b-0 lg:border-r"
+                    :class="portalNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
                     aria-label="Account navigation"
                 >
                     <div
@@ -102,6 +122,7 @@
                     <nav
                         class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
                         aria-label="Member"
+                        @click="if ($event.target.closest('a')) portalNavOpen = false"
                     >
                         <div>
                             <p
@@ -160,13 +181,13 @@
                                     href="{{ route('account.open-play') }}"
                                     wire:navigate
                                     @class([
-                                        'rounded-lg px-3 py-2 transition-colors',
+                                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 transition-colors',
                                         request()->routeIs('account.open-play', 'account.open-play.legacy')
                                             ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
                                             : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                     ])
                                 >
-                                    PickleGameQ
+                                    <x-picklegameq-mark compact />
                                 </a>
                             </div>
                         </div>
@@ -212,7 +233,7 @@
                     </nav>
 
                     <div class="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
-                        <form method="POST" action="{{ route('logout') }}">
+                        <form method="POST" action="{{ route('logout') }}" @submit="portalNavOpen = false">
                             @csrf
                             <button
                                 type="submit"
@@ -224,13 +245,19 @@
                     </div>
                 </aside>
 
-                <div class="flex min-w-0 flex-1 flex-col">
+                <div class="flex min-w-0 flex-1 flex-col lg:min-h-screen">
                     <header
-                        class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 bg-white/90 px-4 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/90 md:px-6"
+                        class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 bg-white/90 px-4 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/90 lg:px-6"
                     >
-                        <h1 class="truncate font-display text-base font-bold text-zinc-900 dark:text-white md:text-lg">
-                            {{ $title ?? 'My court' }}
-                        </h1>
+                        <div class="flex min-w-0 flex-1 items-center gap-2">
+                            <x-layout.portal-menu-button
+                                controls="member-sidebar"
+                                class="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                            />
+                            <h1 class="truncate font-display text-base font-bold text-zinc-900 dark:text-white lg:text-lg">
+                                {{ $title ?? 'My court' }}
+                            </h1>
+                        </div>
                         <x-theme-toggle />
                     </header>
                     <main class="member-court-bg flex-1 p-4 md:p-6">

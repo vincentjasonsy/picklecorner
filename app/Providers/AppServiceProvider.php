@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Observers\BookingObserver;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -28,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Booking::observe(BookingObserver::class);
+
+        $livewireOverrides = resource_path('views/vendor/livewire');
+        if (is_dir($livewireOverrides)) {
+            View::prependNamespace('livewire', $livewireOverrides);
+        }
 
         $this->ensureSqliteDatabaseFileExists();
     }

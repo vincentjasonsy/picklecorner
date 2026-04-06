@@ -82,17 +82,39 @@
         @endif
 
         <div
-            class="mx-auto flex min-h-0 max-w-[1600px] flex-1 flex-col md:min-h-[calc(100vh-9rem)] md:flex-row"
+            class="mx-auto flex min-h-0 max-w-[1600px] flex-1 flex-col lg:min-h-[calc(100vh-9rem)] lg:flex-row"
+            x-data="{ portalNavOpen: false }"
+            @keydown.escape.window="portalNavOpen = false"
         >
+            <div
+                x-show="portalNavOpen"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                @click="portalNavOpen = false"
+                class="fixed inset-0 z-40 bg-stone-900/50 backdrop-blur-[1px] dark:bg-black/60 lg:hidden"
+                x-cloak
+                aria-hidden="true"
+            ></div>
+
             <aside
-                class="shrink-0 border-stone-200/80 bg-white/95 shadow-sm dark:border-stone-800 dark:bg-stone-900/95 md:w-72 md:border-r md:shadow-none"
+                id="desk-sidebar"
+                class="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[min(100vw-1rem,20rem)] shrink-0 flex-col border-stone-200/80 bg-white/95 shadow-sm transition-transform duration-200 ease-out dark:border-stone-800 dark:bg-stone-900/95 lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-r lg:shadow-none"
+                :class="portalNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
             >
-                <div class="border-b border-stone-200 px-4 py-4 dark:border-stone-800 md:px-5">
+                <div class="border-b border-stone-200 px-4 py-4 dark:border-stone-800 lg:px-5">
                     <p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
                         Counter menu
                     </p>
                 </div>
-                <nav class="flex flex-col gap-1.5 p-3 md:p-4" aria-label="Front desk">
+                <nav
+                    class="flex flex-col gap-1.5 overflow-y-auto p-3 lg:p-4"
+                    aria-label="Front desk"
+                    @click="if ($event.target.closest('a')) portalNavOpen = false"
+                >
                     <a
                         href="{{ route('desk.home') }}"
                         wire:navigate
@@ -182,8 +204,8 @@
                         </span>
                     </a>
                 </nav>
-                <div class="shrink-0 border-t border-stone-200 p-3 dark:border-stone-800 md:p-4">
-                    <form method="POST" action="{{ route('logout') }}">
+                <div class="shrink-0 border-t border-stone-200 p-3 dark:border-stone-800 lg:p-4">
+                    <form method="POST" action="{{ route('logout') }}" @submit="portalNavOpen = false">
                         @csrf
                         <button
                             type="submit"
@@ -195,13 +217,19 @@
                 </div>
             </aside>
 
-            <div class="flex min-w-0 flex-1 flex-col bg-stone-50/80 dark:bg-stone-950/50">
+            <div class="flex min-w-0 flex-1 flex-col bg-stone-50/80 dark:bg-stone-950/50 lg:min-h-0">
                 <div
-                    class="flex shrink-0 items-center justify-between gap-4 border-b border-stone-200/80 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-stone-800 dark:bg-stone-900/50 md:px-8"
+                    class="flex shrink-0 items-center justify-between gap-4 border-b border-stone-200/80 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-stone-800 dark:bg-stone-900/50 lg:px-8"
                 >
-                    <h2 class="font-display truncate text-lg font-bold text-stone-900 dark:text-white md:text-xl">
-                        {{ $title ?? 'Front desk' }}
-                    </h2>
+                    <div class="flex min-w-0 flex-1 items-center gap-2">
+                        <x-layout.portal-menu-button
+                            controls="desk-sidebar"
+                            class="border-stone-200 text-stone-700 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800/80"
+                        />
+                        <h2 class="font-display truncate text-lg font-bold text-stone-900 dark:text-white lg:text-xl">
+                            {{ $title ?? 'Front desk' }}
+                        </h2>
+                    </div>
                     <x-theme-toggle />
                 </div>
                 <main class="flex-1 px-4 py-6 md:px-8 md:py-8">

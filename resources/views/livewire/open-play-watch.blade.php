@@ -20,8 +20,8 @@
         <p class="text-sm text-sky-700 dark:text-sky-400">
             Live view · refreshes automatically
         </p>
-        <h1 class="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
-            PickleGameQ
+        <h1 class="mt-2 flex flex-wrap items-center gap-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-3xl">
+            <x-picklegameq-mark />
         </h1>
         <p class="mt-2 text-slate-600 dark:text-slate-400">
             {{ $mode === 'doubles' ? 'Doubles' : 'Singles' }}

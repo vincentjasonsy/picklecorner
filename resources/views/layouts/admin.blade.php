@@ -30,18 +30,42 @@
         @include('partials.flash-messages')
         @include('partials.impersonation-banner')
 
-        <div class="flex min-h-screen flex-col md:flex-row">
+        <div
+            class="flex min-h-screen flex-col lg:flex-row"
+            x-data="{ portalNavOpen: false }"
+            @keydown.escape.window="portalNavOpen = false"
+        >
+            <div
+                x-show="portalNavOpen"
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0"
+                x-transition:enter-end="opacity-100"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                @click="portalNavOpen = false"
+                class="fixed inset-0 z-40 bg-zinc-900/50 backdrop-blur-[1px] dark:bg-black/60 lg:hidden"
+                x-cloak
+                aria-hidden="true"
+            ></div>
+
             <aside
-                class="shrink-0 border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 md:w-64 md:border-r"
+                id="admin-sidebar"
+                class="fixed inset-y-0 left-0 z-50 flex w-64 max-w-[min(100vw-1rem,20rem)] shrink-0 flex-col border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-r"
+                :class="portalNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
             >
                 <div
-                    class="flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 md:px-5"
+                    class="flex h-14 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 lg:px-5"
                 >
                     <span class="font-display text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                         Super admin
                     </span>
                 </div>
-                <nav class="flex flex-col gap-6 p-3 text-sm font-medium" aria-label="Admin">
+                <nav
+                    class="flex flex-col gap-6 overflow-y-auto p-3 text-sm font-medium"
+                    aria-label="Admin"
+                    @click="if ($event.target.closest('a')) portalNavOpen = false"
+                >
                     <div class="flex flex-col gap-1">
                         <a
                             href="{{ route('admin.dashboard') }}"
@@ -207,7 +231,7 @@
                     </div>
                 </nav>
                 <div class="shrink-0 border-t border-zinc-200 p-3 dark:border-zinc-800">
-                    <form method="POST" action="{{ route('logout') }}">
+                    <form method="POST" action="{{ route('logout') }}" @submit="portalNavOpen = false">
                         @csrf
                         <button
                             type="submit"
@@ -219,13 +243,19 @@
                 </div>
             </aside>
 
-            <div class="flex min-w-0 flex-1 flex-col">
+            <div class="flex min-w-0 flex-1 flex-col lg:min-h-screen">
                 <header
-                    class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 md:px-6"
+                    class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-900 lg:px-6"
                 >
-                    <h1 class="truncate text-base font-semibold md:text-lg">
-                        {{ $title ?? 'Admin' }}
-                    </h1>
+                    <div class="flex min-w-0 flex-1 items-center gap-2">
+                        <x-layout.portal-menu-button
+                            controls="admin-sidebar"
+                            class="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                        />
+                        <h1 class="truncate text-base font-semibold lg:text-lg">
+                            {{ $title ?? 'Admin' }}
+                        </h1>
+                    </div>
                     <x-theme-toggle />
                 </header>
                 <main class="flex-1 p-4 md:p-6">
