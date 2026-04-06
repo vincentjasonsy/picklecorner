@@ -26,6 +26,19 @@ class AdminUserManagementTest extends TestCase
             ->assertOk();
     }
 
+    public function test_super_admin_users_index_shows_venues_column_and_filter(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $super = User::factory()->superAdmin()->create();
+
+        $this->actingAs($super)
+            ->get(route('admin.users.index'))
+            ->assertOk()
+            ->assertSee('Venues', false)
+            ->assertSee('All venues', false);
+    }
+
     public function test_super_admin_can_create_user(): void
     {
         $this->seed(UserTypeSeeder::class);

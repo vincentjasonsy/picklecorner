@@ -63,7 +63,9 @@ class CourtOpenPlayTest extends TestCase
 
         $this->actingAs($host)->get(route('account.court-open-plays.join', $booking))->assertOk()->assertSee('You’re the host');
 
-        $this->actingAs($joiner)->get(route('account.court-open-plays.join', $booking))->assertOk();
+        $this->actingAs($joiner)->get(route('account.court-open-plays.join', $booking))->assertOk()
+            ->assertSee('Payment (from host)', false)
+            ->assertSee('GCash 09xx — ₱200', false);
 
         Livewire::actingAs($joiner)
             ->test(MemberCourtOpenPlayJoin::class, ['booking' => $booking])

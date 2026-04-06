@@ -72,7 +72,9 @@
                     <p
                         class="font-display flex items-center justify-center gap-1 truncate text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-white"
                     >
-                        @php($t = $title ?? '')
+                        @php
+                            $t = $title ?? '';
+                        @endphp
                         @if (in_array($t, ['', 'GameQ', 'GameQ (Beta)'], true))
                             <x-gameq-mark compact class="min-w-0 shrink" />
                         @else
@@ -104,6 +106,21 @@
                 </p>
             </footer>
         </div>
+
+        @auth
+            @php
+                $gameqEndpoints = [
+                    'shareStore' => route('open-play.share.store'),
+                    'shareApiBase' => url('/open-play/share'),
+                    'watchBase' => url('/open-play/watch'),
+                    'sessionsBase' => url(route('account.open-play.sessions.index', [], false)),
+                ];
+            @endphp
+            {{-- GameQ: endpoints for live share + session history (layout is only used by OpenPlayOrganizer). --}}
+            <script>
+                window.__GAMEQ_ENDPOINTS = {!! json_encode($gameqEndpoints, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) !!};
+            </script>
+        @endauth
 
         @livewireScripts
     </body>

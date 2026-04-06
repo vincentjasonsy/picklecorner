@@ -59,6 +59,15 @@
             </section>
         @endif
 
+        @if ($booking->open_play_host_payment_details)
+            <section class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                <h2 class="font-display text-sm font-bold text-emerald-900 dark:text-emerald-100">Payment (from host)</h2>
+                <p class="mt-2 whitespace-pre-wrap text-sm text-emerald-950 dark:text-emerald-100">
+                    {{ $booking->open_play_host_payment_details }}
+                </p>
+            </section>
+        @endif
+
         @if ($booking->open_play_external_contact)
             <section class="rounded-2xl border border-violet-200/80 bg-violet-50/50 p-6 dark:border-violet-900/40 dark:bg-violet-950/20">
                 <h2 class="font-display text-sm font-bold text-violet-950 dark:text-violet-100">
@@ -103,15 +112,6 @@
                     </p>
                 @endif
             </div>
-        @endif
-
-        @if ($myParticipant && $myParticipant->status === OpenPlayParticipant::STATUS_ACCEPTED && $booking->open_play_host_payment_details)
-            <section class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                <h2 class="font-display text-sm font-bold text-emerald-900 dark:text-emerald-100">Payment (from host)</h2>
-                <p class="mt-2 whitespace-pre-wrap text-sm text-emerald-950 dark:text-emerald-100">
-                    {{ $booking->open_play_host_payment_details }}
-                </p>
-            </section>
         @endif
 
         @php

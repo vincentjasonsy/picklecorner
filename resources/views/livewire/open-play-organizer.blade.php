@@ -239,45 +239,128 @@
         </div>
 
         <div class="grid gap-4 lg:grid-cols-3">
-            <section class="space-y-3 lg:col-span-2">
+            <section class="min-w-0 space-y-3 lg:col-span-2">
                 <template x-for="(court, i) in courts" :key="'court-' + i">
                     <div
-                        class="rounded-2xl border p-4 dark:border-zinc-700"
+                        class="mx-auto w-full max-w-4xl overflow-hidden rounded-xl border transition-shadow xl:max-w-5xl"
                         :class="court
-                            ? 'border-emerald-200/80 bg-emerald-50/30 dark:border-emerald-900/40 dark:bg-emerald-950/20'
-                            : 'border-dashed border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/30'"
+                            ? 'border-emerald-200/90 bg-gradient-to-b from-emerald-50/90 via-white to-white shadow-md shadow-emerald-900/[0.06] dark:border-emerald-800/45 dark:from-emerald-950/35 dark:via-zinc-900/80 dark:to-zinc-950 dark:shadow-emerald-950/25'
+                            : 'border-dashed border-zinc-200 bg-zinc-50/40 dark:border-zinc-700 dark:bg-zinc-900/35'"
                     >
-                        <div class="flex items-start justify-between gap-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400" x-text="'Court ' + (i + 1)"></span>
+                        <div
+                            class="flex items-center justify-between gap-2 border-b px-3 py-2"
+                            :class="court
+                                ? 'border-emerald-200/60 bg-emerald-600/[0.06] dark:border-emerald-900/50 dark:bg-emerald-500/[0.04]'
+                                : 'border-zinc-200/80 dark:border-zinc-700'"
+                        >
+                            <span
+                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                                :class="court
+                                    ? 'bg-emerald-600/15 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-100'
+                                    : 'bg-zinc-200/90 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'"
+                                x-text="'Court ' + (i + 1)"
+                            ></span>
                             <template x-if="court && timeLimitMinutes > 0">
                                 <span
-                                    class="text-xs tabular-nums text-zinc-600 dark:text-zinc-400"
+                                    class="tabular-nums text-[11px] font-semibold text-zinc-600 dark:text-zinc-400"
                                     :class="remainingSeconds(court) === 0 ? 'text-amber-700 dark:text-amber-300' : ''"
                                     x-text="formatCountdown(remainingSeconds(court))"
                                 ></span>
                             </template>
                         </div>
                         <template x-if="!court">
-                            <p class="mt-2 text-sm text-zinc-500 dark:text-zinc-400">Empty</p>
+                            <p class="px-3 py-5 text-center text-xs text-zinc-500 dark:text-zinc-400">
+                                Open slot — use <span class="font-semibold text-zinc-700 dark:text-zinc-300">Fill courts</span>
+                            </p>
                         </template>
                         <template x-if="court">
-                            <div class="mt-3 space-y-3">
-                                <div class="grid grid-cols-2 gap-3 text-sm">
-                                    <div>
-                                        <p class="text-xs text-zinc-500">A</p>
-                                        <p class="font-medium text-zinc-900 dark:text-zinc-100" x-text="sideLabels(court.sideA)"></p>
+                            <div class="space-y-2 p-2.5 sm:p-3">
+                                <div
+                                    class="mx-auto grid w-full max-w-3xl gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch sm:gap-2"
+                                >
+                                    <div
+                                        class="flex min-w-0 flex-col justify-center rounded-lg border border-emerald-200/70 bg-white/80 px-2 py-2 shadow-sm dark:border-emerald-900/40 dark:bg-zinc-950/60"
+                                    >
+                                        <p class="text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400/90">
+                                            Side A
+                                        </p>
+                                        <p
+                                            class="mt-0.5 text-xs font-semibold leading-tight text-zinc-900 dark:text-zinc-100"
+                                            x-text="sideLabels(court.sideA)"
+                                        ></p>
                                     </div>
-                                    <div>
-                                        <p class="text-xs text-zinc-500">B</p>
-                                        <p class="font-medium text-zinc-900 dark:text-zinc-100" x-text="sideLabels(court.sideB)"></p>
+                                    <div
+                                        class="flex items-center justify-center py-0.5 sm:w-9 sm:shrink-0 sm:self-center sm:py-0"
+                                    >
+                                        <span
+                                            class="rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                                        >
+                                            vs
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="flex min-w-0 flex-col justify-center rounded-lg border border-violet-200/70 bg-white/80 px-2 py-2 shadow-sm dark:border-violet-900/40 dark:bg-zinc-950/60"
+                                    >
+                                        <p class="text-[9px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400/90">
+                                            Side B
+                                        </p>
+                                        <p
+                                            class="mt-0.5 text-xs font-semibold leading-tight text-zinc-900 dark:text-zinc-100"
+                                            x-text="sideLabels(court.sideB)"
+                                        ></p>
                                     </div>
                                 </div>
-                                <div class="flex flex-wrap items-end gap-2">
-                                    <input type="number" min="0" class="w-16 rounded border border-zinc-200 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950" x-model.number="getScoreDraft(i).a" aria-label="Score A" />
-                                    <span class="text-zinc-400">–</span>
-                                    <input type="number" min="0" class="w-16 rounded border border-zinc-200 px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-950" x-model.number="getScoreDraft(i).b" aria-label="Score B" />
-                                    <button type="button" class="rounded-xl bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white dark:bg-zinc-100 dark:text-zinc-900" @click="completeMatch(i)">Done</button>
-                                    <button type="button" class="text-xs text-zinc-500 underline" @click="clearCourt(i)">Clear</button>
+                                <div
+                                    class="mx-auto w-full max-w-2xl rounded-lg border border-zinc-200/90 bg-zinc-50/95 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-950/90"
+                                >
+                                    <div
+                                        class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3 lg:gap-4"
+                                    >
+                                        <div class="flex items-center justify-center gap-2 sm:gap-2.5">
+                                            <label class="sr-only" :for="'gq-score-a-' + i">Side A score</label>
+                                            <input
+                                                :id="'gq-score-a-' + i"
+                                                type="number"
+                                                min="0"
+                                                inputmode="numeric"
+                                                class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center text-lg font-bold tabular-nums text-zinc-900 shadow-inner transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/25"
+                                                x-model.number="getScoreDraft(i).a"
+                                            />
+                                            <span
+                                                class="select-none text-xl font-light leading-none text-zinc-300 dark:text-zinc-600"
+                                                aria-hidden="true"
+                                            >
+                                                –
+                                            </span>
+                                            <label class="sr-only" :for="'gq-score-b-' + i">Side B score</label>
+                                            <input
+                                                :id="'gq-score-b-' + i"
+                                                type="number"
+                                                min="0"
+                                                inputmode="numeric"
+                                                class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center text-lg font-bold tabular-nums text-zinc-900 shadow-inner transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/25"
+                                                x-model.number="getScoreDraft(i).b"
+                                            />
+                                        </div>
+                                        <div
+                                            class="flex flex-wrap items-center justify-center gap-1.5 sm:shrink-0"
+                                        >
+                                            <button
+                                                type="button"
+                                                class="min-h-8 min-w-[5.5rem] rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500"
+                                                @click="completeMatch(i)"
+                                            >
+                                                Done
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="min-h-8 rounded-lg px-2 text-xs font-semibold text-zinc-500 transition hover:bg-white hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                                                @click="clearCourt(i)"
+                                            >
+                                                Clear
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </template>
@@ -304,7 +387,7 @@
         </div>
 
         <details class="rounded-2xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-            <summary class="cursor-pointer text-sm font-semibold text-zinc-800 dark:text-zinc-200">More — share, history, backup</summary>
+            <summary class="cursor-pointer text-sm font-semibold text-zinc-800 dark:text-zinc-200">More — share &amp; history</summary>
             <div class="mt-4 space-y-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
                 <div>
                     <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Save to account history</p>
@@ -357,16 +440,6 @@
                     </div>
                     <p class="mt-1 text-xs text-red-600" x-show="shareError" x-text="shareError"></p>
                 </div>
-                <div class="flex flex-wrap gap-3 text-sm">
-                    <button type="button" class="text-emerald-700 hover:underline dark:text-emerald-400" @click="exportJson()">Export</button>
-                    <label class="cursor-pointer text-emerald-700 hover:underline dark:text-emerald-400">
-                        Import
-                        <input type="file" accept="application/json,.json" class="sr-only" @change="importJson($event)" />
-                    </label>
-                    <button type="button" class="text-amber-800 hover:underline dark:text-amber-300" @click="resetSession()">Clear scores</button>
-                    <button type="button" class="text-zinc-500 hover:underline dark:text-zinc-400" @click="fullReset()">Delete all</button>
-                </div>
-                <p class="text-xs text-red-600" x-show="importError" x-text="importError"></p>
             </div>
         </details>
     </div>
@@ -470,13 +543,34 @@
                 <div x-show="activeTab === 'stats'" class="space-y-6" x-cloak>
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Standings</p>
-                        <ol class="mt-2 space-y-1 text-sm">
+                        <ol class="mt-3 space-y-2">
                             <template x-for="(r, ri) in rankings()" :key="r.id">
-                                <li class="flex justify-between rounded-2xl bg-zinc-50 px-3 py-2 dark:bg-zinc-950/60">
-                                    <span><span class="text-zinc-500" x-text="(ri + 1) + '.'"></span> <span class="font-medium" x-text="r.name"></span></span>
-                                    <span class="tabular-nums text-zinc-600 dark:text-zinc-400">
-                                        <span x-text="r.wins + 'W ' + r.losses + 'L'"></span>
-                                        <span class="ml-2 text-emerald-700 dark:text-emerald-400" x-text="r.played ? r.pct + '%' : '—'"></span>
+                                <li
+                                    class="flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-sm transition dark:border-zinc-800"
+                                    :class="ri === 0
+                                        ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-white dark:border-amber-900/40 dark:from-amber-950/30 dark:to-zinc-900/50'
+                                        : 'border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/50'"
+                                >
+                                    <span class="flex min-w-0 items-center gap-3">
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold tabular-nums"
+                                            :class="ri === 0
+                                                ? 'bg-amber-400/25 text-amber-950 dark:bg-amber-500/20 dark:text-amber-100'
+                                                : ri === 1
+                                                    ? 'bg-zinc-200/90 text-zinc-700 dark:bg-zinc-600 dark:text-zinc-100'
+                                                    : ri === 2
+                                                        ? 'bg-orange-200/50 text-orange-950 dark:bg-orange-500/15 dark:text-orange-100'
+                                                        : 'bg-zinc-200/60 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'"
+                                            x-text="ri + 1"
+                                        ></span>
+                                        <span class="truncate font-semibold text-zinc-900 dark:text-zinc-100" x-text="r.name"></span>
+                                    </span>
+                                    <span class="shrink-0 text-right tabular-nums">
+                                        <span class="block text-xs text-zinc-500 dark:text-zinc-400" x-text="r.wins + 'W · ' + r.losses + 'L'"></span>
+                                        <span
+                                            class="text-sm font-bold text-emerald-700 dark:text-emerald-400"
+                                            x-text="r.played ? r.pct + '%' : '—'"
+                                        ></span>
                                     </span>
                                 </li>
                             </template>
@@ -496,9 +590,24 @@
                     </details>
                     <div>
                         <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Recent matches</p>
-                        <ul class="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs text-zinc-600 dark:text-zinc-400">
+                        <ul class="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
                             <template x-for="(m, mi) in [...completedMatches].reverse()" :key="mi">
-                                <li class="rounded border border-zinc-100 px-2 py-1 dark:border-zinc-800" x-text="sideLabels(m.sideA) + ' ' + m.scoreA + '–' + m.scoreB + ' ' + sideLabels(m.sideB)"></li>
+                                <li
+                                    class="grid grid-cols-1 items-center gap-2 rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-xs shadow-sm sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3 dark:border-zinc-700 dark:bg-zinc-950/60"
+                                >
+                                    <span
+                                        class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-left"
+                                        x-text="sideLabels(m.sideA)"
+                                    ></span>
+                                    <span
+                                        class="justify-self-center rounded-lg bg-zinc-100 px-2.5 py-1 font-mono text-sm font-bold tabular-nums text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100"
+                                        x-text="m.scoreA + ' – ' + m.scoreB"
+                                    ></span>
+                                    <span
+                                        class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-right"
+                                        x-text="sideLabels(m.sideB)"
+                                    ></span>
+                                </li>
                             </template>
                         </ul>
                     </div>

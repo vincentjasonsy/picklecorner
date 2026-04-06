@@ -75,6 +75,39 @@ class CourtClientSeeder extends Seeder
         }
 
         $this->seedDemoCoachScenario();
+        $this->seedDeskUsers();
+    }
+
+    /** One front-desk user per seeded venue (password: password). */
+    private function seedDeskUsers(): void
+    {
+        $deskTypeId = UserType::query()
+            ->where('slug', UserType::SLUG_COURT_CLIENT_DESK)
+            ->value('id');
+
+        if ($deskTypeId === null) {
+            return;
+        }
+
+        $clients = CourtClient::query()->orderBy('name')->get();
+        if ($clients->count() < 3) {
+            return;
+        }
+
+        $verified = ['email_verified_at' => now()];
+
+        foreach ([1, 2, 3] as $i) {
+            User::query()->updateOrCreate(
+                ['email' => "desk{$i}@picklecorner.ph"],
+                [
+                    'name' => "Desk {$i}",
+                    'password' => 'password',
+                    'user_type_id' => $deskTypeId,
+                    'desk_court_client_id' => $clients[$i - 1]->id,
+                    ...$verified,
+                ],
+            );
+        }
     }
 
     /** Links demo coach1 to a court and tomorrow’s hours so “book with coach” can be tried after migrate + seed. */

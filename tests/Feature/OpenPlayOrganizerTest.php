@@ -25,6 +25,9 @@ class OpenPlayOrganizerTest extends TestCase
             ->assertOk()
             ->assertSee('gameqApp', false)
             ->assertSee('Start GameQ', false)
-            ->assertSee('Open a saved session', false);
+            ->assertSee('Open a saved session', false)
+            ->assertSee('__GAMEQ_ENDPOINTS', false)
+            ->assertSee('shareStore', false)
+            ->assertSee(route('open-play.share.store'), false);
     }
 }

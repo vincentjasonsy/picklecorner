@@ -51,7 +51,7 @@ class VenueBookingPage extends Component
 
     public string $giftCardCode = '';
 
-    /** Optional coach for this request (single court only; court + coach booked together). */
+    /** Optional coach for this request (must be available on every selected court and hour). */
     public string $coachUserId = '';
 
     /** Billable coach hours (you choose; max = selected slot hours). Only used when {@see $coachUserId} is set. */
@@ -95,6 +95,31 @@ class VenueBookingPage extends Component
                 $this->hydrateFromDraft($draft);
                 session()->forget(self::DRAFT_SESSION_KEY);
             }
+        }
+
+        $this->clearCoachWhenCheckoutHidden();
+    }
+
+    protected function venueCheckoutShowCoach(): bool
+    {
+        return (bool) config('booking.venue_checkout_show_coach', false);
+    }
+
+    /** Ignore coach when the checkout UI is disabled via config. */
+    protected function effectiveCoachUserId(): string
+    {
+        if (! $this->venueCheckoutShowCoach()) {
+            return '';
+        }
+
+        return $this->coachUserId;
+    }
+
+    protected function clearCoachWhenCheckoutHidden(): void
+    {
+        if (! $this->venueCheckoutShowCoach()) {
+            $this->coachUserId = '';
+            $this->coachPaidHours = 0;
         }
     }
 
@@ -144,6 +169,8 @@ class VenueBookingPage extends Component
             $this->openPlayRefundPolicy = $draft['open_play_refund_policy'];
         }
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
+
+        $this->clearCoachWhenCheckoutHidden();
     }
 
     protected function persistDraftForAuthReturn(): void
@@ -442,10 +469,6 @@ class VenueBookingPage extends Component
 
         $selected[] = $key;
         $this->selectedSlots = array_values($selected);
-        if ($this->coachUserId !== '' && count(CoachAvailabilityService::groupSlotsByCourt($this->selectedSlots)) > 1) {
-            $this->coachUserId = '';
-            $this->coachPaidHours = 0;
-        }
         $this->clampCoachPaidHours();
         $this->resetOpenPlayIfNeeded();
     }
@@ -687,6 +710,10 @@ class VenueBookingPage extends Component
     #[Computed]
     public function availableCoachesForReview(): Collection
     {
+        if (! $this->venueCheckoutShowCoach()) {
+            return collect();
+        }
+
         $date = $this->normalizedBookingCalendarDate();
         if ($date === null || $this->selectedSlots === []) {
             return collect();
@@ -717,15 +744,13 @@ class VenueBookingPage extends Component
         }
 
         $coachUser = null;
-        if ($this->coachUserId !== '') {
-            if (count($byCourt) !== 1) {
-                return [];
-            }
-            $coachUser = User::query()->with('coachProfile')->find($this->coachUserId);
+        $effectiveCoachId = $this->effectiveCoachUserId();
+        if ($effectiveCoachId !== '') {
+            $coachUser = User::query()->with('coachProfile')->find($effectiveCoachId);
             if (! $coachUser?->isCoach()) {
                 return [];
             }
-            if (! $this->availableCoachesForReview->contains('id', $this->coachUserId)) {
+            if (! $this->availableCoachesForReview->contains('id', $effectiveCoachId)) {
                 return [];
             }
         }
@@ -816,7 +841,7 @@ class VenueBookingPage extends Component
     #[Computed]
     public function reviewCoachFeeCents(): int
     {
-        if ($this->coachUserId === '') {
+        if ($this->effectiveCoachUserId() === '') {
             return 0;
         }
 
@@ -837,16 +862,6 @@ class VenueBookingPage extends Component
         }
 
         return (int) array_sum(array_column($specs, 'court_gross_cents'));
-    }
-
-    public function coachSelectionBlockedReason(): ?string
-    {
-        $by = CoachAvailabilityService::groupSlotsByCourt($this->selectedSlots);
-        if (count($by) > 1) {
-            return 'To book a coach, select time slots on one court only for this date. Court and coach are reserved together.';
-        }
-
-        return null;
     }
 
     /**
@@ -907,6 +922,8 @@ class VenueBookingPage extends Component
 
         $this->step = 'review';
 
+        $this->clearCoachWhenCheckoutHidden();
+
         $maxCoachH = $this->totalSelectedSlotHours();
 
         $rules = [
@@ -918,7 +935,7 @@ class VenueBookingPage extends Component
             'coachPaidHours' => ['nullable', 'integer', 'min:0', 'max:'.$maxCoachH],
         ];
 
-        if ($this->coachUserId !== '' && $maxCoachH >= 1) {
+        if ($this->effectiveCoachUserId() !== '' && $maxCoachH >= 1) {
             $rules['coachPaidHours'] = ['required', 'integer', 'min:1', 'max:'.$maxCoachH];
         }
 
@@ -948,9 +965,9 @@ class VenueBookingPage extends Component
             return;
         }
 
-        if ($this->coachUserId !== '') {
+        if ($this->effectiveCoachUserId() !== '') {
             $ids = $this->availableCoachesForReview->pluck('id')->map(fn ($id): string => (string) $id)->all();
-            if (! in_array($this->coachUserId, $ids, true)) {
+            if (! in_array($this->effectiveCoachUserId(), $ids, true)) {
                 $this->addError('coachUserId', 'That coach is not available for these courts and times. Choose another coach or change your selection.');
 
                 return;
@@ -990,7 +1007,7 @@ class VenueBookingPage extends Component
                 $this->paymentReference,
                 $this->paymentProof,
                 $this->giftCardCode,
-                $this->coachUserId !== '' ? $this->coachUserId : null,
+                $this->effectiveCoachUserId() !== '' ? $this->effectiveCoachUserId() : null,
                 $openPlayPayload,
             );
         } catch (\InvalidArgumentException $e) {
@@ -1034,13 +1051,11 @@ class VenueBookingPage extends Component
         $flash = match ($deskPolicy) {
             CourtClient::DESK_BOOKING_POLICY_AUTO_APPROVE => count($bookings) === 1
                 ? 'Booking confirmed automatically (venue setting).'
-                : count($bookings).' bookings confirmed automatically (venue setting).',
+                : 'Your booking request was confirmed automatically (venue setting) — '.count($bookings).' court time blocks.',
             CourtClient::DESK_BOOKING_POLICY_AUTO_DENY => count($bookings) === 1
                 ? 'Booking was not accepted (venue auto-deny setting).'
-                : 'Bookings were not accepted (venue auto-deny setting).',
-            default => count($bookings) === 1
-                ? 'Request sent. The venue will review your booking.'
-                : count($bookings).' requests sent. The venue will review your bookings.',
+                : 'Your booking request was not accepted (venue auto-deny setting).',
+            default => 'Request sent. The venue will review your booking.',
         };
         if ($giftTotal > 0) {
             $flash .= ' Gift card applied: '.Money::formatMinor($giftTotal).' total.';

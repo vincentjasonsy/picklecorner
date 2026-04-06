@@ -14,7 +14,8 @@ use Illuminate\Support\Collection;
 final class CoachAvailabilityService
 {
     /**
-     * Coaches that can take this request: single court only, every hour marked available, not double-booked.
+     * Coaches that can take this request: must be linked to every selected court, have hour availability on each
+     * court, and not double-booked across the requested time windows.
      *
      * @param  list<string>  $selectedSlots  courtId-hour keys
      * @param  list<array{starts: Carbon, ends: Carbon}>  $timeWindows  merged specs for overlap check
@@ -30,40 +31,51 @@ final class CoachAvailabilityService
         }
 
         $byCourt = self::groupSlotsByCourt($selectedSlots);
-        if (count($byCourt) !== 1) {
+        if ($byCourt === []) {
             return collect();
         }
 
-        $courtId = array_key_first($byCourt);
-        $hours = $byCourt[$courtId];
-        sort($hours);
+        $courtIds = array_keys($byCourt);
+        sort($courtIds);
 
-        $coachIds = CoachCourt::query()
-            ->where('court_id', $courtId)
-            ->pluck('coach_user_id')
-            ->all();
+        /** @var list<string>|null $coachIdsIntersect */
+        $coachIdsIntersect = null;
+        foreach ($courtIds as $cid) {
+            $ids = CoachCourt::query()
+                ->where('court_id', $cid)
+                ->pluck('coach_user_id')
+                ->map(fn ($id): string => (string) $id)
+                ->all();
+            $coachIdsIntersect = $coachIdsIntersect === null
+                ? $ids
+                : array_values(array_intersect($coachIdsIntersect, $ids));
+        }
 
-        if ($coachIds === []) {
+        if ($coachIdsIntersect === [] || $coachIdsIntersect === null) {
             return collect();
         }
 
         $coaches = User::query()
-            ->whereIn('id', $coachIds)
+            ->whereIn('id', $coachIdsIntersect)
             ->whereHas('userType', fn ($q) => $q->where('slug', UserType::SLUG_COACH))
             ->with('coachProfile')
             ->orderBy('name')
             ->get();
 
-        return $coaches->filter(function (User $coach) use ($courtId, $dateYmd, $hours, $timeWindows): bool {
-            foreach ($hours as $h) {
-                $exists = CoachHourAvailability::query()
-                    ->where('coach_user_id', $coach->id)
-                    ->where('court_id', $courtId)
-                    ->whereDate('date', $dateYmd)
-                    ->where('hour', $h)
-                    ->exists();
-                if (! $exists) {
-                    return false;
+        return $coaches->filter(function (User $coach) use ($byCourt, $dateYmd, $timeWindows): bool {
+            foreach ($byCourt as $courtId => $hours) {
+                $hoursSorted = array_values(array_unique(array_map('intval', $hours)));
+                sort($hoursSorted);
+                foreach ($hoursSorted as $h) {
+                    $exists = CoachHourAvailability::query()
+                        ->where('coach_user_id', $coach->id)
+                        ->where('court_id', $courtId)
+                        ->whereDate('date', $dateYmd)
+                        ->where('hour', $h)
+                        ->exists();
+                    if (! $exists) {
+                        return false;
+                    }
                 }
             }
 

@@ -93,6 +93,7 @@ function loadState() {
     }
 }
 
+/** Plain session token from the csrf-token meta (or cookie fallback). Send as X-CSRF-TOKEN; X-XSRF-TOKEN expects the encrypted XSRF cookie value. */
 function readCsrfToken() {
     const meta = document.querySelector('meta[name="csrf-token"]');
     const fromMeta = meta?.getAttribute('content');
@@ -102,6 +103,45 @@ function readCsrfToken() {
     const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
 
     return m ? decodeURIComponent(m[1]) : '';
+}
+
+/** From layouts::tool-focus @auth script (preferred). */
+function gameqEndpointsFromWindow() {
+    const w =
+        typeof window !== 'undefined' ? window.__GAMEQ_ENDPOINTS : null;
+    if (!w || typeof w !== 'object') {
+        return {
+            shareStore: '',
+            shareApiBase: '',
+            watchBase: '',
+            sessionsBase: '',
+        };
+    }
+
+    return {
+        shareStore: String(w.shareStore ?? '').trim(),
+        shareApiBase: String(w.shareApiBase ?? '').trim(),
+        watchBase: String(w.watchBase ?? '').trim(),
+        sessionsBase: String(w.sessionsBase ?? '').trim(),
+    };
+}
+
+function gameqDataAttr(el, name) {
+    if (!el || typeof el.getAttribute !== 'function') {
+        return '';
+    }
+
+    return String(el.getAttribute(name) ?? '').trim();
+}
+
+/** Fallback: data-* on the Alpine root (see open-play-organizer.blade.php). */
+function gameqEndpointsFromElement(el) {
+    return {
+        shareStore: gameqDataAttr(el, 'data-open-play-share-store'),
+        shareApiBase: gameqDataAttr(el, 'data-open-play-share-base'),
+        watchBase: gameqDataAttr(el, 'data-open-play-watch-base'),
+        sessionsBase: gameqDataAttr(el, 'data-open-play-sessions-base'),
+    };
 }
 
 document.addEventListener('alpine:init', () => {
@@ -159,11 +199,20 @@ document.addEventListener('alpine:init', () => {
             );
         },
 
+        _gameqEndpoints() {
+            const fromWin = gameqEndpointsFromWindow();
+            const fromEl = gameqEndpointsFromElement(this.$el);
+
+            return {
+                shareStore: fromWin.shareStore || fromEl.shareStore,
+                shareApiBase: fromWin.shareApiBase || fromEl.shareApiBase,
+                watchBase: fromWin.watchBase || fromEl.watchBase,
+                sessionsBase: fromWin.sessionsBase || fromEl.sessionsBase,
+            };
+        },
+
         sessionsApiBase() {
-            return String(this.$el?.dataset?.openPlaySessionsBase || '').replace(
-                /\/$/,
-                '',
-            );
+            return String(this._gameqEndpoints().sessionsBase).replace(/\/$/, '');
         },
 
         async refreshHistorySessions() {
@@ -247,7 +296,7 @@ document.addEventListener('alpine:init', () => {
                     headers: {
                         'Content-Type': 'application/json',
                         Accept: 'application/json',
-                        'X-XSRF-TOKEN': readCsrfToken(),
+                        'X-CSRF-TOKEN': readCsrfToken(),
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                     body: JSON.stringify({
@@ -329,7 +378,7 @@ document.addEventListener('alpine:init', () => {
                     credentials: 'same-origin',
                     headers: {
                         Accept: 'application/json',
-                        'X-XSRF-TOKEN': readCsrfToken(),
+                        'X-CSRF-TOKEN': readCsrfToken(),
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                 });
@@ -531,15 +580,15 @@ document.addEventListener('alpine:init', () => {
         },
 
         shareStoreUrl() {
-            return this.$el?.dataset?.openPlayShareStore || '';
+            return this._gameqEndpoints().shareStore;
         },
 
         shareApiBase() {
-            return this.$el?.dataset?.openPlayShareBase || '';
+            return this._gameqEndpoints().shareApiBase;
         },
 
         shareWatchUrl() {
-            const base = this.$el?.dataset?.openPlayWatchBase || '';
+            const base = this._gameqEndpoints().watchBase;
             if (!this.shareUuid || !base) {
                 return '';
             }
@@ -568,7 +617,7 @@ document.addEventListener('alpine:init', () => {
                     headers: {
                         'Content-Type': 'application/json',
                         Accept: 'application/json',
-                        'X-XSRF-TOKEN': readCsrfToken(),
+                        'X-CSRF-TOKEN': readCsrfToken(),
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                     body: JSON.stringify({
@@ -609,7 +658,7 @@ document.addEventListener('alpine:init', () => {
                     headers: {
                         'Content-Type': 'application/json',
                         Accept: 'application/json',
-                        'X-XSRF-TOKEN': readCsrfToken(),
+                        'X-CSRF-TOKEN': readCsrfToken(),
                         'X-Requested-With': 'XMLHttpRequest',
                     },
                     body: JSON.stringify({ data: this.sharePayload() }),
@@ -665,7 +714,7 @@ document.addEventListener('alpine:init', () => {
                         headers: {
                             'Content-Type': 'application/json',
                             Accept: 'application/json',
-                            'X-XSRF-TOKEN': readCsrfToken(),
+                            'X-CSRF-TOKEN': readCsrfToken(),
                             'X-Requested-With': 'XMLHttpRequest',
                         },
                         body: JSON.stringify({ secret: this.shareSecret }),

@@ -10,6 +10,7 @@ class DemoUsersSeeder extends Seeder
 {
     /**
      * Seed 20 users: 1 super admin, 3 court admins, 6 coaches, 10 players.
+     * (Court client seeding adds 3 front-desk users, one per venue.)
      * Password for every account: "password" (hashed via User model's "hashed" cast).
      *
      * Uses updateOrCreate on email so db:seed can be re-run without duplicate errors.

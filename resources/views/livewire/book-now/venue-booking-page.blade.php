@@ -380,81 +380,80 @@
                         </button>
                     </div>
 
-                    <div
-                        class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-                    >
-                        <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
-                            Coach (optional)
-                        </h3>
-                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Add a coach to the same request. You choose how many hours they’re paid for (up to your
-                            selected slot hours).
-                        </p>
-                        @if ($this->coachSelectionBlockedReason())
-                            <p class="mt-3 text-sm text-amber-800 dark:text-amber-200/90">
-                                {{ $this->coachSelectionBlockedReason() }}
+                    @if (config('booking.venue_checkout_show_coach'))
+                        <div
+                            class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+                        >
+                            <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                                Coach (optional)
+                            </h3>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Add a coach to the same request. You choose how many hours they’re paid for (up to your
+                                selected slot hours). If you pick multiple courts (e.g. indoor and outdoor), the coach must
+                                be linked to every court and available for each hour you selected.
                             </p>
-                        @elseif ($this->availableCoachesForReview->isEmpty())
-                            <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
-                                No coaches are available for this venue and time yet. You can still submit a court-only
-                                request.
-                            </p>
-                        @else
-                            <div class="mt-4 max-w-md space-y-4">
-                                <div>
-                                    <label
-                                        class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                        for="venue-coach-select"
-                                    >
-                                        Coach
-                                    </label>
-                                    <select
-                                        id="venue-coach-select"
-                                        wire:model.live="coachUserId"
-                                        class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                    >
-                                        <option value="">No coach — court only</option>
-                                        @foreach ($this->availableCoachesForReview as $c)
-                                            <option value="{{ $c->id }}">
-                                                {{ $c->name }}
-                                                @if ($c->coachProfile && $c->coachProfile->hourly_rate_cents > 0)
-                                                    — coaching
-                                                    {{ Money::formatMinor($c->coachProfile->hourly_rate_cents, $currency) }}/hr
-                                                @endif
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('coachUserId')
-                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                                    @enderror
-                                </div>
-                                @if ($coachUserId !== '')
-                                    <div class="max-w-xs">
+                            @if ($this->availableCoachesForReview->isEmpty())
+                                <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                    No coaches are available for this venue and time yet. You can still submit a court-only
+                                    request.
+                                </p>
+                            @else
+                                <div class="mt-4 max-w-md space-y-4">
+                                    <div>
                                         <label
                                             class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                            for="venue-coach-paid-hours"
+                                            for="venue-coach-select"
                                         >
-                                            Hours to pay the coach
+                                            Coach
                                         </label>
-                                        <input
-                                            id="venue-coach-paid-hours"
-                                            type="number"
-                                            wire:model.live="coachPaidHours"
-                                            min="1"
-                                            max="{{ $this->totalSelectedSlotHours() }}"
-                                            class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
-                                        />
-                                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                            1–{{ $this->totalSelectedSlotHours() }} (your selected court hours).
-                                        </p>
-                                        @error('coachPaidHours')
+                                        <select
+                                            id="venue-coach-select"
+                                            wire:model.live="coachUserId"
+                                            class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                        >
+                                            <option value="">No coach — court only</option>
+                                            @foreach ($this->availableCoachesForReview as $c)
+                                                <option value="{{ $c->id }}">
+                                                    {{ $c->name }}
+                                                    @if ($c->coachProfile && $c->coachProfile->hourly_rate_cents > 0)
+                                                        — coaching
+                                                        {{ Money::formatMinor($c->coachProfile->hourly_rate_cents, $currency) }}/hr
+                                                    @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('coachUserId')
                                             <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                                         @enderror
                                     </div>
-                                @endif
-                            </div>
-                        @endif
-                    </div>
+                                    @if ($coachUserId !== '')
+                                        <div class="max-w-xs">
+                                            <label
+                                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                                for="venue-coach-paid-hours"
+                                            >
+                                                Hours to pay the coach
+                                            </label>
+                                            <input
+                                                id="venue-coach-paid-hours"
+                                                type="number"
+                                                wire:model.live="coachPaidHours"
+                                                min="1"
+                                                max="{{ $this->totalSelectedSlotHours() }}"
+                                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
+                                            />
+                                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                                1–{{ $this->totalSelectedSlotHours() }} (your selected court hours).
+                                            </p>
+                                            @error('coachPaidHours')
+                                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    @endif
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     <div
                         class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
@@ -524,7 +523,7 @@
                                             {{ Money::formatMinor($courtSub, $currency) }}
                                         </td>
                                     </tr>
-                                    @if ($coachUserId !== '' && $this->coachPaidHours > 0)
+                                    @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '' && $this->coachPaidHours > 0)
                                         <tr>
                                             <td colspan="2" class="pt-1 text-sm text-zinc-700 dark:text-zinc-300">
                                                 Coach

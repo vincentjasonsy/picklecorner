@@ -1,11 +1,13 @@
 <?php
 
 use App\Livewire\Concerns\WithDashboardTable;
+use App\Models\CourtClient;
 use App\Models\User;
 use App\Models\UserType;
 use App\Services\ActivityLogger;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -21,6 +23,9 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
 
     #[Url]
     public string $typeSlug = '';
+
+    #[Url]
+    public string $courtClientId = '';
 
     /** @return list<string> */
     protected function sortableColumns(): array
@@ -38,6 +43,11 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
         $this->resetPage();
     }
 
+    public function updatedCourtClientId(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
     public function typeOptions(): Collection
     {
@@ -45,9 +55,20 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
     }
 
     #[Computed]
+    public function courtClientFilterOptions(): Collection
+    {
+        return CourtClient::query()->orderBy('name')->get(['id', 'name']);
+    }
+
+    #[Computed]
     public function usersPaginator()
     {
-        $query = User::query()->with(['userType', 'deskCourtClient']);
+        $query = User::query()->with([
+            'userType',
+            'deskCourtClient',
+            'administeredCourtClient',
+            'coachedCourts.court.courtClient',
+        ]);
 
         if ($this->search !== '') {
             $s = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $this->search).'%';
@@ -60,6 +81,16 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
             $query->whereHas('userType', fn ($q) => $q->where('slug', $this->typeSlug));
         }
 
+        if ($this->courtClientId !== '') {
+            $ccId = $this->courtClientId;
+            $query->where(function ($q) use ($ccId) {
+                $q->whereHas('administeredCourtClient', fn ($q2) => $q2->where('id', $ccId))
+                    ->orWhereHas('deskCourtClient', fn ($q2) => $q2->where('id', $ccId))
+                    ->orWhereHas('coachedCourts.court', fn ($q2) => $q2->where('court_client_id', $ccId))
+                    ->orWhereHas('bookings', fn ($q2) => $q2->where('court_client_id', $ccId));
+            });
+        }
+
         if ($this->sortField !== '' && in_array($this->sortField, $this->sortableColumns(), true)) {
             $query->orderBy($this->sortField, $this->sortDirection === 'asc' ? 'asc' : 'desc');
         } else {
@@ -67,6 +98,30 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
         }
 
         return $query->paginate($this->perPage);
+    }
+
+    /**
+     * Distinct booking venue names per user id for the current results page.
+     *
+     * @return array<string, list<string>>
+     */
+    #[Computed]
+    public function bookingVenueNamesForPage(): array
+    {
+        $ids = $this->usersPaginator->getCollection()->pluck('id')->all();
+        if ($ids === []) {
+            return [];
+        }
+
+        return DB::table('bookings')
+            ->whereIn('user_id', $ids)
+            ->join('court_clients', 'court_clients.id', '=', 'bookings.court_client_id')
+            ->select('user_id', 'court_clients.name')
+            ->orderBy('court_clients.name')
+            ->get()
+            ->groupBy('user_id')
+            ->map(fn ($rows) => $rows->pluck('name')->unique()->values()->all())
+            ->all();
     }
 
     public function deleteUser(string $userId): void
@@ -131,6 +186,12 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
                 <option value="{{ $type->slug }}">{{ $type->name }}</option>
             @endforeach
         </x-dashboard.table-filter>
+        <x-dashboard.table-filter wire:model.live="courtClientId" label="Venue">
+            <option value="">All venues</option>
+            @foreach ($this->courtClientFilterOptions as $cc)
+                <option value="{{ $cc->id }}">{{ $cc->name }}</option>
+            @endforeach
+        </x-dashboard.table-filter>
     </x-slot:toolbar>
 
     <x-slot:toolbarEnd>
@@ -159,10 +220,14 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
                 :direction="$headerSortDir"
             />
             <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Role</th>
+            <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Venues</th>
             <th class="px-4 py-3 text-right font-semibold text-zinc-700 dark:text-zinc-300">Actions</th>
         </tr>
     </x-slot:head>
 
+    @php
+        $bookingVenuesByUser = $this->bookingVenueNamesForPage;
+    @endphp
     @forelse ($users as $user)
         <tr wire:key="user-{{ $user->id }}">
             <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
@@ -173,10 +238,15 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
             </td>
             <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                 <span>{{ $user->userType?->name ?? '—' }}</span>
-                @if ($user->userType?->slug === UserType::SLUG_COURT_CLIENT_DESK && $user->deskCourtClient)
-                    <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400">
-                        {{ $user->deskCourtClient->name }}
-                    </span>
+            </td>
+            <td class="max-w-xs px-4 py-3 text-left text-xs leading-snug text-zinc-600 dark:text-zinc-400">
+                @php
+                    $venueList = $user->associatedVenueNames($bookingVenuesByUser[$user->id] ?? []);
+                @endphp
+                @if ($venueList === [])
+                    <span class="text-zinc-400 dark:text-zinc-500">—</span>
+                @else
+                    <span class="text-zinc-700 dark:text-zinc-300">{{ implode(', ', $venueList) }}</span>
                 @endif
             </td>
             <td class="px-4 py-3 text-right">
@@ -228,7 +298,7 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
         </tr>
     @empty
         <tr>
-            <td colspan="4" class="px-4 py-8 text-center text-zinc-500">No users match.</td>
+            <td colspan="5" class="px-4 py-8 text-center text-zinc-500">No users match.</td>
         </tr>
     @endforelse
 </x-dashboard.data-table>

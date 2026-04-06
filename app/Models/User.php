@@ -208,4 +208,43 @@ class User extends Authenticatable
     {
         return route('account.dashboard');
     }
+
+    /**
+     * Distinct venue names for the admin users table. Pass booking venue names when pre-aggregated for the page.
+     *
+     * @param  list<string>  $bookingVenueNames
+     * @return list<string>
+     */
+    public function associatedVenueNames(array $bookingVenueNames = []): array
+    {
+        $names = [];
+
+        if ($this->relationLoaded('administeredCourtClient') && $this->administeredCourtClient) {
+            $names[] = $this->administeredCourtClient->name;
+        }
+
+        if ($this->relationLoaded('deskCourtClient') && $this->deskCourtClient) {
+            $names[] = $this->deskCourtClient->name;
+        }
+
+        if ($this->relationLoaded('coachedCourts')) {
+            foreach ($this->coachedCourts as $row) {
+                $n = $row->court?->courtClient?->name;
+                if ($n !== null && $n !== '') {
+                    $names[] = $n;
+                }
+            }
+        }
+
+        foreach ($bookingVenueNames as $n) {
+            if ($n !== null && $n !== '') {
+                $names[] = $n;
+            }
+        }
+
+        $names = array_values(array_unique($names));
+        sort($names);
+
+        return $names;
+    }
 }
