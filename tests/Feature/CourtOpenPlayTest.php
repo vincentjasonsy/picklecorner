@@ -68,6 +68,7 @@ class CourtOpenPlayTest extends TestCase
         Livewire::actingAs($joiner)
             ->test(MemberCourtOpenPlayJoin::class, ['booking' => $booking])
             ->set('joinerNote', '3.5 player')
+            ->set('gcashReference', 'GCASHREF123456')
             ->call('requestJoin')
             ->assertHasNoErrors();
 
@@ -75,6 +76,7 @@ class CourtOpenPlayTest extends TestCase
             'booking_id' => $booking->id,
             'user_id' => $joiner->id,
             'status' => OpenPlayParticipant::STATUS_PENDING,
+            'gcash_reference' => 'GCASHREF123456',
         ]);
 
         $participant = OpenPlayParticipant::query()

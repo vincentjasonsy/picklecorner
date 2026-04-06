@@ -85,6 +85,7 @@
                         <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Name</th>
                         <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Status</th>
                         <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Note</th>
+                        <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">GCash ref</th>
                         <th class="px-4 py-3 text-right font-semibold text-zinc-700 dark:text-zinc-300">Paid</th>
                         <th class="px-4 py-3 text-right font-semibold text-zinc-700 dark:text-zinc-300"></th>
                     </tr>
@@ -100,6 +101,9 @@
                             </td>
                             <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">{{ ucfirst($p->status) }}</td>
                             <td class="max-w-[12rem] truncate px-4 py-3 text-xs text-zinc-500">{{ $p->joiner_note ?? '—' }}</td>
+                            <td class="max-w-[10rem] px-4 py-3 font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                                {{ $p->gcash_reference ?? '—' }}
+                            </td>
                             <td class="px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
                                 @if ($p->status === OpenPlayParticipant::STATUS_ACCEPTED)
                                     {{ $p->paid_at ? $p->paid_at->timezone($tz)->format('M j g:i A') : '—' }}
@@ -150,7 +154,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-10 text-center text-sm text-zinc-500">No requests yet.</td>
+                            <td colspan="6" class="px-4 py-10 text-center text-sm text-zinc-500">No requests yet.</td>
                         </tr>
                     @endforelse
                 </tbody>

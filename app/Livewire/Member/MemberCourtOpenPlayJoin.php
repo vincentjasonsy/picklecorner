@@ -15,6 +15,9 @@ class MemberCourtOpenPlayJoin extends Component
 
     public string $joinerNote = '';
 
+    /** Optional GCash transaction ID so the host can match your payment. */
+    public string $gcashReference = '';
+
     public function mount(Booking $booking): void
     {
         abort_unless($booking->is_open_play, 404);
@@ -24,13 +27,58 @@ class MemberCourtOpenPlayJoin extends Component
             'court:id,name',
             'user:id,name',
         ]);
+
+        if (auth()->check() && (string) auth()->id() !== (string) $booking->user_id) {
+            $existing = OpenPlayParticipant::query()
+                ->where('booking_id', $booking->id)
+                ->where('user_id', auth()->id())
+                ->first();
+            if ($existing !== null && $existing->gcash_reference !== null && $existing->gcash_reference !== '') {
+                $this->gcashReference = $existing->gcash_reference;
+            }
+        }
+    }
+
+    protected function gcashReferenceRules(): array
+    {
+        return [
+            'gcashReference' => ['nullable', 'string', 'max:128'],
+        ];
+    }
+
+    public function updateGcashReference(): void
+    {
+        $this->validate($this->gcashReferenceRules(), [], [
+            'gcashReference' => 'GCash reference',
+        ]);
+
+        $user = auth()->user();
+        abort_if((string) $user->id === (string) $this->booking->user_id, 403);
+
+        $p = OpenPlayParticipant::query()
+            ->where('booking_id', $this->booking->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if ($p === null || ! in_array($p->status, [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED], true)) {
+            return;
+        }
+
+        $trim = trim($this->gcashReference);
+        $p->gcash_reference = $trim !== '' ? $trim : null;
+        $p->save();
+
+        session()->flash('status', 'GCash reference saved.');
     }
 
     public function requestJoin(): void
     {
-        $this->validate([
+        $this->validate(array_merge([
             'joinerNote' => ['nullable', 'string', 'max:2000'],
-        ], [], ['joinerNote' => 'note']);
+        ], $this->gcashReferenceRules()), [], [
+            'joinerNote' => 'note',
+            'gcashReference' => 'GCash reference',
+        ]);
 
         $user = auth()->user();
         abort_if((string) $user->id === (string) $this->booking->user_id, 403);
@@ -61,6 +109,8 @@ class MemberCourtOpenPlayJoin extends Component
                 }
                 $existing->status = OpenPlayParticipant::STATUS_PENDING;
                 $existing->joiner_note = $this->joinerNote !== '' ? $this->joinerNote : null;
+                $trimRef = trim($this->gcashReference);
+                $existing->gcash_reference = $trimRef !== '' ? $trimRef : null;
                 $existing->paid_at = null;
                 $existing->save();
                 session()->flash('status', 'Request sent again.');
@@ -75,11 +125,14 @@ class MemberCourtOpenPlayJoin extends Component
             return;
         }
 
+        $trimRef = trim($this->gcashReference);
+
         OpenPlayParticipant::query()->create([
             'booking_id' => $this->booking->id,
             'user_id' => $user->id,
             'status' => OpenPlayParticipant::STATUS_PENDING,
             'joiner_note' => $this->joinerNote !== '' ? $this->joinerNote : null,
+            'gcash_reference' => $trimRef !== '' ? $trimRef : null,
         ]);
 
         session()->flash('status', 'Request sent to the host.');

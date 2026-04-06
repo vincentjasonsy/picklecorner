@@ -28,8 +28,30 @@ class MemberCourtOpenPlayHub extends Component
             ->orderBy('starts_at')
             ->get();
 
+        $joined = OpenPlayParticipant::query()
+            ->where('user_id', auth()->id())
+            ->whereIn('status', [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED])
+            ->whereHas('booking', function ($q): void {
+                $q->where('is_open_play', true)
+                    ->where('starts_at', '>=', now()->subHour())
+                    ->whereNotIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_DENIED]);
+            })
+            ->with([
+                'booking' => fn ($q) => $q->with([
+                    'courtClient:id,name,city',
+                    'court:id,name',
+                    'user:id,name',
+                ])->withCount([
+                    'openPlayParticipants as accepted_joiners_count' => fn ($q2) => $q2->where('status', OpenPlayParticipant::STATUS_ACCEPTED),
+                ]),
+            ])
+            ->get()
+            ->sortBy(fn (OpenPlayParticipant $p) => $p->booking?->starts_at ?? now())
+            ->values();
+
         return view('livewire.member.member-court-open-play-hub', [
             'hostedSessions' => $hosted,
+            'joinedRows' => $joined,
         ]);
     }
 }

@@ -75,6 +75,33 @@
                         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">Waiting for the host to respond.</p>
                     @endif
                     @if (in_array($myParticipant->status, [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED], true))
+                        <div class="mt-4 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                            <label class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                GCash transaction ID
+                            </label>
+                            <p class="mt-0.5 text-xs text-zinc-500">
+                                Host uses this to match your payment. Update anytime before game day.
+                            </p>
+                            <div class="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
+                                <input
+                                    type="text"
+                                    wire:model="gcashReference"
+                                    class="min-w-0 flex-1 rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                    placeholder="Transaction reference"
+                                    autocomplete="off"
+                                />
+                                <button
+                                    type="button"
+                                    wire:click="updateGcashReference"
+                                    class="shrink-0 rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white dark:bg-zinc-200 dark:text-zinc-900"
+                                >
+                                    Save ref
+                                </button>
+                            </div>
+                            @error('gcashReference')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                         <button
                             type="button"
                             wire:click="leaveOpenPlay"
@@ -99,6 +126,24 @@
                                 placeholder="Skill level, partner preference…"
                             ></textarea>
                             @error('joinerNote')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                GCash ref (optional)
+                            </label>
+                            <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-500">
+                                If you’ve already sent payment to the host, add the transaction ID so they can confirm.
+                            </p>
+                            <input
+                                type="text"
+                                wire:model="gcashReference"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="e.g. 012345678901"
+                                autocomplete="off"
+                            />
+                            @error('gcashReference')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

@@ -35,6 +35,7 @@ class OpenPlayParticipant extends Model
         'status',
         'paid_at',
         'joiner_note',
+        'gcash_reference',
     ];
 
     protected function casts(): array
