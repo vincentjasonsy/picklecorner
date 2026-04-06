@@ -35,10 +35,10 @@ class BookingSeeder extends Seeder
 
         foreach ($clients as $client) {
             for ($i = 0; $i < 25; $i++) {
-                $starts = Carbon::parse(fake()->dateTimeBetween('-120 days', '+14 days'));
-                $ends = $starts->copy()->addHours(fake()->randomElement([1, 2]));
+                $starts = Carbon::parse(\fake()->dateTimeBetween('-120 days', '+14 days'));
+                $ends = $starts->copy()->addHours(\fake()->randomElement([1, 2]));
 
-                $status = fake()->randomElement([
+                $status = \fake()->randomElement([
                     Booking::STATUS_CONFIRMED,
                     Booking::STATUS_CONFIRMED,
                     Booking::STATUS_CONFIRMED,
@@ -59,7 +59,7 @@ class BookingSeeder extends Seeder
                 $hourly = CourtSlotPricing::estimatedHourlyCentsAtStart($courtModel, $starts)
                     ?? $client->hourly_rate_cents
                     ?? 30000;
-                $amount = (int) round($hourly * fake()->randomFloat(1, 0.5, 2.5));
+                $amount = (int) round($hourly * \fake()->randomFloat(1, 0.5, 2.5));
 
                 Booking::query()->create([
                     'court_client_id' => $client->id,
@@ -70,7 +70,7 @@ class BookingSeeder extends Seeder
                     'status' => $status,
                     'amount_cents' => $status === Booking::STATUS_CANCELLED ? null : $amount,
                     'currency' => $client->currency ?? 'PHP',
-                    'notes' => fake()->optional(0.2)->sentence(),
+                    'notes' => \fake()->optional(0.2)->sentence(),
                 ]);
             }
         }
