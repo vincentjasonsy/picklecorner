@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\OpenPlaySessionController;
+use App\Http\Controllers\OpenPlayShareController;
 use App\Http\Controllers\ReportExportController;
 use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
@@ -24,6 +26,9 @@ use App\Livewire\Desk\DeskMyRequests;
 use App\Livewire\Member\MemberBookingHistory;
 use App\Livewire\Member\MemberDashboard;
 use App\Livewire\Member\MemberProfileSettings;
+use App\Livewire\OpenPlayAbout;
+use App\Livewire\OpenPlayOrganizer;
+use App\Livewire\OpenPlayWatch;
 use App\Livewire\PublicCourtShow;
 use App\Livewire\Venue\VenueBookingApprovals;
 use App\Livewire\Venue\VenueBookingHistory;
@@ -44,6 +49,13 @@ Route::get('/about', function () {
 Route::livewire('/book-now', BookNowPage::class)->name('book-now');
 Route::livewire('/book-now/courts/{court}', PublicCourtShow::class)->name('book-now.court');
 Route::livewire('/book-now/venues/{courtClient:slug}/book', VenueBookingPage::class)->name('book-now.venue.book');
+Route::get('/open-play/watch/{openPlayShare}/data', [OpenPlayShareController::class, 'data'])
+    ->middleware('throttle:180,1')
+    ->name('open-play.watch.data');
+Route::livewire('/open-play/watch/{openPlayShare}', OpenPlayWatch::class)
+    ->middleware('throttle:120,1')
+    ->name('open-play.watch');
+Route::livewire('/open-play', OpenPlayAbout::class)->name('open-play.about');
 
 Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
@@ -51,11 +63,37 @@ Route::middleware('guest')->group(function (): void {
 });
 
 Route::middleware('auth')->group(function (): void {
+    Route::post('/open-play/share', [OpenPlayShareController::class, 'store'])
+        ->middleware('throttle:12,1')
+        ->name('open-play.share.store');
+    Route::put('/open-play/share/{openPlayShare}', [OpenPlayShareController::class, 'update'])
+        ->middleware('throttle:90,1')
+        ->name('open-play.share.update');
+    Route::delete('/open-play/share/{openPlayShare}', [OpenPlayShareController::class, 'destroy'])
+        ->middleware('throttle:12,1')
+        ->name('open-play.share.destroy');
+
     Route::prefix('account')->name('account.')->group(function (): void {
         Route::livewire('/', MemberDashboard::class)->name('dashboard');
         Route::livewire('/book', BookNowPage::class)->name('book');
         Route::livewire('/book/venues/{courtClient:slug}', VenueBookingPage::class)->name('book.venue');
         Route::livewire('/bookings', MemberBookingHistory::class)->name('bookings');
+        Route::get('/open-play/sessions', [OpenPlaySessionController::class, 'index'])
+            ->middleware('throttle:60,1')
+            ->name('open-play.sessions.index');
+        Route::post('/open-play/sessions', [OpenPlaySessionController::class, 'store'])
+            ->middleware('throttle:30,1')
+            ->name('open-play.sessions.store');
+        Route::get('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'show'])
+            ->middleware('throttle:60,1')
+            ->name('open-play.sessions.show');
+        Route::patch('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'update'])
+            ->middleware('throttle:30,1')
+            ->name('open-play.sessions.update');
+        Route::delete('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'destroy'])
+            ->middleware('throttle:30,1')
+            ->name('open-play.sessions.destroy');
+        Route::livewire('/open-play', OpenPlayOrganizer::class)->name('open-play');
         Route::livewire('/settings', MemberProfileSettings::class)->name('settings');
     });
 

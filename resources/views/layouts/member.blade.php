@@ -3,6 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
         @include('partials.theme-init')
 
@@ -129,6 +130,28 @@
                                     ])
                                 >
                                     My games
+                                </a>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p
+                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                            >
+                                Tools
+                            </p>
+                            <div class="flex flex-col gap-1">
+                                <a
+                                    href="{{ route('account.open-play') }}"
+                                    wire:navigate
+                                    @class([
+                                        'rounded-lg px-3 py-2 transition-colors',
+                                        request()->routeIs('account.open-play')
+                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                    ])
+                                >
+                                    PickleGameQ
                                 </a>
                             </div>
                         </div>

@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Middleware\BlockAdminWhileImpersonating;
+use App\Http\Middleware\EnsureCourtAdmin;
+use App\Http\Middleware\EnsureCourtClientDesk;
+use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,10 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'super_admin' => \App\Http\Middleware\EnsureSuperAdmin::class,
-            'court_admin' => \App\Http\Middleware\EnsureCourtAdmin::class,
-            'court_client_desk' => \App\Http\Middleware\EnsureCourtClientDesk::class,
-            'admin_not_impersonating' => \App\Http\Middleware\BlockAdminWhileImpersonating::class,
+            'super_admin' => EnsureSuperAdmin::class,
+            'court_admin' => EnsureCourtAdmin::class,
+            'court_client_desk' => EnsureCourtClientDesk::class,
+            'admin_not_impersonating' => BlockAdminWhileImpersonating::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

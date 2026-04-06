@@ -84,6 +84,11 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function openPlaySessions(): HasMany
+    {
+        return $this->hasMany(OpenPlaySession::class);
+    }
+
     public function isSuperAdmin(): bool
     {
         return UserType::query()
