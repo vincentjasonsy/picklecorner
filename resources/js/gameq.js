@@ -821,7 +821,9 @@ document.addEventListener('alpine:init', () => {
         buildSides(poolPlayers) {
             const method = this.shuffleMethod;
             if (this.mode === 'singles') {
-                return this.sortPlayersForMethod(poolPlayers, method).map((p) => [p.id]);
+                // Pool order comes from orderedPoolForFill (queue FIFO, then sorted idle).
+                // Do not re-sort here — that broke singles queueing.
+                return poolPlayers.map((p) => [p.id]);
             }
             if (method === 'teams') {
                 const byTeam = {};
