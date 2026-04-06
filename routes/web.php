@@ -9,6 +9,7 @@ use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
 use App\Livewire\Admin\BookingHistory;
 use App\Livewire\Admin\BookingShow;
+use App\Livewire\Admin\CourtClientCreate;
 use App\Livewire\Admin\CourtClientEdit;
 use App\Livewire\Admin\CourtClientManualBooking;
 use App\Livewire\Admin\GiftCardShow;
@@ -138,6 +139,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'store'])
             ->name('users.impersonate');
         Route::livewire('/court-clients', 'admin-court-clients-index')->name('court-clients.index');
+        Route::livewire('/court-clients/create', CourtClientCreate::class)->name('court-clients.create');
         Route::livewire('/court-clients/{courtClient}/edit', CourtClientEdit::class)
             ->name('court-clients.edit');
         Route::livewire('/court-clients/{courtClient}/manual-booking', CourtClientManualBooking::class)

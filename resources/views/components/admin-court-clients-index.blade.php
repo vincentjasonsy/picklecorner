@@ -2,6 +2,7 @@
 
 use App\Livewire\Concerns\WithDashboardTable;
 use App\Models\CourtClient;
+use App\Services\ActivityLogger;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -60,6 +61,47 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
 
         return $query->paginate($this->perPage);
     }
+
+    public function deleteCourtClient(string $id): void
+    {
+        $client = CourtClient::query()->find($id);
+        if ($client === null) {
+            return;
+        }
+
+        $blockers = [];
+        if ($client->bookings()->exists()) {
+            $blockers[] = 'bookings';
+        }
+        if ($client->invoices()->exists()) {
+            $blockers[] = 'invoices';
+        }
+        if ($client->giftCards()->exists()) {
+            $blockers[] = 'gift cards';
+        }
+
+        if ($blockers !== []) {
+            session()->flash(
+                'warning',
+                'Cannot delete this venue while it has '.implode(', ', $blockers).'.',
+            );
+
+            return;
+        }
+
+        $name = $client->name;
+
+        ActivityLogger::log(
+            'court_client.deleted',
+            ['name' => $name, 'slug' => $client->slug],
+            $client,
+            'Court client “'.$name.'” deleted',
+        );
+
+        $client->delete();
+
+        session()->flash('status', 'Venue deleted.');
+    }
 };
 ?>
 
@@ -87,6 +129,13 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
 
     <x-slot:toolbarEnd>
         <x-dashboard.table-per-page />
+        <a
+            href="{{ route('admin.court-clients.create') }}"
+            wire:navigate
+            class="font-display inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+        >
+            New venue
+        </a>
     </x-slot:toolbarEnd>
 
     <x-slot:head>
@@ -116,7 +165,7 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
                 :active="$headerSortField"
                 :direction="$headerSortDir"
             />
-            <th class="px-4 py-3 text-right font-semibold text-zinc-700 dark:text-zinc-300"></th>
+            <th class="px-4 py-3 text-right font-semibold text-zinc-700 dark:text-zinc-300">Actions</th>
         </tr>
     </x-slot:head>
 
@@ -154,13 +203,23 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
                 @endif
             </td>
             <td class="px-4 py-3 text-right">
-                <a
-                    href="{{ route('admin.court-clients.edit', $client) }}"
-                    wire:navigate
-                    class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
-                >
-                    Edit
-                </a>
+                <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+                    <a
+                        href="{{ route('admin.court-clients.edit', $client) }}"
+                        wire:navigate
+                        class="text-xs font-semibold text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+                    >
+                        Edit
+                    </a>
+                    <button
+                        type="button"
+                        wire:click="deleteCourtClient('{{ $client->id }}')"
+                        wire:confirm="Delete this venue? Courts and schedule rows will be removed. This cannot be undone."
+                        class="text-xs font-semibold text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                    >
+                        Delete
+                    </button>
+                </div>
             </td>
         </tr>
     @empty

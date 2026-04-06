@@ -551,6 +551,9 @@
                                     </select>
                                 </div>
                                 <div class="sm:col-span-2">
+                                    <x-gcash-payment-hint :method="$paymentMethod" />
+                                </div>
+                                <div class="sm:col-span-2">
                                     <label
                                         class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
                                     >

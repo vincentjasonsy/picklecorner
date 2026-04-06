@@ -81,7 +81,7 @@
                                 wire:navigate
                                 @class([
                                     'rounded-lg px-3 py-2 transition-colors',
-                                    request()->routeIs('admin.court-clients.index', 'admin.court-clients.edit')
+                                    request()->routeIs('admin.court-clients.*')
                                         ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
                                         : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                 ])
