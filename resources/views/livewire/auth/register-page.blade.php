@@ -1,66 +1,37 @@
-<?php
-
-use App\Models\User;
-use App\Models\UserType;
-use App\Services\ActivityLogger;
-use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Validation\Rules\Password;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
-use Livewire\Component;
-
-new #[Layout('layouts::auth'), Title('Create account')] class extends Component
-{
-    public string $name = '';
-
-    public string $email = '';
-
-    public string $password = '';
-
-    public string $password_confirmation = '';
-
-    public function register(): void
-    {
-        $validated = $this->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'string', 'confirmed', Password::defaults()],
-        ]);
-
-        $userTypeId = UserType::query()->where('slug', UserType::SLUG_USER)->value('id');
-
-        $user = User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => $validated['password'],
-            'user_type_id' => $userTypeId,
-        ]);
-
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        Session::regenerate();
-
-        ActivityLogger::log('auth.registered', ['email' => $user->email], $user, 'New account registered');
-
-        $this->redirectIntended(default: $user->memberHomeUrl(), navigate: true);
-    }
-};
-?>
-
 <div>
     <div
         class="overflow-hidden rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-xl shadow-zinc-900/5 dark:border-zinc-800 dark:bg-zinc-900/80 dark:shadow-none"
     >
+        @if ($demo)
+            <div
+                class="mb-6 rounded-2xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+                role="status"
+            >
+                <p class="font-semibold">Demo account</p>
+                <p class="mt-1 leading-relaxed opacity-90">
+                    Your bookings and saved data are removed automatically after
+                    {{ config('demo.ttl_hours') }}
+                    {{ \Illuminate\Support\Str::plural('hour', config('demo.ttl_hours')) }}.
+                    For a permanent account, use
+                    <a href="{{ route('register') }}" wire:navigate class="font-semibold underline underline-offset-2">full registration</a>.
+                </p>
+            </div>
+        @endif
+
         <div>
             <h2 class="font-display text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-                Join the club
+                @if ($demo)
+                    Try the site
+                @else
+                    Join the club
+                @endif
             </h2>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                Create your player account and start booking courts in minutes.
+                @if ($demo)
+                    Create a temporary player account to explore booking and tools.
+                @else
+                    Create your player account and start booking courts in minutes.
+                @endif
             </p>
         </div>
 
@@ -145,7 +116,13 @@ new #[Layout('layouts::auth'), Title('Create account')] class extends Component
                 class="font-display flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-900/25 transition hover:from-emerald-500 hover:to-teal-500 focus:outline-none focus-visible:ring-4 focus-visible:ring-emerald-500/40 active:scale-[0.99] disabled:opacity-60 dark:shadow-emerald-950/40"
                 wire:loading.attr="disabled"
             >
-                <span wire:loading.remove wire:target="register">Create account</span>
+                <span wire:loading.remove wire:target="register">
+                    @if ($demo)
+                        Start demo
+                    @else
+                        Create account
+                    @endif
+                </span>
                 <span wire:loading wire:target="register">Creating…</span>
             </button>
         </form>
@@ -160,5 +137,19 @@ new #[Layout('layouts::auth'), Title('Create account')] class extends Component
                 Sign in
             </a>
         </p>
+
+        @if (! $demo && config('demo.registration_enabled'))
+            <p class="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                Just exploring?
+                <a
+                    href="{{ route('register.demo') }}"
+                    wire:navigate
+                    class="font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+                >
+                    Try a {{ config('demo.ttl_hours') }}-hour demo
+                </a>
+                — data is removed automatically.
+            </p>
+        @endif
     </div>
 </div>

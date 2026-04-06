@@ -429,6 +429,15 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                     >
                         Register
                     </a>
+                    @if (config('demo.registration_enabled'))
+                        <a
+                            href="{{ route('register.demo') }}"
+                            wire:navigate
+                            class="inline-flex items-center rounded-xl border border-amber-300/80 bg-amber-50 px-5 py-3 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/70"
+                        >
+                            Try demo
+                        </a>
+                    @endif
                     <a
                         href="{{ route('login') }}"
                         wire:navigate

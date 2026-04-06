@@ -85,4 +85,12 @@ class UserFactory extends Factory
             'user_type_id' => UserType::query()->where('slug', UserType::SLUG_USER)->value('id'),
         ]);
     }
+
+    /** Expires in the future; pair with {@see player()} for a normal member demo. */
+    public function demoAccount(int $ttlHours = 24): static
+    {
+        return $this->state(fn () => [
+            'demo_expires_at' => now()->addHours($ttlHours),
+        ]);
+    }
 }

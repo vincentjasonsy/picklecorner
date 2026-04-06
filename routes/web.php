@@ -17,6 +17,7 @@ use App\Livewire\Admin\InvoiceIndex;
 use App\Livewire\Admin\InvoiceShow;
 use App\Livewire\Admin\ManualBookingHub;
 use App\Livewire\Admin\UserForm;
+use App\Livewire\Auth\RegisterPage;
 use App\Livewire\BookNow\VenueBookingPage;
 use App\Livewire\BookNowPage;
 use App\Livewire\Desk\DeskCourtsLive;
@@ -59,10 +60,11 @@ Route::livewire('/open-play', OpenPlayAbout::class)->name('open-play.about');
 
 Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
-    Route::livewire('/register', 'register-page')->name('register');
+    Route::livewire('/register', RegisterPage::class)->name('register');
+    Route::livewire('/try', RegisterPage::class)->name('register.demo');
 });
 
-Route::middleware('auth')->group(function (): void {
+Route::middleware(['auth', 'demo.valid'])->group(function (): void {
     Route::post('/open-play/share', [OpenPlayShareController::class, 'store'])
         ->middleware('throttle:12,1')
         ->name('open-play.share.store');
@@ -125,7 +127,7 @@ Route::middleware('auth')->group(function (): void {
         ->name('admin.stop-impersonating');
 });
 
-Route::middleware(['auth', 'super_admin', 'admin_not_impersonating'])
+Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating'])
     ->prefix('admin')
     ->name('admin.')
     ->group(function (): void {
@@ -168,4 +170,4 @@ Route::post('/logout', function () {
     request()->session()->regenerateToken();
 
     return redirect()->route('home');
-})->middleware('auth')->name('logout');
+})->middleware(['auth', 'demo.valid'])->name('logout');

@@ -161,6 +161,20 @@
                                 >
                                     Register
                                 </a>
+                                @if (config('demo.registration_enabled'))
+                                    <a
+                                        href="{{ route('register.demo') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-2.5 py-2 text-sm transition-colors',
+                                            request()->routeIs('register.demo')
+                                                ? 'font-semibold text-amber-800 dark:text-amber-200'
+                                                : 'text-amber-800/90 hover:text-amber-950 dark:text-amber-200/90 dark:hover:text-amber-100',
+                                        ])
+                                    >
+                                        Try demo
+                                    </a>
+                                @endif
                             @endauth
                         </nav>
                         {{-- Mobile menu toggle --}}
@@ -317,6 +331,16 @@
                             >
                                 Register
                             </a>
+                            @if (config('demo.registration_enabled'))
+                                <a
+                                    href="{{ route('register.demo') }}"
+                                    wire:navigate
+                                    @click="mobileNavOpen = false"
+                                    class="rounded-lg border border-amber-300/70 bg-amber-50/90 px-3 py-3 text-center font-semibold text-amber-950 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-950/50 dark:text-amber-100 dark:hover:bg-amber-950/80"
+                                >
+                                    Try demo
+                                </a>
+                            @endif
                         @endauth
                     </nav>
                 </div>

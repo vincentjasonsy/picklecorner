@@ -43,6 +43,18 @@
         @include('partials.flash-messages')
         @include('partials.impersonation-banner')
 
+        @auth
+            @if (auth()->user()->isDemoAccount() && ! auth()->user()->demoHasExpired())
+                <div
+                    class="border-b border-amber-200 bg-amber-50 px-4 py-2.5 text-center text-xs font-medium text-amber-950 dark:border-amber-900 dark:bg-amber-950/35 dark:text-amber-100"
+                    role="status"
+                >
+                    Demo account — data removed after
+                    {{ auth()->user()->demo_expires_at->timezone(config('app.timezone'))->format('M j, g:i a') }}.
+                </div>
+            @endif
+        @endauth
+
         <div class="tool-focus-shell flex min-h-[100dvh] flex-col pb-[env(safe-area-inset-bottom)]">
             <header
                 class="sticky top-0 z-40 flex shrink-0 items-center justify-between gap-3 border-b border-zinc-200/80 bg-white/85 px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur-md dark:border-zinc-800/80 dark:bg-zinc-950/85"

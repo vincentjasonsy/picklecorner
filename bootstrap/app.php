@@ -3,6 +3,7 @@
 use App\Http\Middleware\BlockAdminWhileImpersonating;
 use App\Http\Middleware\EnsureCourtAdmin;
 use App\Http\Middleware\EnsureCourtClientDesk;
+use App\Http\Middleware\EnsureDemoAccountValid;
 use App\Http\Middleware\EnsureSuperAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'court_admin' => EnsureCourtAdmin::class,
             'court_client_desk' => EnsureCourtClientDesk::class,
             'admin_not_impersonating' => BlockAdminWhileImpersonating::class,
+            'demo.valid' => EnsureDemoAccountValid::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -49,8 +49,20 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'demo_expires_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /** Time-limited account created via /try (data removed after {@see $demo_expires_at}). */
+    public function isDemoAccount(): bool
+    {
+        return $this->demo_expires_at !== null;
+    }
+
+    public function demoHasExpired(): bool
+    {
+        return $this->demo_expires_at !== null && now()->greaterThan($this->demo_expires_at);
     }
 
     public function userType(): BelongsTo
