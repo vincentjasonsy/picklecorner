@@ -26,6 +26,14 @@ server {
         log_not_found off;
     }
 
+    # Vite output — must exist under public/build (see Dockerfile assets stage). If missing, return 404
+    # instead of passing to Laravel (which would serve HTML and trigger stylesheet MIME errors).
+    location ^~ /build/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+        access_log off;
+    }
+
     location ~ \.php$ {
         fastcgi_pass 127.0.0.1:9000;
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;

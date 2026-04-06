@@ -1,0 +1,17 @@
+# Render Blueprint — Vite assets must exist at runtime under public/build (gitignored).
+#
+# Recommended: use Docker. The Dockerfile runs `npm run build` and copies public/build.
+#
+# If you deploy as a native PHP service instead, set Build Command to something like:
+#   bash scripts/render-build.sh
+# and ensure the environment has Node 20+ and npm (install via env or Render’s Node buildpack).
+#
+# Symptom if build is skipped: browser error "MIME type text/html" for *.css under /build/assets/
+# (Laravel returns HTML because the static file is missing).
+services:
+  - type: web
+    name: pickle-corner
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
