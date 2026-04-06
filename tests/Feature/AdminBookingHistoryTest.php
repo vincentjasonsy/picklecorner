@@ -22,6 +22,7 @@ class AdminBookingHistoryTest extends TestCase
         $player = User::factory()->player()->create();
 
         $this->actingAs($player)->get(route('admin.bookings.index'))->assertForbidden();
+        $this->actingAs($player)->get(route('admin.coach-bookings.index'))->assertForbidden();
     }
 
     public function test_player_cannot_open_booking_show(): void
@@ -79,6 +80,7 @@ class AdminBookingHistoryTest extends TestCase
         ]);
 
         $this->actingAs($super)->get(route('admin.bookings.index'))->assertOk();
+        $this->actingAs($super)->get(route('admin.coach-bookings.index'))->assertOk();
 
         $this->actingAs($super)
             ->get(route('admin.bookings.show', $booking))

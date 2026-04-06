@@ -3,6 +3,7 @@
 use App\Livewire\Concerns\WithDashboardTable;
 use App\Models\CourtClient;
 use App\Models\GiftCard;
+use App\Models\UserType;
 use App\Services\ActivityLogger;
 use App\Services\GiftCardService;
 use App\Support\Money;
@@ -24,6 +25,10 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
 
     #[Url]
     public string $courtFilter = '';
+
+    /** all | coaches | staff */
+    #[Url]
+    public string $issuedByFilter = '';
 
     public bool $showCreateForm = false;
 
@@ -69,6 +74,11 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
         $this->resetPage();
     }
 
+    public function updatedIssuedByFilter(): void
+    {
+        $this->resetPage();
+    }
+
     #[Computed]
     public function clientsForSelect()
     {
@@ -78,7 +88,16 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
     #[Computed]
     public function giftCardsPaginator()
     {
-        $query = GiftCard::query()->with(['courtClient', 'creator']);
+        $query = GiftCard::query()->with(['courtClient', 'creator.userType']);
+
+        if ($this->issuedByFilter === 'coaches') {
+            $query->whereHas('creator.userType', fn ($q) => $q->where('slug', UserType::SLUG_COACH));
+        } elseif ($this->issuedByFilter === 'staff') {
+            $query->where(function ($q) {
+                $q->whereNull('created_by')
+                    ->orWhereHas('creator.userType', fn ($q2) => $q2->where('slug', '!=', UserType::SLUG_COACH));
+            });
+        }
 
         if ($this->courtFilter !== '') {
             if ($this->courtFilter === '__platform__') {
@@ -288,11 +307,15 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
 
 <div class="space-y-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">
+        <p class="max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
             Issue <strong>fixed peso</strong> cards or <strong>percentage-off</strong> cards (each redemption applies the
             percent of the booking total, capped by a max total discount budget). Use
             <strong>All venues</strong> for platform-wide give-back codes redeemable at any court client. Optional redeem
             windows and <strong>event labels</strong> for campaigns.
+            <span class="mt-2 block text-zinc-500 dark:text-zinc-500">
+                Coaches issue venue-scoped cards from <strong>Account → Coaching → Gift cards</strong>; those appear here
+                with an <strong>Issued by</strong> name and you can filter by coach-issued rows.
+            </span>
         </p>
         <button
             type="button"
@@ -526,6 +549,11 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
                     <option value="{{ $c->id }}">{{ $c->name }}</option>
                 @endforeach
             </x-dashboard.table-filter>
+            <x-dashboard.table-filter wire:model.live="issuedByFilter" label="Issued by">
+                <option value="">Everyone</option>
+                <option value="coaches">Coaches</option>
+                <option value="staff">Staff &amp; other</option>
+            </x-dashboard.table-filter>
         </x-slot:toolbar>
 
         <x-slot:toolbarEnd>
@@ -541,6 +569,7 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
                     :direction="$headerSortDir"
                 />
                 <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Venue</th>
+                <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Issued by</th>
                 <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Type</th>
                 <x-dashboard.sortable-th
                     column="face_value_cents"
@@ -585,6 +614,20 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
                         </span>
                     @else
                         {{ $card->courtClient?->name ?? '—' }}
+                    @endif
+                </td>
+                <td class="px-4 py-3 text-xs text-zinc-600 dark:text-zinc-400">
+                    @if ($card->creator)
+                        <span class="font-medium text-zinc-800 dark:text-zinc-200">{{ $card->creator->name }}</span>
+                        @if (($card->creator->userType->slug ?? '') === \App\Models\UserType::SLUG_COACH)
+                            <span
+                                class="ml-1 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-800 dark:bg-violet-950/60 dark:text-violet-200"
+                            >
+                                Coach
+                            </span>
+                        @endif
+                    @else
+                        —
                     @endif
                 </td>
                 <td class="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
@@ -675,7 +718,7 @@ new #[Layout('layouts::admin'), Title('Gift cards')] class extends Component
             </tr>
         @empty
             <tr>
-                <td colspan="11" class="px-4 py-8 text-center text-zinc-500">No gift cards yet.</td>
+                <td colspan="12" class="px-4 py-8 text-center text-zinc-500">No gift cards yet.</td>
             </tr>
         @endforelse
     </x-dashboard.data-table>

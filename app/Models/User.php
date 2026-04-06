@@ -122,6 +122,25 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class, 'coach_user_id');
     }
 
+    /**
+     * Distinct venue ids where this coach has at least one court enabled.
+     *
+     * @return list<string>
+     */
+    public function coachedCourtClientIds(): array
+    {
+        $courtIds = $this->coachedCourts()->pluck('court_id');
+        if ($courtIds->isEmpty()) {
+            return [];
+        }
+
+        return Court::query()
+            ->whereIn('id', $courtIds)
+            ->distinct()
+            ->pluck('court_client_id')
+            ->all();
+    }
+
     public function isCoach(): bool
     {
         return UserType::query()

@@ -9,6 +9,7 @@ use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
 use App\Livewire\Admin\BookingHistory;
 use App\Livewire\Admin\BookingShow;
+use App\Livewire\Admin\CoachBookingManagement;
 use App\Livewire\Admin\CourtClientCreate;
 use App\Livewire\Admin\CourtClientEdit;
 use App\Livewire\Admin\CourtClientManualBooking;
@@ -23,6 +24,8 @@ use App\Livewire\BookNow\VenueBookingPage;
 use App\Livewire\BookNowPage;
 use App\Livewire\Coach\CoachAvailability;
 use App\Livewire\Coach\CoachCourtsManage;
+use App\Livewire\Coach\CoachGiftCards;
+use App\Livewire\Coach\CoachGiftCardShow;
 use App\Livewire\Coach\CoachHome;
 use App\Livewire\Coach\CoachProfileEdit;
 use App\Livewire\Desk\DeskCourtsLive;
@@ -111,6 +114,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/', CoachHome::class)->name('dashboard');
         Route::livewire('/courts', CoachCourtsManage::class)->name('courts');
         Route::livewire('/availability', CoachAvailability::class)->name('availability');
+        Route::livewire('/gift-cards', CoachGiftCards::class)->name('gift-cards.index');
+        Route::livewire('/gift-cards/{giftCard}', CoachGiftCardShow::class)->name('gift-cards.show');
         Route::livewire('/profile', CoachProfileEdit::class)->name('profile');
     });
 
@@ -165,6 +170,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::get('/invoices/{invoice}/pdf', InvoicePdfController::class)->name('invoices.pdf');
         Route::livewire('/reports', 'admin-reports')->name('reports');
         Route::livewire('/bookings', BookingHistory::class)->name('bookings.index');
+        Route::livewire('/coach-bookings', CoachBookingManagement::class)->name('coach-bookings.index');
         Route::livewire('/bookings/{booking}', BookingShow::class)->name('bookings.show');
         Route::get('/reports/export/bookings', [ReportExportController::class, 'adminBookings'])
             ->name('reports.export.bookings');
