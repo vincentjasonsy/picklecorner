@@ -383,8 +383,84 @@
                     <div
                         class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
                     >
+                        <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                            Coach (optional)
+                        </h3>
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                            Add a coach to the same request. You choose how many hours they’re paid for (up to your
+                            selected slot hours).
+                        </p>
+                        @if ($this->coachSelectionBlockedReason())
+                            <p class="mt-3 text-sm text-amber-800 dark:text-amber-200/90">
+                                {{ $this->coachSelectionBlockedReason() }}
+                            </p>
+                        @elseif ($this->availableCoachesForReview->isEmpty())
+                            <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                No coaches are available for this venue and time yet. You can still submit a court-only
+                                request.
+                            </p>
+                        @else
+                            <div class="mt-4 max-w-md space-y-4">
+                                <div>
+                                    <label
+                                        class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                        for="venue-coach-select"
+                                    >
+                                        Coach
+                                    </label>
+                                    <select
+                                        id="venue-coach-select"
+                                        wire:model.live="coachUserId"
+                                        class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                    >
+                                        <option value="">No coach — court only</option>
+                                        @foreach ($this->availableCoachesForReview as $c)
+                                            <option value="{{ $c->id }}">
+                                                {{ $c->name }}
+                                                @if ($c->coachProfile && $c->coachProfile->hourly_rate_cents > 0)
+                                                    — coaching
+                                                    {{ Money::formatMinor($c->coachProfile->hourly_rate_cents, $currency) }}/hr
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('coachUserId')
+                                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                                @if ($coachUserId !== '')
+                                    <div class="max-w-xs">
+                                        <label
+                                            class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                            for="venue-coach-paid-hours"
+                                        >
+                                            Hours to pay the coach
+                                        </label>
+                                        <input
+                                            id="venue-coach-paid-hours"
+                                            type="number"
+                                            wire:model.live="coachPaidHours"
+                                            min="1"
+                                            max="{{ $this->totalSelectedSlotHours() }}"
+                                            class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
+                                        />
+                                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                            1–{{ $this->totalSelectedSlotHours() }} (your selected court hours).
+                                        </p>
+                                        @error('coachPaidHours')
+                                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+
+                    <div
+                        class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+                    >
                         <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            Selected slots
+                            Selected slots & totals
                         </p>
                         @if (count($reviewSpecs) === 0)
                             <p class="mt-3 text-sm text-amber-800 dark:text-amber-200">
@@ -393,6 +469,8 @@
                         @endif
                         @php($giftEst = $this->reviewGiftEstimateCents)
                         @php($grossTotal = $this->reviewEstimateCents)
+                        @php($courtSub = $this->reviewCourtSubtotalCents)
+                        @php($coachFee = $this->reviewCoachFeeCents)
                         <div class="mt-3 overflow-x-auto">
                             <table class="w-full min-w-[18rem] border-collapse text-left text-sm text-zinc-800 dark:text-zinc-200">
                                 <thead>
@@ -415,7 +493,7 @@
                                             scope="col"
                                             class="w-[1%] whitespace-nowrap py-2 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
                                         >
-                                            Amount
+                                            Fee
                                         </th>
                                     </tr>
                                 </thead>
@@ -429,7 +507,7 @@
                                                 {{ $spec['starts']->format('g:i A') }} – {{ $spec['ends']->format('g:i A') }}
                                             </td>
                                             <td class="py-2.5 text-right align-top tabular-nums">
-                                                {{ Money::formatMinor($spec['gross_cents'], $currency) }}
+                                                {{ Money::formatMinor($spec['court_gross_cents'] ?? $spec['gross_cents'], $currency) }}
                                             </td>
                                         </tr>
                                     @endforeach
@@ -440,9 +518,35 @@
                                             colspan="2"
                                             class="pt-3 text-sm font-bold text-zinc-900 dark:text-white"
                                         >
-                                            Subtotal
+                                            Courts subtotal
                                         </td>
                                         <td class="pt-3 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
+                                            {{ Money::formatMinor($courtSub, $currency) }}
+                                        </td>
+                                    </tr>
+                                    @if ($coachUserId !== '' && $this->coachPaidHours > 0)
+                                        <tr>
+                                            <td colspan="2" class="pt-1 text-sm text-zinc-700 dark:text-zinc-300">
+                                                Coach
+                                                <span class="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                                    {{ $this->coachPaidHours }}
+                                                    {{ \Illuminate\Support\Str::plural('hr', $this->coachPaidHours) }} at
+                                                    their listed rate
+                                                </span>
+                                            </td>
+                                            <td class="pt-1 text-right text-sm tabular-nums text-zinc-800 dark:text-zinc-200">
+                                                {{ Money::formatMinor($coachFee, $currency) }}
+                                            </td>
+                                        </tr>
+                                    @endif
+                                    <tr>
+                                        <td
+                                            colspan="2"
+                                            class="pt-2 text-sm font-bold text-zinc-900 dark:text-white"
+                                        >
+                                            Total
+                                        </td>
+                                        <td class="pt-2 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
                                             {{ Money::formatMinor($grossTotal, $currency) }}
                                         </td>
                                     </tr>

@@ -170,6 +170,66 @@
                             </div>
                         </div>
 
+                        @if (auth()->user()->isCoach())
+                            <div>
+                                <p
+                                    class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                                >
+                                    Coaching
+                                </p>
+                                <div class="flex flex-col gap-1">
+                                    <a
+                                        href="{{ route('account.coach.dashboard') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.coach.dashboard')
+                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Coach home
+                                    </a>
+                                    <a
+                                        href="{{ route('account.coach.courts') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.coach.courts')
+                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Venues you coach
+                                    </a>
+                                    <a
+                                        href="{{ route('account.coach.availability') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.coach.availability')
+                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Availability
+                                    </a>
+                                    <a
+                                        href="{{ route('account.coach.profile') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.coach.profile')
+                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Coach profile
+                                    </a>
+                                </div>
+                            </div>
+                        @endif
+
                         <div>
                             <p
                                 class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
@@ -187,7 +247,7 @@
                                             : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                     ])
                                 >
-                                    <x-picklegameq-mark compact />
+                                    <x-gameq-mark compact />
                                 </a>
                             </div>
                         </div>

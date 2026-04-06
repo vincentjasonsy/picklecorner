@@ -2,10 +2,15 @@
 
 namespace Database\Seeders;
 
+use App\Models\CoachCourt;
+use App\Models\CoachHourAvailability;
+use App\Models\CoachProfile;
+use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\User;
 use App\Models\UserType;
 use App\Services\CourtClientBootstrap;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -67,6 +72,52 @@ class CourtClientSeeder extends Seeder
             );
 
             CourtClientBootstrap::ensureDefaultCourtsAndSchedule($client);
+        }
+
+        $this->seedDemoCoachScenario();
+    }
+
+    /** Links demo coach1 to a court and tomorrow’s hours so “book with coach” can be tried after migrate + seed. */
+    private function seedDemoCoachScenario(): void
+    {
+        $coach = User::query()->where('email', 'coach1@picklecorner.ph')->first();
+        if ($coach === null) {
+            return;
+        }
+
+        CoachProfile::query()->firstOrCreate(
+            ['user_id' => $coach->id],
+            [
+                'hourly_rate_cents' => 80_000,
+                'currency' => 'PHP',
+                'bio' => 'Demo coach — players can add you when booking this court.',
+            ],
+        );
+
+        $court = Court::query()->orderBy('court_client_id')->orderBy('sort_order')->first();
+        if ($court === null) {
+            return;
+        }
+
+        CoachCourt::query()->firstOrCreate(
+            [
+                'coach_user_id' => $coach->id,
+                'court_id' => $court->id,
+            ],
+            [],
+        );
+
+        $tomorrow = Carbon::tomorrow(config('app.timezone', 'UTC'))->format('Y-m-d');
+        foreach ([10, 11, 12, 13, 14, 15] as $hour) {
+            CoachHourAvailability::query()->firstOrCreate(
+                [
+                    'coach_user_id' => $coach->id,
+                    'court_id' => $court->id,
+                    'date' => $tomorrow,
+                    'hour' => $hour,
+                ],
+                [],
+            );
         }
     }
 }

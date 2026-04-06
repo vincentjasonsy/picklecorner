@@ -21,6 +21,10 @@ use App\Livewire\Admin\UserForm;
 use App\Livewire\Auth\RegisterPage;
 use App\Livewire\BookNow\VenueBookingPage;
 use App\Livewire\BookNowPage;
+use App\Livewire\Coach\CoachAvailability;
+use App\Livewire\Coach\CoachCourtsManage;
+use App\Livewire\Coach\CoachHome;
+use App\Livewire\Coach\CoachProfileEdit;
 use App\Livewire\Desk\DeskCourtsLive;
 use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
@@ -96,10 +100,18 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::delete('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'destroy'])
             ->middleware('throttle:30,1')
             ->name('open-play.sessions.destroy');
-        Route::livewire('/tools/pickle-game-q', OpenPlayOrganizer::class)->name('open-play');
+        Route::livewire('/tools/gameq', OpenPlayOrganizer::class)->name('open-play');
+        Route::get('/tools/pickle-game-q', fn () => redirect('/account/tools/gameq', 301));
         Route::get('/open-play', fn () => redirect()->route('account.open-play'))
             ->name('open-play.legacy');
         Route::livewire('/settings', MemberProfileSettings::class)->name('settings');
+    });
+
+    Route::middleware('coach')->prefix('account/coach')->name('account.coach.')->group(function (): void {
+        Route::livewire('/', CoachHome::class)->name('dashboard');
+        Route::livewire('/courts', CoachCourtsManage::class)->name('courts');
+        Route::livewire('/availability', CoachAvailability::class)->name('availability');
+        Route::livewire('/profile', CoachProfileEdit::class)->name('profile');
     });
 
     Route::middleware('court_admin')->prefix('venue')->name('venue.')->group(function (): void {

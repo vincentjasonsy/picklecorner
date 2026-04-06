@@ -11,7 +11,7 @@ class OpenPlaySession extends Model
     /** Max new account snapshots a user may create per calendar month (app timezone). */
     public const MONTHLY_SAVE_LIMIT = 5;
 
-    /** Max players in one PickleGameQ session (queue / roster). */
+    /** Max players in one GameQ session (queue / roster). */
     public const MAX_PLAYERS_PER_SESSION = 55;
 
     protected $fillable = [

@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'PickleGameQ (Beta)' }} — {{ config('app.name') }}</title>
+        <title>{{ $title ?? 'GameQ (Beta)' }} — {{ config('app.name') }}</title>
 
         @include('partials.favicon')
 
@@ -73,8 +73,8 @@
                         class="font-display flex items-center justify-center gap-1 truncate text-[15px] font-extrabold tracking-tight text-zinc-900 dark:text-white"
                     >
                         @php($t = $title ?? '')
-                        @if (in_array($t, ['', 'PickleGameQ', 'PickleGameQ (Beta)'], true))
-                            <x-picklegameq-mark compact class="min-w-0 shrink" />
+                        @if (in_array($t, ['', 'GameQ', 'GameQ (Beta)'], true))
+                            <x-gameq-mark compact class="min-w-0 shrink" />
                         @else
                             <span class="truncate">{{ $t }}</span>
                         @endif

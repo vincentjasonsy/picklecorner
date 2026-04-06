@@ -16,15 +16,15 @@ class OpenPlayOrganizerTest extends TestCase
             ->assertRedirect(route('login'));
     }
 
-    public function test_authenticated_user_can_view_picklegameq_organizer(): void
+    public function test_authenticated_user_can_view_gameq_organizer(): void
     {
         $user = User::factory()->create();
 
         $this->actingAs($user)
             ->get(route('account.open-play'))
             ->assertOk()
-            ->assertSee('pickleGameQApp', false)
-            ->assertSee('Start PickleGameQ', false)
+            ->assertSee('gameqApp', false)
+            ->assertSee('Start GameQ', false)
             ->assertSee('Open a saved session', false);
     }
 }

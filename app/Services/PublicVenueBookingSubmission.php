@@ -19,6 +19,9 @@ class PublicVenueBookingSubmission
      * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>}>  $specs
      * @return array{bookings: list<Booking>, desk_policy: string}
      */
+    /**
+     * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>, coach_fee_cents?: int}>  $specs
+     */
     public static function submit(
         CourtClient $courtClient,
         User $booker,
@@ -28,6 +31,7 @@ class PublicVenueBookingSubmission
         ?string $paymentReference,
         mixed $paymentProof,
         ?string $giftCardCodeRaw = null,
+        ?string $coachUserId = null,
     ): array {
         if ($specs === []) {
             throw new \InvalidArgumentException('No time slots to book.');
@@ -69,6 +73,8 @@ class PublicVenueBookingSubmission
         $pref = trim((string) $paymentReference);
         $giftCodeRaw = trim((string) $giftCardCodeRaw);
 
+        $coachId = $coachUserId !== null && $coachUserId !== '' ? (string) $coachUserId : null;
+
         $bookings = DB::transaction(function () use (
             $specs,
             $courtClient,
@@ -79,6 +85,7 @@ class PublicVenueBookingSubmission
             $pref,
             $proofPath,
             $giftCodeRaw,
+            $coachId,
         ) {
             $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
 
@@ -121,15 +128,19 @@ class PublicVenueBookingSubmission
                 $slice = $giftSlices[$i] ?? 0;
                 $netCents = max(0, $gross - $slice);
 
+                $coachFee = (int) ($spec['coach_fee_cents'] ?? 0);
+
                 $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
                     'court_id' => $court->id,
                     'user_id' => $booker->id,
+                    'coach_user_id' => $coachId,
                     'desk_submitted_by' => null,
                     'starts_at' => $spec['starts'],
                     'ends_at' => $spec['ends'],
                     'status' => $deskStatus,
                     'amount_cents' => $netCents > 0 ? $netCents : null,
+                    'coach_fee_cents' => $coachFee > 0 ? $coachFee : null,
                     'currency' => $courtClient->currency ?? 'PHP',
                     'notes' => $bookingNotesForCreate,
                     'gift_card_id' => $slice > 0 ? $giftCardId : null,

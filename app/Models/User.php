@@ -101,6 +101,35 @@ class User extends Authenticatable
         return $this->hasMany(OpenPlaySession::class);
     }
 
+    public function coachProfile(): HasOne
+    {
+        return $this->hasOne(CoachProfile::class);
+    }
+
+    public function coachedCourts(): HasMany
+    {
+        return $this->hasMany(CoachCourt::class, 'coach_user_id');
+    }
+
+    public function coachHourAvailabilities(): HasMany
+    {
+        return $this->hasMany(CoachHourAvailability::class, 'coach_user_id');
+    }
+
+    /** Bookings where this user is the assigned coach. */
+    public function coachedBookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'coach_user_id');
+    }
+
+    public function isCoach(): bool
+    {
+        return UserType::query()
+            ->where('id', $this->user_type_id)
+            ->where('slug', UserType::SLUG_COACH)
+            ->exists();
+    }
+
     public function isSuperAdmin(): bool
     {
         return UserType::query()

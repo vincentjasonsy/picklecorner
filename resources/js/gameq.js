@@ -1,7 +1,10 @@
 /**
- * PickleGameQ organizer — runs fully in the browser with localStorage (works offline after first load).
+ * GameQ organizer — runs fully in the browser with localStorage (works offline after first load).
  */
-const STORAGE_KEY = 'court_booking_picklegameq_v1';
+const STORAGE_KEY = 'court_booking_gameq_v1';
+
+/** Previous key (PickleGameQ); migrated once on read. */
+const STORAGE_KEY_LEGACY = 'court_booking_picklegameq_v1';
 
 /** Max roster / queue size for one session (must match OpenPlaySession::MAX_PLAYERS_PER_SESSION). */
 const MAX_PLAYERS_PER_SESSION = 55;
@@ -52,7 +55,14 @@ function defaultState() {
 
 function loadState() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+            raw = localStorage.getItem(STORAGE_KEY_LEGACY);
+            if (raw) {
+                localStorage.setItem(STORAGE_KEY, raw);
+                localStorage.removeItem(STORAGE_KEY_LEGACY);
+            }
+        }
         if (!raw) {
             return defaultState();
         }
@@ -95,7 +105,7 @@ function readCsrfToken() {
 }
 
 document.addEventListener('alpine:init', () => {
-    window.Alpine.data('pickleGameQApp', () => ({
+    window.Alpine.data('gameqApp', () => ({
         saveTimer: null,
         tick: 0,
         activeTab: 'play',
@@ -1149,7 +1159,7 @@ document.addEventListener('alpine:init', () => {
             });
             const a = document.createElement('a');
             a.href = URL.createObjectURL(blob);
-            a.download = `picklegameq-${new Date().toISOString().slice(0, 10)}.json`;
+            a.download = `gameq-${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(a.href);
         },

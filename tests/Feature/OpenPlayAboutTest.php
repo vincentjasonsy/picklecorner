@@ -15,8 +15,8 @@ class OpenPlayAboutTest extends TestCase
     {
         $this->get(route('open-play.about'))
             ->assertOk()
-            ->assertSee('PickleGameQ', false)
-            ->assertSee('Log in to use PickleGameQ', false)
+            ->assertSee('GameQ', false)
+            ->assertSee('Log in to use GameQ', false)
             ->assertSee('Your hosted sessions', false);
     }
 
@@ -33,7 +33,7 @@ class OpenPlayAboutTest extends TestCase
             ->get(route('open-play.about'))
             ->assertOk()
             ->assertSee('Friday ladder', false)
-            ->assertSee('Open in PickleGameQ', false)
+            ->assertSee('Open in GameQ', false)
             ->assertSee('of '.OpenPlaySession::MONTHLY_SAVE_LIMIT, false);
     }
 }

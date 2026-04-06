@@ -1,6 +1,6 @@
 <div
     class="min-h-0"
-    x-data="pickleGameQApp()"
+    x-data="gameqApp()"
     x-cloak
     data-open-play-share-store="{{ route('open-play.share.store') }}"
     data-open-play-share-base="{{ url('/open-play/share') }}"
@@ -23,7 +23,7 @@
                 class="shrink-0 rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-emerald-600/25 transition hover:bg-emerald-500 active:scale-[0.98] dark:bg-emerald-600 dark:shadow-emerald-900/30 dark:hover:bg-emerald-500"
                 @click="startOpenPlayWizard()"
             >
-                Start PickleGameQ
+                Start GameQ
             </button>
         </div>
 
@@ -76,7 +76,7 @@
                                 <p class="font-medium text-zinc-700 dark:text-zinc-300">No sessions yet</p>
                                 <p class="mt-2">
                                     <button type="button" class="font-semibold text-emerald-700 hover:underline dark:text-emerald-400" @click="startOpenPlayWizard()">
-                                        Start your first PickleGameQ
+                                        Start your first GameQ
                                     </button>
                                 </p>
                             </td>

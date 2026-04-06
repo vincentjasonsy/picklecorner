@@ -25,7 +25,7 @@ class OpenPlayShareController extends Controller
         if ($playerCount > OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
             return response()->json([
                 'message' => sprintf(
-                    'PickleGameQ allows at most %d players per session.',
+                    'GameQ allows at most %d players per session.',
                     OpenPlaySession::MAX_PLAYERS_PER_SESSION,
                 ),
             ], 422);
@@ -70,7 +70,7 @@ class OpenPlayShareController extends Controller
         if ($playerCount > OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
             return response()->json([
                 'message' => sprintf(
-                    'PickleGameQ allows at most %d players per session.',
+                    'GameQ allows at most %d players per session.',
                     OpenPlaySession::MAX_PLAYERS_PER_SESSION,
                 ),
             ], 422);

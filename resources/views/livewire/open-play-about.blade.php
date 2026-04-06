@@ -8,7 +8,7 @@
                 <h1
                     class="font-display mt-3 flex flex-wrap items-center justify-center gap-2 text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-4xl lg:justify-start lg:text-5xl"
                 >
-                    <x-picklegameq-mark />
+                    <x-gameq-mark />
                 </h1>
                 <p class="mx-auto mt-5 max-w-2xl text-lg text-zinc-600 dark:text-zinc-400 xl:mx-0 xl:max-w-none xl:text-xl">
                     Run casual sessions at the club: who’s on court, who’s waiting, and scores — without spreadsheets or group chats.
@@ -22,7 +22,7 @@
                         wire:navigate
                         class="inline-flex w-full items-center justify-center rounded-xl bg-sky-600 px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 sm:w-auto"
                     >
-                        Open PickleGameQ
+                        Open GameQ
                     </a>
                     <a
                         href="{{ route('account.dashboard') }}"
@@ -37,7 +37,7 @@
                         wire:navigate
                         class="inline-flex w-full items-center justify-center rounded-xl bg-sky-600 px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500 sm:w-auto"
                     >
-                        Log in to use PickleGameQ
+                        Log in to use GameQ
                     </a>
                     <a
                         href="{{ route('register') }}"
@@ -80,7 +80,7 @@
                             Where your data lives
                         </h2>
                         <p class="mt-4 text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            While you run a session, PickleGameQ keeps a copy in your browser so it stays quick and works even if the Wi‑Fi blips. When you’re logged in, you can <span class="font-medium text-zinc-800 dark:text-zinc-200">record sessions you hosted</span> in your history (up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new entries per calendar month), search and filter them here, and reopen any session in PickleGameQ.
+                            While you run a session, GameQ keeps a copy in your browser so it stays quick and works even if the Wi‑Fi blips. When you’re logged in, you can <span class="font-medium text-zinc-800 dark:text-zinc-200">record sessions you hosted</span> in your history (up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new entries per calendar month), search and filter them here, and reopen any session in GameQ.
                         </p>
                     </section>
 
@@ -89,7 +89,7 @@
                             Booking a court is separate
                         </h2>
                         <p class="mt-4 text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            PickleGameQ helps you organize people and games on the day. To reserve court time through {{ config('app.name') }}, use
+                            GameQ helps you organize people and games on the day. To reserve court time through {{ config('app.name') }}, use
                             <a href="{{ route('book-now') }}" wire:navigate class="font-medium text-sky-700 underline decoration-sky-600/30 hover:decoration-sky-600 dark:text-sky-400">Book now</a>.
                         </p>
                     </section>
@@ -110,7 +110,7 @@
                     @if ($monthlyQuota !== null)
                         <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
                             <span class="font-medium text-zinc-800 dark:text-zinc-200">{{ $monthlyQuota['used'] }} of {{ $monthlyQuota['limit'] }}</span>
-                            PickleGameQ uses this month (saved to your account).
+                            GameQ uses this month (saved to your account).
                             <span class="mt-1 block text-xs text-zinc-500 dark:text-zinc-500">
                                 Resets {{ \Illuminate\Support\Carbon::parse($monthlyQuota['resets_at'])->timezone(config('app.timezone'))->format('M j, Y') }}.
                             </span>
@@ -154,7 +154,7 @@
                             @if ($historySearch !== '' || $historyMonth !== '')
                                 No sessions match your filters. Try another search or month.
                             @else
-                                No history yet. Open PickleGameQ, run a session, then use <span class="font-medium text-zinc-800 dark:text-zinc-200">Add to history</span> — each entry is one session you hosted.
+                                No history yet. Open GameQ, run a session, then use <span class="font-medium text-zinc-800 dark:text-zinc-200">Add to history</span> — each entry is one session you hosted.
                             @endif
                         </p>
                     @else
@@ -175,7 +175,7 @@
                                         wire:navigate
                                         class="mt-3 inline-flex w-full items-center justify-center rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-500"
                                     >
-                                        Open in PickleGameQ
+                                        Open in GameQ
                                     </a>
                                 </li>
                             @endforeach
@@ -184,7 +184,7 @@
                 @else
                     <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                         <a href="{{ route('login') }}" wire:navigate class="font-medium text-sky-700 underline decoration-sky-600/30 hover:decoration-sky-600 dark:text-sky-400">Log in</a>
-                        to see sessions you’ve hosted, search your history, and reopen one in PickleGameQ.
+                        to see sessions you’ve hosted, search your history, and reopen one in GameQ.
                     </p>
                     <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
                         Up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} uses per calendar month (each save counts as one use).

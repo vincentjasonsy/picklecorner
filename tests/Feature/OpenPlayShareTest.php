@@ -84,7 +84,7 @@ class OpenPlayShareTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath(
                 'message',
-                'PickleGameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
+                'GameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
             );
     }
 
@@ -108,7 +108,7 @@ class OpenPlayShareTest extends TestCase
 
         $this->get(route('open-play.watch', $share))
             ->assertOk()
-            ->assertSee('PickleGameQ · Live', false)
+            ->assertSee('GameQ · Live', false)
             ->assertSee('Sam', false);
     }
 
@@ -166,7 +166,7 @@ class OpenPlayShareTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath(
                 'message',
-                'PickleGameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
+                'GameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
             );
     }
 

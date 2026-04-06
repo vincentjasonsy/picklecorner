@@ -7,8 +7,10 @@ use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\CourtDateSlotBlock;
 use App\Models\GiftCard;
+use App\Models\User;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
+use App\Services\CoachAvailabilityService;
 use App\Services\CourtSlotPricing;
 use App\Services\GiftCardService;
 use App\Services\PublicVenueBookingSubmission;
@@ -48,6 +50,12 @@ class VenueBookingPage extends Component
     public string $paymentReference = '';
 
     public string $giftCardCode = '';
+
+    /** Optional coach for this request (single court only; court + coach booked together). */
+    public string $coachUserId = '';
+
+    /** Billable coach hours (you choose; max = selected slot hours). Only used when {@see $coachUserId} is set. */
+    public int $coachPaidHours = 0;
 
     /** @var mixed */
     public $paymentProof = null;
@@ -93,6 +101,12 @@ class VenueBookingPage extends Component
         if (is_string($draft['gift_card_code'] ?? null)) {
             $this->giftCardCode = $draft['gift_card_code'];
         }
+        if (is_string($draft['coach_user_id'] ?? null)) {
+            $this->coachUserId = $draft['coach_user_id'];
+        }
+        if (isset($draft['coach_paid_hours'])) {
+            $this->coachPaidHours = max(0, (int) $draft['coach_paid_hours']);
+        }
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
     }
 
@@ -105,6 +119,8 @@ class VenueBookingPage extends Component
             'payment_method' => $this->paymentMethod,
             'payment_reference' => $this->paymentReference,
             'gift_card_code' => $this->giftCardCode,
+            'coach_user_id' => $this->coachUserId,
+            'coach_paid_hours' => $this->coachPaidHours,
             'step' => 'review',
         ]);
         session()->put(self::AFTER_LOGIN_SESSION_KEY, true);
@@ -168,6 +184,8 @@ class VenueBookingPage extends Component
             $this->bookingCalendarDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
         }
         $this->selectedSlots = [];
+        $this->coachUserId = '';
+        $this->coachPaidHours = 0;
     }
 
     public function shiftBookingDate(int $days): void
@@ -179,6 +197,8 @@ class VenueBookingPage extends Component
         }
         $this->bookingCalendarDate = $d->format('Y-m-d');
         $this->selectedSlots = [];
+        $this->coachUserId = '';
+        $this->coachPaidHours = 0;
     }
 
     public function bookingDayOfWeek(): int
@@ -378,11 +398,79 @@ class VenueBookingPage extends Component
 
         $selected[] = $key;
         $this->selectedSlots = array_values($selected);
+        if ($this->coachUserId !== '' && count(CoachAvailabilityService::groupSlotsByCourt($this->selectedSlots)) > 1) {
+            $this->coachUserId = '';
+            $this->coachPaidHours = 0;
+        }
+        $this->clampCoachPaidHours();
+    }
+
+    public function updatedCoachUserId(?string $value): void
+    {
+        if ($value === null || $value === '') {
+            $this->coachPaidHours = 0;
+
+            return;
+        }
+
+        $max = $this->totalSelectedSlotHours();
+        if ($max < 1) {
+            $this->coachPaidHours = 0;
+
+            return;
+        }
+
+        if ($this->coachPaidHours < 1) {
+            $this->coachPaidHours = $max;
+        }
+        $this->coachPaidHours = min($max, max(1, $this->coachPaidHours));
+    }
+
+    public function updatedCoachPaidHours(mixed $value): void
+    {
+        $this->clampCoachPaidHours((int) $value);
+    }
+
+    protected function clampCoachPaidHours(?int $preferred = null): void
+    {
+        if ($this->coachUserId === '') {
+            $this->coachPaidHours = 0;
+
+            return;
+        }
+
+        $max = $this->totalSelectedSlotHours();
+        if ($max < 1) {
+            $this->coachPaidHours = 0;
+
+            return;
+        }
+
+        $v = $preferred ?? $this->coachPaidHours;
+        if ($v < 1) {
+            $v = $max;
+        }
+        $this->coachPaidHours = min($max, max(1, $v));
+    }
+
+    /**
+     * Number of one-hour slots selected (all courts). Used as max coach-paid hours.
+     */
+    public function totalSelectedSlotHours(): int
+    {
+        $n = 0;
+        foreach ($this->selectedSlotsGroupedByCourt() as $hours) {
+            $n += count($hours);
+        }
+
+        return $n;
     }
 
     public function clearSlotSelection(): void
     {
         $this->selectedSlots = [];
+        $this->coachUserId = '';
+        $this->coachPaidHours = 0;
     }
 
     /**
@@ -460,6 +548,7 @@ class VenueBookingPage extends Component
             return;
         }
 
+        $this->clampCoachPaidHours();
         $this->step = 'review';
     }
 
@@ -505,7 +594,55 @@ class VenueBookingPage extends Component
     }
 
     /**
-     * @return list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>}>
+     * @return list<array{starts: Carbon, ends: Carbon}>
+     */
+    protected function selectedTimeWindows(): array
+    {
+        $byCourt = $this->selectedSlotsGroupedByCourt();
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date === null) {
+            return [];
+        }
+        $tz = config('app.timezone', 'UTC');
+        $windows = [];
+        foreach ($byCourt as $hours) {
+            foreach ($this->contiguousHourRuns($hours) as $run) {
+                if ($run === []) {
+                    continue;
+                }
+                $firstHour = $run[0];
+                $lastHour = $run[count($run) - 1];
+                $starts = Carbon::parse($date.' '.sprintf('%02d:00:00', $firstHour), $tz);
+                $ends = Carbon::parse($date.' '.sprintf('%02d:00:00', $lastHour), $tz)->addHour();
+                $windows[] = ['starts' => $starts, 'ends' => $ends];
+            }
+        }
+
+        return $windows;
+    }
+
+    #[Computed]
+    public function availableCoachesForReview(): Collection
+    {
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date === null || $this->selectedSlots === []) {
+            return collect();
+        }
+        $windows = $this->selectedTimeWindows();
+        if ($windows === []) {
+            return collect();
+        }
+
+        return CoachAvailabilityService::availableCoaches(
+            $this->courtClient,
+            $date,
+            $this->selectedSlots,
+            $windows,
+        );
+    }
+
+    /**
+     * @return list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents: int, hours: list<int>, coach_fee_cents: int}>
      */
     public function buildSpecsForSubmit(): array
     {
@@ -515,8 +652,31 @@ class VenueBookingPage extends Component
         if ($date === null) {
             return [];
         }
+
+        $coachUser = null;
+        if ($this->coachUserId !== '') {
+            if (count($byCourt) !== 1) {
+                return [];
+            }
+            $coachUser = User::query()->with('coachProfile')->find($this->coachUserId);
+            if (! $coachUser?->isCoach()) {
+                return [];
+            }
+            if (! $this->availableCoachesForReview->contains('id', $this->coachUserId)) {
+                return [];
+            }
+        }
+
         $tz = config('app.timezone', 'UTC');
         $specs = [];
+
+        $rate = (int) ($coachUser?->coachProfile?->hourly_rate_cents ?? 0);
+        $maxBillable = $this->totalSelectedSlotHours();
+        $paidHours = $coachUser !== null
+            ? min($maxBillable, max(0, $this->coachPaidHours))
+            : 0;
+        $coachTotalFee = $coachUser !== null ? $rate * $paidHours : 0;
+        $coachFeeRemaining = $coachTotalFee;
 
         foreach ($byCourt as $courtId => $hours) {
             $court = Court::query()
@@ -547,22 +707,36 @@ class VenueBookingPage extends Component
                     return [];
                 }
 
-                $grossCents = 0;
+                if ($coachUser !== null) {
+                    if (CoachAvailabilityService::coachHasOverlappingBooking((string) $coachUser->id, $starts, $ends)) {
+                        return [];
+                    }
+                }
+
+                $courtGross = 0;
                 foreach ($run as $h) {
                     $slotStart = Carbon::parse($date.' '.sprintf('%02d:00:00', $h), $tz);
                     $hourly = CourtSlotPricing::estimatedHourlyCentsAtStart($court, $slotStart)
                         ?? $court->courtClient?->hourly_rate_cents
                         ?? 0;
-                    $grossCents += $hourly;
+                    $courtGross += $hourly;
                 }
-                $grossCents = (int) round($grossCents);
+                $courtGross = (int) round($courtGross);
+
+                $coachFeeThisSpec = 0;
+                if ($coachFeeRemaining > 0) {
+                    $coachFeeThisSpec = $coachFeeRemaining;
+                    $coachFeeRemaining = 0;
+                }
 
                 $specs[] = [
                     'court' => $court,
                     'starts' => $starts,
                     'ends' => $ends,
-                    'gross_cents' => $grossCents,
+                    'gross_cents' => $courtGross + $coachFeeThisSpec,
+                    'court_gross_cents' => $courtGross,
                     'hours' => $run,
+                    'coach_fee_cents' => $coachFeeThisSpec,
                 ];
             }
         }
@@ -574,6 +748,42 @@ class VenueBookingPage extends Component
     public function reviewEstimateCents(): int
     {
         return (int) array_sum(array_column($this->buildSpecsForSubmit(), 'gross_cents'));
+    }
+
+    #[Computed]
+    public function reviewCoachFeeCents(): int
+    {
+        if ($this->coachUserId === '') {
+            return 0;
+        }
+
+        $specs = $this->buildSpecsForSubmit();
+        if ($specs === []) {
+            return 0;
+        }
+
+        return (int) array_sum(array_column($specs, 'coach_fee_cents'));
+    }
+
+    #[Computed]
+    public function reviewCourtSubtotalCents(): int
+    {
+        $specs = $this->buildSpecsForSubmit();
+        if ($specs === []) {
+            return 0;
+        }
+
+        return (int) array_sum(array_column($specs, 'court_gross_cents'));
+    }
+
+    public function coachSelectionBlockedReason(): ?string
+    {
+        $by = CoachAvailabilityService::groupSlotsByCourt($this->selectedSlots);
+        if (count($by) > 1) {
+            return 'To book a coach, select time slots on one court only for this date. Court and coach are reserved together.';
+        }
+
+        return null;
     }
 
     /**
@@ -628,15 +838,25 @@ class VenueBookingPage extends Component
 
         $this->step = 'review';
 
+        $maxCoachH = $this->totalSelectedSlotHours();
+
         $rules = [
             'paymentMethod' => ['nullable', 'string', Rule::in(Booking::paymentMethodOptions())],
             'paymentReference' => ['nullable', 'string', 'max:128'],
             'paymentProof' => ['nullable', 'image', 'max:5120'],
             'giftCardCode' => ['nullable', 'string', 'max:48'],
+            'coachUserId' => ['nullable', 'string', 'uuid', 'exists:users,id'],
+            'coachPaidHours' => ['nullable', 'integer', 'min:0', 'max:'.$maxCoachH],
         ];
+
+        if ($this->coachUserId !== '' && $maxCoachH >= 1) {
+            $rules['coachPaidHours'] = ['required', 'integer', 'min:1', 'max:'.$maxCoachH];
+        }
+
         $this->validate($rules, [], [
             'paymentReference' => 'payment reference',
             'giftCardCode' => 'gift card code',
+            'coachPaidHours' => 'coach paid hours',
         ]);
 
         $specs = $this->buildSpecsForSubmit();
@@ -644,6 +864,16 @@ class VenueBookingPage extends Component
             $this->addError('selectedSlots', 'Your selection is no longer available. Adjust the grid and try again.');
 
             return;
+        }
+
+        if ($this->coachUserId !== '') {
+            $ids = $this->availableCoachesForReview->pluck('id')->map(fn ($id): string => (string) $id)->all();
+            if (! in_array($this->coachUserId, $ids, true)) {
+                $this->addError('coachUserId', 'That coach is not available for these courts and times. Choose another coach or change your selection.');
+
+                return;
+            }
+            $this->clampCoachPaidHours();
         }
 
         $booker = auth()->user();
@@ -661,6 +891,7 @@ class VenueBookingPage extends Component
                 $this->paymentReference,
                 $this->paymentProof,
                 $this->giftCardCode,
+                $this->coachUserId !== '' ? $this->coachUserId : null,
             );
         } catch (\InvalidArgumentException $e) {
             if ($e->getMessage() === 'No time slots to book.') {
@@ -685,6 +916,8 @@ class VenueBookingPage extends Component
         $this->paymentReference = '';
         $this->paymentMethod = Booking::PAYMENT_GCASH;
         $this->giftCardCode = '';
+        $this->coachUserId = '';
+        $this->coachPaidHours = 0;
         $this->step = 'times';
 
         $giftTotal = (int) array_sum(array_filter(array_map(

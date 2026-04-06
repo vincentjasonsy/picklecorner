@@ -56,7 +56,7 @@ class OpenPlaySessionController extends Controller
         if ($playerCount > OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
             return response()->json([
                 'message' => sprintf(
-                    'PickleGameQ allows at most %d players per session.',
+                    'GameQ allows at most %d players per session.',
                     OpenPlaySession::MAX_PLAYERS_PER_SESSION,
                 ),
             ], 422);
@@ -66,7 +66,7 @@ class OpenPlaySessionController extends Controller
         if ($quota['remaining'] <= 0) {
             return response()->json([
                 'message' => sprintf(
-                    'You can save up to %d PickleGameQ sessions to your account each calendar month. The limit resets at the start of next month.',
+                    'You can save up to %d GameQ sessions to your account each calendar month. The limit resets at the start of next month.',
                     OpenPlaySession::MONTHLY_SAVE_LIMIT,
                 ),
                 'quota' => $quota,

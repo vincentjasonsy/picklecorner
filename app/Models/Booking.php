@@ -90,6 +90,8 @@ class Booking extends Model
         'payment_method',
         'payment_reference',
         'payment_proof_path',
+        'coach_user_id',
+        'coach_fee_cents',
     ];
 
     protected function casts(): array
@@ -98,6 +100,7 @@ class Booking extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'gift_card_redeemed_cents' => 'integer',
+            'coach_fee_cents' => 'integer',
         ];
     }
 
@@ -114,6 +117,11 @@ class Booking extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function coach(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'coach_user_id');
     }
 
     public function deskSubmitter(): BelongsTo

@@ -3,7 +3,7 @@
 ])
 
 <span {{ $attributes->merge(['class' => 'inline-flex items-center gap-1.5']) }}>
-    <span>PickleGameQ</span>
+    <span>GameQ</span>
     <span
         @class([
             'shrink-0 rounded-md border font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200',

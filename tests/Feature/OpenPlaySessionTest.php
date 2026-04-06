@@ -263,7 +263,7 @@ class OpenPlaySessionTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonPath(
                 'message',
-                'PickleGameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
+                'GameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
             );
     }
 }

@@ -1,5 +1,5 @@
 import './bootstrap';
-import './open-play.js';
+import './gameq.js';
 import { initTheme } from './theme';
 
 document.addEventListener('DOMContentLoaded', () => {

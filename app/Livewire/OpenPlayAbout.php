@@ -8,7 +8,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::guest')]
-#[Title('PickleGameQ (Beta)')]
+#[Title('GameQ (Beta)')]
 class OpenPlayAbout extends Component
 {
     public string $historySearch = '';

@@ -107,7 +107,7 @@
                                         : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                 ])
                             >
-                                <x-picklegameq-mark compact />
+                                <x-gameq-mark compact />
                             </a>
                             <a
                                 href="{{ route('book-now') }}"
@@ -273,7 +273,7 @@
                                     : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                             ])
                         >
-                            <x-picklegameq-mark compact />
+                            <x-gameq-mark compact />
                         </a>
                         <a
                             href="{{ route('book-now') }}"
@@ -366,7 +366,7 @@
                             wire:navigate
                             class="inline-flex items-center gap-1 normal-case hover:text-emerald-600 dark:hover:text-emerald-400"
                         >
-                            <x-picklegameq-mark compact />
+                            <x-gameq-mark compact />
                         </a>
                         <a href="{{ route('book-now') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Book now</a>
                     </nav>
