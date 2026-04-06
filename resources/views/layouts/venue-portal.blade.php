@@ -8,6 +8,8 @@
 
         <title>{{ $title ?? 'Venue' }} — {{ config('app.name') }}</title>
 
+        @include('partials.favicon')
+
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link
             href="https://fonts.bunny.net/css?family=barlow:600,700|instrument-sans:400,500,600"
