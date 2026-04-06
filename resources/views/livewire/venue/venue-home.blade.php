@@ -16,7 +16,7 @@
             </p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
             <a
                 href="{{ route('venue.bookings.pending') }}"
                 wire:navigate
@@ -47,6 +47,15 @@
                 <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Manual booking</p>
                 <p class="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">Open grid →</p>
                 <p class="mt-1 text-xs text-zinc-500">Create confirmed bookings</p>
+            </a>
+            <a
+                href="{{ route('venue.crm.index') }}"
+                wire:navigate
+                class="rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-emerald-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-800"
+            >
+                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Customers</p>
+                <p class="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">CRM →</p>
+                <p class="mt-1 text-xs text-zinc-500">Notes &amp; booking history per player</p>
             </a>
         </div>
     @endif

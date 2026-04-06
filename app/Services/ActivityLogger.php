@@ -4,6 +4,13 @@ namespace App\Services;
 
 use App\Events\ActivityLogged;
 use App\Models\ActivityLog;
+use App\Models\Booking;
+use App\Models\Court;
+use App\Models\CourtChangeRequest;
+use App\Models\CourtClient;
+use App\Models\CourtClientInvoice;
+use App\Models\GiftCard;
+use App\Models\VenueContactNote;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Request;
 
@@ -40,27 +47,31 @@ class ActivityLogger
 
     protected static function inferCourtClientId(?Model $subject): ?string
     {
-        if ($subject instanceof \App\Models\Booking) {
+        if ($subject instanceof Booking) {
             return $subject->court_client_id;
         }
 
-        if ($subject instanceof \App\Models\CourtClient) {
+        if ($subject instanceof CourtClient) {
             return (string) $subject->getKey();
         }
 
-        if ($subject instanceof \App\Models\Court) {
+        if ($subject instanceof Court) {
             return (string) $subject->court_client_id;
         }
 
-        if ($subject instanceof \App\Models\GiftCard) {
+        if ($subject instanceof GiftCard) {
             return $subject->court_client_id !== null ? (string) $subject->court_client_id : null;
         }
 
-        if ($subject instanceof \App\Models\CourtChangeRequest) {
+        if ($subject instanceof CourtChangeRequest) {
             return (string) $subject->court_client_id;
         }
 
-        if ($subject instanceof \App\Models\CourtClientInvoice) {
+        if ($subject instanceof CourtClientInvoice) {
+            return (string) $subject->court_client_id;
+        }
+
+        if ($subject instanceof VenueContactNote) {
             return (string) $subject->court_client_id;
         }
 

@@ -47,6 +47,8 @@ use App\Livewire\Venue\VenueBookingHistory;
 use App\Livewire\Venue\VenueBookingShow;
 use App\Livewire\Venue\VenueCourtClientManage;
 use App\Livewire\Venue\VenueCourts;
+use App\Livewire\Venue\VenueCrmContact;
+use App\Livewire\Venue\VenueCrmIndex;
 use App\Livewire\Venue\VenueGiftCardShow;
 use App\Livewire\Venue\VenueHome;
 use App\Livewire\Venue\VenueManualBooking;
@@ -132,6 +134,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/bookings/pending', VenueBookingApprovals::class)->name('bookings.pending');
         Route::livewire('/bookings/history', VenueBookingHistory::class)->name('bookings.history');
         Route::livewire('/bookings/{booking}', VenueBookingShow::class)->name('bookings.show');
+        Route::livewire('/customers', VenueCrmIndex::class)->name('crm.index');
+        Route::livewire('/customers/{contact}', VenueCrmContact::class)->name('crm.contacts.show');
         Route::livewire('/courts', VenueCourts::class)->name('courts');
         Route::livewire('/gift-cards', 'venue-gift-cards-index')->name('gift-cards.index');
         Route::livewire('/gift-cards/{giftCard}', VenueGiftCardShow::class)->name('gift-cards.show');

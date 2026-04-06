@@ -103,6 +103,11 @@ class CourtClient extends Model
         return $this->hasMany(CourtClientInvoice::class)->orderByDesc('created_at');
     }
 
+    public function venueContactNotes(): HasMany
+    {
+        return $this->hasMany(VenueContactNote::class)->orderByDesc('created_at');
+    }
+
     /** @return list<string> */
     public static function deskBookingPolicyValues(): array
     {

@@ -134,6 +134,28 @@
                             >
                                 Booking history
                             </a>
+                            <a
+                                href="{{ route('venue.crm.index') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.crm.*')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                <span class="block">Customers</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-[11px] font-normal normal-case',
+                                        request()->routeIs('venue.crm.*')
+                                            ? 'text-emerald-700/80 dark:text-emerald-300/80'
+                                            : 'text-zinc-500 dark:text-zinc-400',
+                                    ])
+                                >
+                                    Search, profiles &amp; notes
+                                </span>
+                            </a>
                         </div>
                     </div>
 

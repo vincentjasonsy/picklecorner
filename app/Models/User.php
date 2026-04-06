@@ -96,6 +96,11 @@ class User extends Authenticatable
         return $this->hasMany(ActivityLog::class);
     }
 
+    public function venueContactNotesAbout(): HasMany
+    {
+        return $this->hasMany(VenueContactNote::class, 'user_id')->orderByDesc('created_at');
+    }
+
     public function openPlaySessions(): HasMany
     {
         return $this->hasMany(OpenPlaySession::class);
