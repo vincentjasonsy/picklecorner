@@ -5,7 +5,13 @@ cd /var/www/html
 export PORT="${PORT:-8080}"
 
 # Writable dirs (Render uses ephemeral disk by default)
-chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
+chown -R www-data:www-data storage bootstrap/cache database 2>/dev/null || true
+
+# SQLite file DB (default path); ensure file exists and is writable by php-fpm
+if [ ! -f database/database.sqlite ]; then
+    touch database/database.sqlite
+fi
+chown www-data:www-data database/database.sqlite 2>/dev/null || true
 
 php artisan storage:link --force 2>/dev/null || true
 

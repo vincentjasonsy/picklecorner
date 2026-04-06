@@ -58,8 +58,8 @@ COPY . .
 COPY --from=assets /app/public/build ./public/build
 
 RUN composer dump-autoload --optimize --no-dev \
-    && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache
+    && mkdir -p storage/framework/{sessions,views,cache} storage/logs bootstrap/cache database \
+    && chown -R www-data:www-data storage bootstrap/cache database
 
 COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/php/fpm-pool.conf /usr/local/etc/php-fpm.d/zz-docker.conf
