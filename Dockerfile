@@ -63,10 +63,11 @@ RUN composer dump-autoload --optimize --no-dev \
 
 COPY docker/nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/php/fpm-pool.conf /usr/local/etc/php-fpm.d/zz-docker.conf
-COPY docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY docker/supervisor/laravel.conf /etc/supervisor/conf.d/laravel.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \
-    && rm -f /etc/nginx/sites-enabled/default
+    && rm -f /etc/nginx/sites-enabled/default \
+    && mkdir -p /var/log/supervisor
 
 EXPOSE 8080
 

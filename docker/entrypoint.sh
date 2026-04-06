@@ -9,6 +9,8 @@ chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true
 
 php artisan storage:link --force 2>/dev/null || true
 
+php artisan package:discover --ansi 2>/dev/null || true
+
 # Runtime caches once env (APP_KEY, DB_*, etc.) is injected by the platform
 php artisan config:cache 2>/dev/null || true
 php artisan route:cache 2>/dev/null || true
@@ -19,4 +21,4 @@ export PORT
 envsubst '${PORT}' < /etc/nginx/templates/default.conf.template > /etc/nginx/sites-available/default
 ln -sf /etc/nginx/sites-available/default /etc/nginx/sites-enabled/default
 
-exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf
+exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
