@@ -93,7 +93,9 @@ Route::middleware('auth')->group(function (): void {
         Route::delete('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'destroy'])
             ->middleware('throttle:30,1')
             ->name('open-play.sessions.destroy');
-        Route::livewire('/open-play', OpenPlayOrganizer::class)->name('open-play');
+        Route::livewire('/tools/pickle-game-q', OpenPlayOrganizer::class)->name('open-play');
+        Route::get('/open-play', fn () => redirect()->route('account.open-play'))
+            ->name('open-play.legacy');
         Route::livewire('/settings', MemberProfileSettings::class)->name('settings');
     });
 

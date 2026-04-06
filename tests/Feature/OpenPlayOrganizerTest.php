@@ -25,6 +25,6 @@ class OpenPlayOrganizerTest extends TestCase
             ->assertOk()
             ->assertSee('pickleGameQApp', false)
             ->assertSee('Start PickleGameQ', false)
-            ->assertSee('Your hosted sessions', false);
+            ->assertSee('Open a saved session', false);
     }
 }
