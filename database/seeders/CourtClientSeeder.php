@@ -62,6 +62,7 @@ class CourtClientSeeder extends Seeder
                     'name' => $venue['name'],
                     'city' => $venue['city'],
                     'admin_user_id' => $admins[$index]->id,
+                    'subscription_tier' => CourtClient::TIER_PREMIUM,
                     'is_active' => true,
                     'hourly_rate_cents' => $pricing[$index]['hourly'],
                     'peak_hourly_rate_cents' => $pricing[$index]['peak'],

@@ -34,6 +34,7 @@ class CourtClientFactory extends Factory
             'city' => fake()->city(),
             'notes' => null,
             'admin_user_id' => null,
+            'subscription_tier' => CourtClient::TIER_PREMIUM,
             'is_active' => true,
             'hourly_rate_cents' => fake()->numberBetween(250, 550) * 100,
             'peak_hourly_rate_cents' => null,
@@ -48,6 +49,20 @@ class CourtClientFactory extends Factory
     {
         return $this->state(fn () => [
             'admin_user_id' => $user->id,
+        ]);
+    }
+
+    public function basicTier(): static
+    {
+        return $this->state(fn () => [
+            'subscription_tier' => CourtClient::TIER_BASIC,
+        ]);
+    }
+
+    public function premiumTier(): static
+    {
+        return $this->state(fn () => [
+            'subscription_tier' => CourtClient::TIER_PREMIUM,
         ]);
     }
 }

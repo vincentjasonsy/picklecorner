@@ -6,6 +6,7 @@ use App\Http\Middleware\EnsureCourtClientDesk;
 use App\Http\Middleware\EnsureDemoAccountValid;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureUserIsCoach;
+use App\Http\Middleware\EnsureVenuePremiumSubscription;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin_not_impersonating' => BlockAdminWhileImpersonating::class,
             'demo.valid' => EnsureDemoAccountValid::class,
             'coach' => EnsureUserIsCoach::class,
+            'venue_premium' => EnsureVenuePremiumSubscription::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

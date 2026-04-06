@@ -95,6 +95,59 @@
                             </p>
                         </div>
                     @endif
+
+                    @if ($isEdit && $courtAdminTypeId !== '' && (string) $user_type_id === (string) $courtAdminTypeId)
+                        @if ($user?->administeredCourtClient)
+                            <div class="sm:col-span-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                                <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                                    Venue subscription
+                                </h3>
+                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                    Applies to
+                                    <strong class="font-medium text-zinc-700 dark:text-zinc-300">
+                                        {{ $user->administeredCourtClient->name }}
+                                    </strong>
+                                    — controls gift cards and customer CRM in the venue portal (Basic vs Premium).
+                                </p>
+                                <label
+                                    class="mt-3 block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                    for="venue_subscription_tier"
+                                >
+                                    Tier
+                                </label>
+                                <select
+                                    wire:model="venue_subscription_tier"
+                                    id="venue_subscription_tier"
+                                    class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950 lg:max-w-md"
+                                >
+                                    <option value="{{ \App\Models\CourtClient::TIER_BASIC }}">
+                                        Basic — core operations only
+                                    </option>
+                                    <option value="{{ \App\Models\CourtClient::TIER_PREMIUM }}">
+                                        Premium — gift cards &amp; CRM
+                                    </option>
+                                </select>
+                                @error('venue_subscription_tier')
+                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @else
+                            <div class="sm:col-span-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                    <strong class="font-medium text-zinc-700 dark:text-zinc-300">Venue subscription</strong>
+                                    — assign this user to a venue under
+                                    <a
+                                        href="{{ route('admin.court-clients.index') }}"
+                                        wire:navigate
+                                        class="font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
+                                    >
+                                        Court clients
+                                    </a>
+                                    first; then you can set Basic or Premium here.
+                                </p>
+                            </div>
+                        @endif
+                    @endif
                 </div>
             </div>
 

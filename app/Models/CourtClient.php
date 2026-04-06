@@ -26,12 +26,19 @@ class CourtClient extends Model
 
     public const DESK_BOOKING_POLICY_AUTO_DENY = 'auto_deny';
 
+    /** @see self::subscriptionTierValues() — manual booking, desk queue, courts, reports, settings */
+    public const TIER_BASIC = 'basic';
+
+    /** Gift cards + customer CRM (and anything else marked Premium-only) */
+    public const TIER_PREMIUM = 'premium';
+
     protected $fillable = [
         'name',
         'slug',
         'city',
         'notes',
         'admin_user_id',
+        'subscription_tier',
         'is_active',
         'hourly_rate_cents',
         'peak_hourly_rate_cents',
@@ -158,5 +165,28 @@ class CourtClient extends Model
             self::DESK_BOOKING_POLICY_AUTO_DENY => 'Desk submissions are declined automatically. Nothing is queued here—change handling under Settings if you want to review requests.',
             default => 'Desk staff submit manual booking requests from the desk portal. Approve to confirm the slot, or deny to release it and record a reason.',
         };
+    }
+
+    /** @return list<string> */
+    public static function subscriptionTierValues(): array
+    {
+        return [
+            self::TIER_BASIC,
+            self::TIER_PREMIUM,
+        ];
+    }
+
+    public function subscriptionTierNormalized(): string
+    {
+        $t = (string) ($this->subscription_tier ?? '');
+
+        return in_array($t, self::subscriptionTierValues(), true)
+            ? $t
+            : self::TIER_BASIC;
+    }
+
+    public function hasPremiumSubscription(): bool
+    {
+        return $this->subscriptionTierNormalized() === self::TIER_PREMIUM;
     }
 }

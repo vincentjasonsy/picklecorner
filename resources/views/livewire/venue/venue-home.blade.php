@@ -49,13 +49,23 @@
                 <p class="mt-1 text-xs text-zinc-500">Create confirmed bookings</p>
             </a>
             <a
-                href="{{ route('venue.crm.index') }}"
+                href="{{ $cc->hasPremiumSubscription() ? route('venue.crm.index') : route('venue.plan') }}"
                 wire:navigate
-                class="rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-emerald-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-800"
+                @class([
+                    'rounded-xl border bg-white p-5 transition-colors dark:bg-zinc-900',
+                    $cc->hasPremiumSubscription()
+                        ? 'border-zinc-200 hover:border-emerald-300 dark:border-zinc-800 dark:hover:border-emerald-800'
+                        : 'border-amber-200 border-dashed hover:border-amber-400 dark:border-amber-900/60 dark:hover:border-amber-700',
+                ])
             >
                 <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Customers</p>
-                <p class="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">CRM →</p>
-                <p class="mt-1 text-xs text-zinc-500">Notes &amp; booking history per player</p>
+                @if ($cc->hasPremiumSubscription())
+                    <p class="mt-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">CRM →</p>
+                    <p class="mt-1 text-xs text-zinc-500">Notes &amp; booking history per player</p>
+                @else
+                    <p class="mt-2 text-sm font-medium text-amber-800 dark:text-amber-200">Locked · Premium</p>
+                    <p class="mt-1 text-xs text-zinc-500">Upgrade to unlock CRM</p>
+                @endif
             </a>
         </div>
     @endif

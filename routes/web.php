@@ -52,6 +52,7 @@ use App\Livewire\Venue\VenueCrmIndex;
 use App\Livewire\Venue\VenueGiftCardShow;
 use App\Livewire\Venue\VenueHome;
 use App\Livewire\Venue\VenueManualBooking;
+use App\Livewire\Venue\VenuePlan;
 use App\Services\ActivityLogger;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -129,19 +130,23 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
 
     Route::middleware('court_admin')->prefix('venue')->name('venue.')->group(function (): void {
         Route::livewire('/', VenueHome::class)->name('home');
+        Route::livewire('/plan', VenuePlan::class)->name('plan');
         Route::livewire('/settings', VenueCourtClientManage::class)->name('settings');
         Route::livewire('/manual-booking', VenueManualBooking::class)->name('manual-booking');
         Route::livewire('/bookings/pending', VenueBookingApprovals::class)->name('bookings.pending');
         Route::livewire('/bookings/history', VenueBookingHistory::class)->name('bookings.history');
         Route::livewire('/bookings/{booking}', VenueBookingShow::class)->name('bookings.show');
-        Route::livewire('/customers', VenueCrmIndex::class)->name('crm.index');
-        Route::livewire('/customers/{contact}', VenueCrmContact::class)->name('crm.contacts.show');
         Route::livewire('/courts', VenueCourts::class)->name('courts');
-        Route::livewire('/gift-cards', 'venue-gift-cards-index')->name('gift-cards.index');
-        Route::livewire('/gift-cards/{giftCard}', VenueGiftCardShow::class)->name('gift-cards.show');
         Route::livewire('/reports', 'venue-reports')->name('reports');
         Route::get('/reports/export/bookings', [ReportExportController::class, 'venueBookings'])
             ->name('reports.export.bookings');
+
+        Route::middleware('venue_premium')->group(function (): void {
+            Route::livewire('/customers', VenueCrmIndex::class)->name('crm.index');
+            Route::livewire('/customers/{contact}', VenueCrmContact::class)->name('crm.contacts.show');
+            Route::livewire('/gift-cards', 'venue-gift-cards-index')->name('gift-cards.index');
+            Route::livewire('/gift-cards/{giftCard}', VenueGiftCardShow::class)->name('gift-cards.show');
+        });
     });
 
     Route::middleware('court_client_desk')->prefix('desk')->name('desk.')->group(function (): void {

@@ -61,6 +61,9 @@
                         Venue portal
                     </span>
                 </div>
+                @php
+                    $premiumNav = $venueHasPremiumFeatures ?? false;
+                @endphp
                 <nav
                     class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
                     aria-label="Venue"
@@ -135,25 +138,52 @@
                                 Booking history
                             </a>
                             <a
-                                href="{{ route('venue.crm.index') }}"
+                                href="{{ $premiumNav ? route('venue.crm.index') : route('venue.plan') }}"
                                 wire:navigate
                                 @class([
                                     'rounded-lg px-3 py-2 transition-colors',
-                                    request()->routeIs('venue.crm.*')
+                                    $premiumNav && request()->routeIs('venue.crm.*')
                                         ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        : ($premiumNav
+                                            ? 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
+                                            : 'border border-dashed border-amber-300/90 bg-amber-50/70 text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100'),
                                 ])
                             >
-                                <span class="block">Customers</span>
-                                <span
-                                    @class([
-                                        'mt-0.5 block text-[11px] font-normal normal-case',
-                                        request()->routeIs('venue.crm.*')
-                                            ? 'text-emerald-700/80 dark:text-emerald-300/80'
-                                            : 'text-zinc-500 dark:text-zinc-400',
-                                    ])
-                                >
-                                    Search, profiles &amp; notes
+                                <span class="flex items-start gap-2">
+                                    @unless ($premiumNav)
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="1.5"
+                                            stroke="currentColor"
+                                            class="mt-0.5 h-4 w-4 shrink-0 opacity-80"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                                            />
+                                        </svg>
+                                    @endunless
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block">Customers</span>
+                                        <span
+                                            @class([
+                                                'mt-0.5 block text-[11px] font-normal normal-case',
+                                                $premiumNav && request()->routeIs('venue.crm.*')
+                                                    ? 'text-emerald-700/80 dark:text-emerald-300/80'
+                                                    : ($premiumNav ? 'text-zinc-500 dark:text-zinc-400' : 'text-amber-800/90 dark:text-amber-200/90'),
+                                            ])
+                                        >
+                                            @if ($premiumNav)
+                                                Search, profiles &amp; notes
+                                            @else
+                                                Locked — Premium only
+                                            @endif
+                                        </span>
+                                    </span>
                                 </span>
                             </a>
                         </div>
@@ -201,16 +231,46 @@
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
-                                href="{{ route('venue.gift-cards.index') }}"
+                                href="{{ $premiumNav ? route('venue.gift-cards.index') : route('venue.plan') }}"
                                 wire:navigate
                                 @class([
                                     'rounded-lg px-3 py-2 transition-colors',
-                                    request()->routeIs('venue.gift-cards.*')
+                                    $premiumNav && request()->routeIs('venue.gift-cards.*')
                                         ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        : ($premiumNav
+                                            ? 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
+                                            : 'border border-dashed border-amber-300/90 bg-amber-50/70 text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100'),
                                 ])
                             >
-                                Gift cards
+                                <span class="flex items-start gap-2">
+                                    @unless ($premiumNav)
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke-width="1.5"
+                                            stroke="currentColor"
+                                            class="mt-0.5 h-4 w-4 shrink-0 opacity-80"
+                                            aria-hidden="true"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                                            />
+                                        </svg>
+                                    @endunless
+                                    <span class="min-w-0 flex-1">
+                                        <span class="block">Gift cards</span>
+                                        @unless ($premiumNav)
+                                            <span
+                                                class="mt-0.5 block text-[11px] font-normal normal-case text-amber-800/90 dark:text-amber-200/90"
+                                            >
+                                                Locked — Premium only
+                                            </span>
+                                        @endunless
+                                    </span>
+                                </span>
                             </a>
                             <a
                                 href="{{ route('venue.reports') }}"

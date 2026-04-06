@@ -148,4 +148,26 @@ class AdminUserManagementTest extends TestCase
             'desk_court_client_id' => $venue->id,
         ]);
     }
+
+    public function test_super_admin_can_set_court_admin_venue_subscription_tier_from_user_edit(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $super = User::factory()->superAdmin()->create();
+        $admin = User::factory()->courtAdmin()->create();
+        $client = CourtClient::factory()->forAdmin($admin)->basicTier()->create();
+
+        Livewire::actingAs($super)
+            ->test(UserForm::class, ['user' => $admin])
+            ->set('venue_subscription_tier', CourtClient::TIER_PREMIUM)
+            ->set('password', '')
+            ->set('password_confirmation', '')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect(route('admin.users.index'));
+
+        $client->refresh();
+        $this->assertSame(CourtClient::TIER_PREMIUM, $client->subscription_tier);
+        $this->assertTrue($client->hasPremiumSubscription());
+    }
 }

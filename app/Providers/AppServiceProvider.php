@@ -30,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
 
         Booking::observe(BookingObserver::class);
 
+        View::composer('layouts::venue-portal', function (\Illuminate\View\View $view): void {
+            $client = auth()->user()?->administeredCourtClient;
+            $view->with('venueHasPremiumFeatures', $client?->hasPremiumSubscription() ?? false);
+        });
+
         $livewireOverrides = resource_path('views/vendor/livewire');
         if (is_dir($livewireOverrides)) {
             View::prependNamespace('livewire', $livewireOverrides);

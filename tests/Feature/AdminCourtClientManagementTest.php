@@ -61,6 +61,7 @@ class AdminCourtClientManagementTest extends TestCase
         $this->assertNotNull($client);
         $r->assertRedirect(route('admin.court-clients.edit', $client));
         $this->assertSame($courtAdmin->id, $client->admin_user_id);
+        $this->assertSame(CourtClient::TIER_BASIC, $client->subscription_tier);
         $this->assertGreaterThanOrEqual(2, $client->courts()->count());
         $this->assertSame(7, $client->weeklyHours()->count());
     }

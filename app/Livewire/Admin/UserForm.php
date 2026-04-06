@@ -9,6 +9,7 @@ use App\Services\ActivityLogger;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -31,15 +32,22 @@ class UserForm extends Component
 
     public string $desk_court_client_id = '';
 
+    /** When editing a court admin with a venue, maps to {@see CourtClient::$subscription_tier}. */
+    public string $venue_subscription_tier = CourtClient::TIER_BASIC;
+
     public function mount(?User $user = null): void
     {
         $this->user = ($user !== null && $user->exists) ? $user : null;
 
         if ($this->user) {
+            $this->user->load('administeredCourtClient');
             $this->name = $user->name;
             $this->email = $user->email;
             $this->user_type_id = (string) $user->user_type_id;
             $this->desk_court_client_id = (string) ($user->desk_court_client_id ?? '');
+            if ($this->user->administeredCourtClient) {
+                $this->venue_subscription_tier = $this->user->administeredCourtClient->subscriptionTierNormalized();
+            }
         } else {
             $defaultId = UserType::query()->where('slug', UserType::SLUG_USER)->value('id');
             $this->user_type_id = $defaultId ? (string) $defaultId : '';
@@ -55,6 +63,7 @@ class UserForm extends Component
             : ['required', 'string', 'confirmed', Password::defaults()];
 
         $deskTypeId = (string) UserType::query()->where('slug', UserType::SLUG_COURT_CLIENT_DESK)->value('id');
+        $courtAdminTypeId = (string) UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id');
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -73,6 +82,19 @@ class UserForm extends Component
                 'required',
                 'uuid',
                 Rule::exists('court_clients', 'id'),
+            ],
+            'venue_subscription_tier' => [
+                Rule::requiredIf(function () use ($courtAdminTypeId) {
+                    if (! $this->user) {
+                        return false;
+                    }
+
+                    return (string) $this->user_type_id === $courtAdminTypeId
+                        && $this->user->administeredCourtClient !== null;
+                }),
+                'nullable',
+                'string',
+                Rule::in(CourtClient::subscriptionTierValues()),
             ],
         ]);
 
@@ -110,6 +132,11 @@ class UserForm extends Component
                 "User {$this->user->email} updated",
             );
 
+            $this->syncCourtAdminVenueSubscriptionTier(
+                $validated,
+                $courtAdminTypeId,
+            );
+
             session()->flash('status', 'User updated.');
 
             $this->redirect(route('admin.users.index'), navigate: true);
@@ -137,6 +164,46 @@ class UserForm extends Component
         $this->redirect(route('admin.users.index'), navigate: true);
     }
 
+    /**
+     * @param  array<string, mixed>  $validated
+     */
+    private function syncCourtAdminVenueSubscriptionTier(array $validated, string $courtAdminTypeId): void
+    {
+        if ((string) $validated['user_type_id'] !== $courtAdminTypeId) {
+            return;
+        }
+
+        $this->user?->load('administeredCourtClient');
+        $client = $this->user?->administeredCourtClient;
+        if ($client === null) {
+            return;
+        }
+
+        $tier = $validated['venue_subscription_tier'] ?? null;
+        if (! is_string($tier) || ! in_array($tier, CourtClient::subscriptionTierValues(), true)) {
+            return;
+        }
+
+        $before = $client->subscription_tier;
+        if ($before === $tier) {
+            return;
+        }
+
+        $client->update(['subscription_tier' => $tier]);
+
+        ActivityLogger::log(
+            'court_client.subscription_tier_updated',
+            [
+                'before' => $before,
+                'after' => $tier,
+                'via' => 'admin.users.edit',
+                'court_admin_user_id' => $this->user?->id,
+            ],
+            $client->fresh(),
+            'Venue subscription tier updated for “'.$client->name.'”',
+        );
+    }
+
     private function assertCanChangeRole(string $newTypeId): void
     {
         if (! $this->user) {
@@ -152,7 +219,7 @@ class UserForm extends Component
         $stillCourtAdmin = $newType->slug === UserType::SLUG_COURT_ADMIN;
 
         if ($wasCourtAdmin && ! $stillCourtAdmin && $this->user->administeredCourtClient()->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'user_type_id' => 'This user is assigned as a venue admin. Reassign the venue before changing their role.',
             ]);
         }
@@ -166,7 +233,7 @@ class UserForm extends Component
                 ->count();
 
             if ($count <= 1) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'user_type_id' => 'You cannot remove the last super admin account.',
                 ]);
             }
@@ -179,6 +246,7 @@ class UserForm extends Component
             'typeOptions' => UserType::query()->orderBy('sort_order')->get(),
             'courtClientOptions' => CourtClient::query()->orderBy('name')->get(['id', 'name']),
             'deskUserTypeId' => (string) UserType::query()->where('slug', UserType::SLUG_COURT_CLIENT_DESK)->value('id'),
+            'courtAdminTypeId' => (string) UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id'),
             'isEdit' => $this->user !== null,
             'heading' => $this->user ? 'Edit user' : 'Create user',
         ]);

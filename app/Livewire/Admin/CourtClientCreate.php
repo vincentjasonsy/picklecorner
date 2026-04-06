@@ -101,6 +101,7 @@ class CourtClientCreate extends Component
             'currency' => $validated['currency'],
             'desk_booking_policy' => $validated['desk_booking_policy'],
             'admin_user_id' => $validated['admin_user_id'],
+            'subscription_tier' => CourtClient::TIER_BASIC,
             'public_rating_count' => 0,
         ]);
 

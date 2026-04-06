@@ -50,6 +50,9 @@ class CourtClientEdit extends Component
     /** @see CourtClient::DESK_BOOKING_POLICY_* */
     public string $desk_booking_policy = CourtClient::DESK_BOOKING_POLICY_MANUAL;
 
+    /** @see CourtClient::TIER_* (super admin only) */
+    public string $subscription_tier = CourtClient::TIER_BASIC;
+
     public ?string $admin_user_id = null;
 
     /** @var list<array{id: ?string, environment: string}> */
@@ -113,6 +116,13 @@ class CourtClientEdit extends Component
             ? (string) $c->desk_booking_policy
             : CourtClient::DESK_BOOKING_POLICY_MANUAL;
         $this->admin_user_id = $c->admin_user_id;
+        $this->subscription_tier = in_array(
+            (string) ($c->subscription_tier ?? ''),
+            CourtClient::subscriptionTierValues(),
+            true,
+        )
+            ? (string) $c->subscription_tier
+            : CourtClient::TIER_BASIC;
     }
 
     protected function ensureDefaultWeeklyHours(): void
@@ -638,6 +648,7 @@ class CourtClientEdit extends Component
         } else {
             $courtAdminTypeId = UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id');
             $validated = $this->validate(array_merge($baseRules, [
+                'subscription_tier' => ['required', 'string', Rule::in(CourtClient::subscriptionTierValues())],
                 'admin_user_id' => [
                     'required',
                     'uuid',
@@ -675,6 +686,7 @@ class CourtClientEdit extends Component
 
         if (! $this->isVenuePortal) {
             $payload['admin_user_id'] = $validated['admin_user_id'];
+            $payload['subscription_tier'] = $validated['subscription_tier'];
         }
 
         $before = $this->courtClient->only(array_keys($payload));
