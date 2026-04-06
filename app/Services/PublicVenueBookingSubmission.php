@@ -21,6 +21,7 @@ class PublicVenueBookingSubmission
      */
     /**
      * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>, coach_fee_cents?: int}>  $specs
+     * @param  array{max_slots: int, public_notes?: string|null, host_payment_details: string}|null  $openPlay
      */
     public static function submit(
         CourtClient $courtClient,
@@ -32,9 +33,14 @@ class PublicVenueBookingSubmission
         mixed $paymentProof,
         ?string $giftCardCodeRaw = null,
         ?string $coachUserId = null,
+        ?array $openPlay = null,
     ): array {
         if ($specs === []) {
             throw new \InvalidArgumentException('No time slots to book.');
+        }
+
+        if ($openPlay !== null && count($specs) !== 1) {
+            throw new \InvalidArgumentException('Open play is only available when booking a single court time block.');
         }
 
         $deskPolicy = CourtClient::DESK_BOOKING_POLICY_MANUAL;
@@ -86,6 +92,7 @@ class PublicVenueBookingSubmission
             $proofPath,
             $giftCodeRaw,
             $coachId,
+            $openPlay,
         ) {
             $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
 
@@ -130,6 +137,10 @@ class PublicVenueBookingSubmission
 
                 $coachFee = (int) ($spec['coach_fee_cents'] ?? 0);
 
+                $useOpenPlay = $openPlay !== null && count($specs) === 1;
+                $publicNotes = $useOpenPlay ? trim((string) ($openPlay['public_notes'] ?? '')) : '';
+                $hostPay = $useOpenPlay ? trim((string) ($openPlay['host_payment_details'] ?? '')) : '';
+
                 $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
                     'court_id' => $court->id,
@@ -148,6 +159,10 @@ class PublicVenueBookingSubmission
                     'payment_method' => $pm,
                     'payment_reference' => $pref !== '' ? $pref : null,
                     'payment_proof_path' => $proofPath,
+                    'is_open_play' => $useOpenPlay,
+                    'open_play_max_slots' => $useOpenPlay ? (int) $openPlay['max_slots'] : null,
+                    'open_play_public_notes' => $useOpenPlay && $publicNotes !== '' ? $publicNotes : null,
+                    'open_play_host_payment_details' => $useOpenPlay && $hostPay !== '' ? $hostPay : null,
                 ]);
 
                 if ($slice > 0 && $giftCardId !== null) {

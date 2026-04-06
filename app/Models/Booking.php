@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 
 class Booking extends Model
@@ -92,6 +93,10 @@ class Booking extends Model
         'payment_proof_path',
         'coach_user_id',
         'coach_fee_cents',
+        'is_open_play',
+        'open_play_max_slots',
+        'open_play_public_notes',
+        'open_play_host_payment_details',
     ];
 
     protected function casts(): array
@@ -101,6 +106,8 @@ class Booking extends Model
             'ends_at' => 'datetime',
             'gift_card_redeemed_cents' => 'integer',
             'coach_fee_cents' => 'integer',
+            'is_open_play' => 'boolean',
+            'open_play_max_slots' => 'integer',
         ];
     }
 
@@ -132,6 +139,52 @@ class Booking extends Model
     public function giftCard(): BelongsTo
     {
         return $this->belongsTo(GiftCard::class);
+    }
+
+    /** @return HasMany<OpenPlayParticipant, $this> */
+    public function openPlayParticipants(): HasMany
+    {
+        return $this->hasMany(OpenPlayParticipant::class);
+    }
+
+    public function acceptedOpenPlayParticipantsCount(): int
+    {
+        if (! $this->is_open_play) {
+            return 0;
+        }
+
+        return $this->openPlayParticipants()
+            ->where('status', OpenPlayParticipant::STATUS_ACCEPTED)
+            ->count();
+    }
+
+    /**
+     * Remaining slots for additional players (host is not counted; max_slots = joiner cap).
+     */
+    public function openPlaySlotsRemaining(): int
+    {
+        if (! $this->is_open_play || $this->open_play_max_slots === null) {
+            return 0;
+        }
+
+        return max(0, $this->open_play_max_slots - $this->acceptedOpenPlayParticipantsCount());
+    }
+
+    public function allowsOpenPlayJoinRequests(): bool
+    {
+        if (! $this->is_open_play || $this->open_play_max_slots === null) {
+            return false;
+        }
+
+        if ($this->status !== self::STATUS_CONFIRMED) {
+            return false;
+        }
+
+        if ($this->starts_at === null || $this->starts_at->lte(now())) {
+            return false;
+        }
+
+        return $this->openPlaySlotsRemaining() > 0;
     }
 
     /** Invoices that include this booking (each booking may appear on at most one invoice). */

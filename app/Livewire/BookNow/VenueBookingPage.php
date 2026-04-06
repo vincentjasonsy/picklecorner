@@ -57,6 +57,18 @@ class VenueBookingPage extends Component
     /** Billable coach hours (you choose; max = selected slot hours). Only used when {@see $coachUserId} is set. */
     public int $coachPaidHours = 0;
 
+    /** Host wants extra players to join this single-court booking (one continuous block only). */
+    public bool $isOpenPlay = false;
+
+    /** Max additional players who can join (not including you). */
+    public int $openPlayMaxSlots = 4;
+
+    /** Shown to people who want to join (format, level, etc.). */
+    public string $openPlayPublicNotes = '';
+
+    /** How joiners pay you (e.g. GCash number). Shown to accepted players. */
+    public string $openPlayHostPaymentDetails = '';
+
     /** @var mixed */
     public $paymentProof = null;
 
@@ -107,6 +119,18 @@ class VenueBookingPage extends Component
         if (isset($draft['coach_paid_hours'])) {
             $this->coachPaidHours = max(0, (int) $draft['coach_paid_hours']);
         }
+        if (isset($draft['is_open_play'])) {
+            $this->isOpenPlay = (bool) $draft['is_open_play'];
+        }
+        if (isset($draft['open_play_max_slots'])) {
+            $this->openPlayMaxSlots = max(1, min(48, (int) $draft['open_play_max_slots']));
+        }
+        if (is_string($draft['open_play_public_notes'] ?? null)) {
+            $this->openPlayPublicNotes = $draft['open_play_public_notes'];
+        }
+        if (is_string($draft['open_play_host_payment_details'] ?? null)) {
+            $this->openPlayHostPaymentDetails = $draft['open_play_host_payment_details'];
+        }
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
     }
 
@@ -121,6 +145,10 @@ class VenueBookingPage extends Component
             'gift_card_code' => $this->giftCardCode,
             'coach_user_id' => $this->coachUserId,
             'coach_paid_hours' => $this->coachPaidHours,
+            'is_open_play' => $this->isOpenPlay,
+            'open_play_max_slots' => $this->openPlayMaxSlots,
+            'open_play_public_notes' => $this->openPlayPublicNotes,
+            'open_play_host_payment_details' => $this->openPlayHostPaymentDetails,
             'step' => 'review',
         ]);
         session()->put(self::AFTER_LOGIN_SESSION_KEY, true);
@@ -186,6 +214,7 @@ class VenueBookingPage extends Component
         $this->selectedSlots = [];
         $this->coachUserId = '';
         $this->coachPaidHours = 0;
+        $this->resetOpenPlayIfNeeded();
     }
 
     public function shiftBookingDate(int $days): void
@@ -199,6 +228,7 @@ class VenueBookingPage extends Component
         $this->selectedSlots = [];
         $this->coachUserId = '';
         $this->coachPaidHours = 0;
+        $this->resetOpenPlayIfNeeded();
     }
 
     public function bookingDayOfWeek(): int
@@ -403,6 +433,23 @@ class VenueBookingPage extends Component
             $this->coachPaidHours = 0;
         }
         $this->clampCoachPaidHours();
+        $this->resetOpenPlayIfNeeded();
+    }
+
+    protected function resetOpenPlayIfNeeded(): void
+    {
+        if (count($this->buildSpecsForSubmit()) !== 1) {
+            $this->isOpenPlay = false;
+        }
+    }
+
+    public function updatedIsOpenPlay(bool $value): void
+    {
+        if (! $value) {
+            $this->openPlayPublicNotes = '';
+            $this->openPlayHostPaymentDetails = '';
+            $this->openPlayMaxSlots = 4;
+        }
     }
 
     public function updatedCoachUserId(?string $value): void
@@ -822,6 +869,12 @@ class VenueBookingPage extends Component
         return max(0, $this->reviewEstimateCents - $this->reviewGiftEstimateCents);
     }
 
+    #[Computed]
+    public function canConfigureOpenPlay(): bool
+    {
+        return count($this->buildSpecsForSubmit()) === 1;
+    }
+
     public function submitRequest(): void
     {
         if (! auth()->check()) {
@@ -853,10 +906,19 @@ class VenueBookingPage extends Component
             $rules['coachPaidHours'] = ['required', 'integer', 'min:1', 'max:'.$maxCoachH];
         }
 
+        if ($this->isOpenPlay) {
+            $rules['openPlayMaxSlots'] = ['required', 'integer', 'min:1', 'max:48'];
+            $rules['openPlayPublicNotes'] = ['nullable', 'string', 'max:5000'];
+            $rules['openPlayHostPaymentDetails'] = ['required', 'string', 'min:3', 'max:5000'];
+        }
+
         $this->validate($rules, [], [
             'paymentReference' => 'payment reference',
             'giftCardCode' => 'gift card code',
             'coachPaidHours' => 'coach paid hours',
+            'openPlayMaxSlots' => 'player slots',
+            'openPlayPublicNotes' => 'open play notes',
+            'openPlayHostPaymentDetails' => 'payment details for players',
         ]);
 
         $specs = $this->buildSpecsForSubmit();
@@ -876,6 +938,21 @@ class VenueBookingPage extends Component
             $this->clampCoachPaidHours();
         }
 
+        if ($this->isOpenPlay && count($specs) !== 1) {
+            $this->addError('isOpenPlay', 'Open play only applies when you book a single court in one continuous block. Adjust your selection or turn off open play.');
+
+            return;
+        }
+
+        $openPlayPayload = null;
+        if ($this->isOpenPlay && count($specs) === 1) {
+            $openPlayPayload = [
+                'max_slots' => $this->openPlayMaxSlots,
+                'public_notes' => $this->openPlayPublicNotes !== '' ? $this->openPlayPublicNotes : null,
+                'host_payment_details' => $this->openPlayHostPaymentDetails,
+            ];
+        }
+
         $booker = auth()->user();
         if ($booker === null) {
             return;
@@ -892,6 +969,7 @@ class VenueBookingPage extends Component
                 $this->paymentProof,
                 $this->giftCardCode,
                 $this->coachUserId !== '' ? $this->coachUserId : null,
+                $openPlayPayload,
             );
         } catch (\InvalidArgumentException $e) {
             if ($e->getMessage() === 'No time slots to book.') {
@@ -918,6 +996,10 @@ class VenueBookingPage extends Component
         $this->giftCardCode = '';
         $this->coachUserId = '';
         $this->coachPaidHours = 0;
+        $this->isOpenPlay = false;
+        $this->openPlayMaxSlots = 4;
+        $this->openPlayPublicNotes = '';
+        $this->openPlayHostPaymentDetails = '';
         $this->step = 'times';
 
         $giftTotal = (int) array_sum(array_filter(array_map(
@@ -938,6 +1020,9 @@ class VenueBookingPage extends Component
         };
         if ($giftTotal > 0) {
             $flash .= ' Gift card applied: '.Money::formatMinor($giftTotal).' total.';
+        }
+        if ($openPlayPayload !== null) {
+            $flash .= ' Open play enabled — share the link from Account → Court open play after the venue confirms.';
         }
 
         session()->flash('status', $flash);

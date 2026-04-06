@@ -1,5 +1,6 @@
 @php
     use App\Models\Booking;
+    use App\Models\OpenPlayParticipant;
     use App\Support\Money;
 
     $tz = config('app.timezone', 'UTC');
@@ -12,6 +13,38 @@
             Every court you’ve booked — newest first. Nice work keeping the rallies going.
         </p>
     </div>
+
+    @if ($openPlayJoins->isNotEmpty())
+        <div
+            class="rounded-2xl border border-violet-200 bg-violet-50/40 p-5 dark:border-violet-900/40 dark:bg-violet-950/20"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <h2 class="font-display text-base font-bold text-zinc-900 dark:text-white">Upcoming open plays (joined)</h2>
+                <a
+                    href="{{ route('account.court-open-plays.index') }}"
+                    wire:navigate
+                    class="text-xs font-bold text-violet-600 dark:text-violet-400"
+                >
+                    Host hub
+                </a>
+            </div>
+            <ul class="mt-3 space-y-2">
+                @foreach ($openPlayJoins as $row)
+                    @php($b = $row->booking)
+                    @if ($b)
+                        <li class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                            <span class="text-zinc-800 dark:text-zinc-200">
+                                {{ $b->courtClient?->name }} · {{ $b->starts_at?->timezone($tz)->format('M j, g:i A') }}
+                            </span>
+                            <span class="text-xs font-semibold text-violet-800 dark:text-violet-200">
+                                {{ $row->status === OpenPlayParticipant::STATUS_ACCEPTED ? 'Confirmed' : 'Pending' }}
+                            </span>
+                        </li>
+                    @endif
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <div
         class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80"

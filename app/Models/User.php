@@ -122,6 +122,12 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class, 'coach_user_id');
     }
 
+    /** Court open-play sessions this user joined (as a player, not the booker). */
+    public function openPlayParticipations(): HasMany
+    {
+        return $this->hasMany(OpenPlayParticipant::class, 'user_id');
+    }
+
     /**
      * Distinct venue ids where this coach has at least one court enabled.
      *

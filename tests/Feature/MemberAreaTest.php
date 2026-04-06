@@ -32,6 +32,7 @@ class MemberAreaTest extends TestCase
         $this->actingAs($player)->get(route('account.dashboard'))->assertOk();
         $this->actingAs($player)->get(route('account.book'))->assertOk();
         $this->actingAs($player)->get(route('account.bookings'))->assertOk();
+        $this->actingAs($player)->get(route('account.court-open-plays.index'))->assertOk();
         $this->actingAs($player)->get(route('account.settings'))->assertOk();
     }
 

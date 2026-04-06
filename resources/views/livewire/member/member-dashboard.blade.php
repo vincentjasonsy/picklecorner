@@ -1,5 +1,6 @@
 @php
     use App\Models\Booking;
+    use App\Models\OpenPlayParticipant;
     use App\Support\Money;
 
     $tz = config('app.timezone', 'UTC');
@@ -79,6 +80,64 @@
             <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Completed games</p>
         </div>
     </section>
+
+    @if ($this->upcomingOpenPlayJoins->isNotEmpty())
+        <section
+            class="rounded-2xl border border-violet-200/80 bg-white p-6 shadow-sm dark:border-violet-900/40 dark:bg-zinc-900/80"
+        >
+            <div class="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                    <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Open plays you joined</h2>
+                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Someone else booked the court — you’re on the list</p>
+                </div>
+                <a
+                    href="{{ route('account.court-open-plays.index') }}"
+                    wire:navigate
+                    class="text-sm font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400"
+                >
+                    Manage →
+                </a>
+            </div>
+            <ul class="mt-4 space-y-3">
+                @foreach ($this->upcomingOpenPlayJoins as $row)
+                    @php
+                        $b = $row->booking;
+                    @endphp
+                    @if ($b)
+                        <li
+                            class="flex flex-col gap-2 rounded-xl border border-violet-100 bg-violet-50/50 px-4 py-3 dark:border-violet-900/40 dark:bg-violet-950/20 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <div>
+                                <p class="font-semibold text-zinc-900 dark:text-zinc-100">
+                                    {{ $b->courtClient?->name ?? 'Venue' }}
+                                    · {{ $b->court?->name ?? 'Court' }}
+                                </p>
+                                <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                    {{ $b->starts_at?->timezone($tz)->format('D, M j') }}
+                                    ·
+                                    {{ $b->starts_at?->timezone($tz)->format('g:i A') }}
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span
+                                    class="rounded-full bg-white px-2.5 py-0.5 text-xs font-bold text-violet-900 shadow-sm dark:bg-violet-950 dark:text-violet-200"
+                                >
+                                    {{ $row->status === OpenPlayParticipant::STATUS_ACCEPTED ? 'In' : 'Pending' }}
+                                </span>
+                                <a
+                                    href="{{ route('account.court-open-plays.join', $b) }}"
+                                    wire:navigate
+                                    class="text-xs font-bold text-violet-600 hover:text-violet-700 dark:text-violet-400"
+                                >
+                                    Details
+                                </a>
+                            </div>
+                        </li>
+                    @endif
+                @endforeach
+            </ul>
+        </section>
+    @endif
 
     <div class="grid gap-8 lg:grid-cols-2">
         <section

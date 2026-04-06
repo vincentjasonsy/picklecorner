@@ -3,6 +3,7 @@
 namespace App\Livewire\Member;
 
 use App\Models\Booking;
+use App\Models\OpenPlayParticipant;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -32,6 +33,24 @@ class MemberDashboard extends Component
             ->orderBy('starts_at')
             ->limit(5)
             ->get();
+    }
+
+    #[Computed]
+    public function upcomingOpenPlayJoins()
+    {
+        return OpenPlayParticipant::query()
+            ->where('user_id', auth()->id())
+            ->whereIn('status', [OpenPlayParticipant::STATUS_PENDING, OpenPlayParticipant::STATUS_ACCEPTED])
+            ->whereHas('booking', function ($q): void {
+                $q->where('starts_at', '>=', now()->subHour())
+                    ->whereNotIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_DENIED]);
+            })
+            ->with([
+                'booking' => fn ($q) => $q->with(['courtClient:id,name', 'court:id,name']),
+            ])
+            ->get()
+            ->sortBy(fn (OpenPlayParticipant $p) => $p->booking?->starts_at ?? now())
+            ->values();
     }
 
     #[Computed]

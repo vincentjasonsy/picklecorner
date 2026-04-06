@@ -33,6 +33,9 @@ use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
 use App\Livewire\Desk\DeskMyRequests;
 use App\Livewire\Member\MemberBookingHistory;
+use App\Livewire\Member\MemberCourtOpenPlayHost;
+use App\Livewire\Member\MemberCourtOpenPlayHub;
+use App\Livewire\Member\MemberCourtOpenPlayJoin;
 use App\Livewire\Member\MemberDashboard;
 use App\Livewire\Member\MemberProfileSettings;
 use App\Livewire\OpenPlayAbout;
@@ -88,6 +91,9 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/book', BookNowPage::class)->name('book');
         Route::livewire('/book/venues/{courtClient:slug}', VenueBookingPage::class)->name('book.venue');
         Route::livewire('/bookings', MemberBookingHistory::class)->name('bookings');
+        Route::livewire('/court-open-plays', MemberCourtOpenPlayHub::class)->name('court-open-plays.index');
+        Route::livewire('/court-open-plays/{booking}/host', MemberCourtOpenPlayHost::class)->name('court-open-plays.host');
+        Route::livewire('/court-open-plays/{booking}/join', MemberCourtOpenPlayJoin::class)->name('court-open-plays.join');
         Route::get('/open-play/sessions', [OpenPlaySessionController::class, 'index'])
             ->middleware('throttle:60,1')
             ->name('open-play.sessions.index');
