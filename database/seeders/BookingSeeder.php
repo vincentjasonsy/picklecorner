@@ -29,6 +29,10 @@ class BookingSeeder extends Seeder
             return;
         }
 
+        if (Booking::query()->exists()) {
+            return;
+        }
+
         foreach ($clients as $client) {
             for ($i = 0; $i < 25; $i++) {
                 $starts = Carbon::parse(fake()->dateTimeBetween('-120 days', '+14 days'));

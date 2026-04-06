@@ -16,6 +16,9 @@ chown www-data:www-data database/database.sqlite 2>/dev/null || true
 # Create users, sessions, cache, jobs, and app tables (required for SESSION_DRIVER=database, etc.)
 php artisan migrate --force --no-interaction
 
+# Demo / reference data (seeders are safe to re-run; BookingSeeder skips if bookings already exist)
+php artisan db:seed --force --no-interaction
+
 php artisan storage:link --force 2>/dev/null || true
 
 php artisan package:discover --ansi 2>/dev/null || true

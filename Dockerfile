@@ -69,6 +69,7 @@ RUN chmod +x /usr/local/bin/entrypoint.sh \
     && rm -f /etc/nginx/sites-enabled/default \
     && mkdir -p /var/log/supervisor
 
+# At runtime, entrypoint runs migrate + db:seed (see docker/entrypoint.sh), then nginx + php-fpm.
 EXPOSE 8080
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
