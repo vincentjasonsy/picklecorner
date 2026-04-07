@@ -275,26 +275,26 @@
                                                             $dateBlocked = isset($dateBlocks[$slotKey]);
                                                             $blocked = $weeklyBlocked || $dateBlocked;
                                                             $slotSelected = $this->isSlotSelected($court->id, $hour);
+                                                            $isBookedCell = false;
+                                                            $isBlockedCell = false;
                                                             if ($booked !== null) {
                                                                 $availStyle =
                                                                     'cursor-default border-slate-300 bg-slate-200/95 text-slate-900 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100';
                                                                 $cellTitle = 'Booked';
                                                                 $isBookedCell = true;
+                                                            } elseif ($blocked) {
+                                                                $availStyle =
+                                                                    'cursor-default border-red-200 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25';
+                                                                $cellTitle = 'Blocked';
+                                                                $isBlockedCell = true;
                                                             } elseif ($slotSelected) {
                                                                 $availStyle =
                                                                     'border-teal-600 bg-teal-600 text-white shadow-sm ring-2 ring-teal-400/40 dark:ring-teal-500/30';
                                                                 $cellTitle = 'Selected';
-                                                                $isBookedCell = false;
-                                                            } elseif ($blocked) {
-                                                                $availStyle =
-                                                                    'border-red-200 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25';
-                                                                $cellTitle = 'Blocked';
-                                                                $isBookedCell = false;
                                                             } else {
                                                                 $availStyle =
                                                                     'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20';
                                                                 $cellTitle = 'Open';
-                                                                $isBookedCell = false;
                                                             }
                                                         @endphp
                                                         <td class="p-1.5 align-middle">
@@ -304,6 +304,15 @@
                                                                 >
                                                                     <span class="text-[10px] font-bold uppercase tracking-wide">
                                                                         Booked
+                                                                    </span>
+                                                                </div>
+                                                            @elseif ($isBlockedCell)
+                                                                <div
+                                                                    title="Not available for booking"
+                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-1.5 py-1.5 text-center {{ $availStyle }}"
+                                                                >
+                                                                    <span class="text-[10px] font-bold uppercase tracking-wide">
+                                                                        Blocked
                                                                     </span>
                                                                 </div>
                                                             @else

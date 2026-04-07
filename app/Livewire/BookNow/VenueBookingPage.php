@@ -422,6 +422,46 @@ class VenueBookingPage extends Component
         return in_array($courtId.'-'.$hour, $this->selectedSlots, true);
     }
 
+    protected function isPublicBookingGridSlotBlocked(Court $court, int $hour): bool
+    {
+        $dow = $this->bookingDayOfWeek();
+        if ($court->isWeeklySlotBlocked($dow, $hour)) {
+            return true;
+        }
+
+        $key = $court->id.'-'.$hour;
+        $dateBlocks = $this->dateBlockLookup;
+
+        return isset($dateBlocks[$key]);
+    }
+
+    protected function selectedSlotsIncludeBlockedCells(): bool
+    {
+        $dow = $this->bookingDayOfWeek();
+        $dateBlocks = $this->dateBlockLookup;
+        $courts = $this->courtsOrderedForGrid()->keyBy('id');
+
+        foreach ($this->selectedSlots as $key) {
+            if (! preg_match('/^(.+)-(\d+)$/', $key, $m)) {
+                continue;
+            }
+            $cid = $m[1];
+            $h = (int) $m[2];
+            $court = $courts->get($cid);
+            if ($court === null) {
+                continue;
+            }
+            if ($court->isWeeklySlotBlocked($dow, $h)) {
+                return true;
+            }
+            if (isset($dateBlocks[$cid.'-'.$h])) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function toggleSlot(string $courtId, int $hour): void
     {
         $allowedHours = $this->slotHoursForSelectedDate();
@@ -450,6 +490,10 @@ class VenueBookingPage extends Component
             unset($selected[$idx]);
             $this->selectedSlots = array_values($selected);
 
+            return;
+        }
+
+        if ($this->isPublicBookingGridSlotBlocked($court, $hour)) {
             return;
         }
 
@@ -630,6 +674,15 @@ class VenueBookingPage extends Component
         $byCourt = $this->selectedSlotsGroupedByCourt();
         if ($byCourt === []) {
             $this->addError('selectedSlots', 'Select at least one open time slot on the grid.');
+
+            return;
+        }
+
+        if ($this->selectedSlotsIncludeBlockedCells()) {
+            $this->addError(
+                'selectedSlots',
+                'Your selection includes blocked times. Remove them or pick another date.',
+            );
 
             return;
         }

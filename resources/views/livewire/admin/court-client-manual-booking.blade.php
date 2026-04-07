@@ -128,10 +128,12 @@
                                 <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                                     @if ($this->manualBookingPortal() === 'desk')
                                         Green = open; slate = booked — <strong>tap a booked cell</strong> for full
-                                        details. Red = blocked. Strong green = your selection for a new request.
+                                        details. Red = blocked (not selectable). Strong green = your selection for a new
+                                        request.
                                     @else
-                                        Green = open; slate = already booked (shows guest). Red = blocked. Strong green =
-                                        your selection. Booked cells cannot be selected.
+                                        Green = open; slate = already booked (shows guest). Red = blocked (venue staff may
+                                        still select to override). Strong green = your selection. Booked cells cannot be
+                                        selected.
                                     @endif
                                 </p>
                             </div>
@@ -257,6 +259,13 @@
                                                             <span class="mt-0.5 text-[9px] font-medium opacity-80">
                                                                 {{ $cellMeta }}
                                                             </span>
+                                                        </div>
+                                                    @elseif ($blocked && ! $this->manualBookingMaySelectBlockedSlots())
+                                                        <div
+                                                            title="Not available — blocked"
+                                                            class="flex min-h-[3.25rem] w-full cursor-default flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-semibold {{ $availStyle }}"
+                                                        >
+                                                            {{ $cellTitle }}
                                                         </div>
                                                     @else
                                                         <button

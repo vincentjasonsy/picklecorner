@@ -103,6 +103,35 @@ class CourtClientManualBooking extends Component
         return 'admin';
     }
 
+    /**
+     * Desk staff cannot select blocked slots; super admin and venue admin may override blocks for manual bookings.
+     */
+    public function manualBookingMaySelectBlockedSlots(): bool
+    {
+        return $this->manualBookingPortal() !== 'desk';
+    }
+
+    public function isManualGridCellBlocked(string $courtId, int $hour, ?Court $court = null): bool
+    {
+        $court ??= Court::query()
+            ->where('id', $courtId)
+            ->where('court_client_id', $this->courtClient->id)
+            ->first();
+
+        if ($court === null) {
+            return false;
+        }
+
+        $dow = $this->bookingDayOfWeek();
+        if ($court->isWeeklySlotBlocked($dow, $hour)) {
+            return true;
+        }
+
+        $map = $this->manualBookingDateBlockLookup;
+
+        return isset($map[$courtId.'-'.$hour]);
+    }
+
     public function manualBookingBackUrl(): string
     {
         return route('admin.court-clients.edit', $this->courtClient);
@@ -409,6 +438,10 @@ class CourtClientManualBooking extends Component
             return;
         }
 
+        if (! $this->manualBookingMaySelectBlockedSlots() && $this->isManualGridCellBlocked($courtId, $hour, $court)) {
+            return;
+        }
+
         $selected[] = $key;
         $this->selectedManualSlots = array_values($selected);
     }
@@ -617,6 +650,19 @@ class CourtClientManualBooking extends Component
                     $this->addError('selectedManualSlots', 'One or more slots are outside venue hours for this day.');
 
                     return;
+                }
+            }
+
+            if ($desk) {
+                foreach ($hours as $h) {
+                    if ($this->isManualGridCellBlocked($courtId, $h, $court)) {
+                        $this->addError(
+                            'selectedManualSlots',
+                            'Desk requests cannot include blocked time slots. Pick open hours only.',
+                        );
+
+                        return;
+                    }
                 }
             }
 
