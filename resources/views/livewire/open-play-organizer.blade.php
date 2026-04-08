@@ -791,7 +791,7 @@
                         </div>
                     @endif
 
-                    @if ($activeTab === 'play')
+                    {{-- Courts, queue, and match timers stay visible on both tabs; Share & data only adds export/import above. --}}
                         <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                             <button type="button" class="touch-manipulation min-h-11 flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 active:scale-[0.98] sm:flex-none sm:px-5 sm:py-2.5" wire:click="fillCourts">Fill courts</button>
                             <button type="button" class="touch-manipulation min-h-11 flex-1 rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:flex-none sm:rounded-xl sm:py-2.5" wire:click="syncQueueFromIdle">Sync queue</button>
@@ -1099,7 +1099,6 @@
                                 </div>
                             </div>
                         </details>
-                    @endif
                 </div>
             </div>
         </div>
