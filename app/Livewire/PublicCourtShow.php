@@ -14,7 +14,7 @@ class PublicCourtShow extends Component
 
     public function mount(Court $court): void
     {
-        $court->load('courtClient');
+        $court->load(['courtClient', 'approvedGalleryImages']);
         if (! $court->is_available || ! $court->courtClient || ! $court->courtClient->is_active) {
             abort(404);
         }

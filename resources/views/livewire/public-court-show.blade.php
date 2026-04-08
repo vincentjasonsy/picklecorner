@@ -31,14 +31,16 @@
     </a>
 
     <div class="mt-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div class="relative aspect-[16/9] bg-zinc-100 dark:bg-zinc-800 sm:aspect-[2/1]">
-            <img
-                src="{{ $c->staticImageUrl() }}"
-                alt="{{ $c->name }}"
-                class="size-full object-cover object-center"
-                loading="eager"
-            />
-        </div>
+        @php
+            $courtSlides = $c->carouselSlides();
+        @endphp
+        <x-image-carousel
+            :slides="$courtSlides"
+            :interval="5500"
+            aria-label="Court photos"
+            aspect-class="aspect-[16/9] sm:aspect-[2/1]"
+            class="w-full"
+        />
         <div class="p-6 sm:p-8">
             <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                 {{ $client?->name ?? 'Venue' }}

@@ -1,6 +1,7 @@
 @php
     use App\Models\Court;
     use App\Support\Money;
+    use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
     $courts = $this->courtsOrderedForGrid();
     $slotHours = $this->slotHoursForSelectedDate();
@@ -8,7 +9,7 @@
     $dateBlocks = $this->dateBlockLookup;
     $occupancy = $this->occupancyBySlot;
     $currency = $courtClient->currency ?? 'PHP';
-    $cover = $courtClient->coverImageUrl();
+    $venueSlides = $courtClient->carouselSlides();
     $minRate = $courts
         ->map(fn (Court $c) => $c->effectiveHourlyRateCents())
         ->filter()
@@ -31,19 +32,22 @@
             <div
                 class="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
             >
-                <div class="relative aspect-[4/3] bg-zinc-100 dark:bg-zinc-800">
-                    @if ($cover)
-                        <img src="{{ $cover }}" alt="" class="size-full object-cover" loading="lazy" />
-                    @else
+                <div class="bg-zinc-100 dark:bg-zinc-800">
+                    <x-image-carousel
+                        :slides="$venueSlides"
+                        :interval="6000"
+                        aria-label="Venue photos"
+                        class="w-full"
+                    >
                         <div
-                            class="flex size-full items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-800"
+                            class="relative aspect-[4/3] flex items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-800"
                             aria-hidden="true"
                         >
                             <span class="font-display text-3xl font-extrabold text-white/90">
                                 {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($courtClient->name, 0, 2)) }}
                             </span>
                         </div>
-                    @endif
+                    </x-image-carousel>
                 </div>
                 <div class="space-y-3 p-5">
                     <div>
@@ -854,6 +858,17 @@
                                     >
                                         Uploading…
                                     </div>
+                                    @if ($paymentProof instanceof TemporaryUploadedFile && $paymentProof->isPreviewable())
+                                        <div
+                                            class="mt-3 max-h-48 max-w-xs overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
+                                        >
+                                            <img
+                                                src="{{ $paymentProof->temporaryUrl() }}"
+                                                alt="Payment proof preview"
+                                                class="max-h-48 w-full object-contain object-center"
+                                            />
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>

@@ -82,10 +82,10 @@ class VenueBookingPage extends Component
     {
         abort_unless($courtClient->is_active, 404);
 
-        $this->courtClient = $courtClient->load(['courts', 'weeklyHours']);
+        $this->courtClient = $courtClient->load(['courts', 'approvedGalleryImages', 'weeklyHours']);
         $this->ensureDefaultWeeklyHours();
         $this->courtClient->refresh();
-        $this->courtClient->load(['courts', 'weeklyHours']);
+        $this->courtClient->load(['courts.approvedGalleryImages', 'approvedGalleryImages', 'weeklyHours']);
         $this->syncScheduleRowsFromDatabase();
         $this->bookingCalendarDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
 
@@ -312,7 +312,7 @@ class VenueBookingPage extends Component
         return Court::orderedForGridColumns(
             $this->courtClient->courts()
                 ->where('is_available', true)
-                ->with(['timeSlotSettings', 'timeSlotBlocks'])
+                ->with(['timeSlotSettings', 'timeSlotBlocks', 'approvedGalleryImages'])
                 ->get(),
         );
     }

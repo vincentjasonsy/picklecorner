@@ -71,6 +71,16 @@ class Court extends Model
         return $this->hasMany(CourtDateSlotBlock::class);
     }
 
+    public function galleryImages(): HasMany
+    {
+        return $this->hasMany(CourtGalleryImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function approvedGalleryImages(): HasMany
+    {
+        return $this->galleryImages()->whereNotNull('approved_at');
+    }
+
     public function isWeeklySlotBlocked(int $dayOfWeek, int $slotStartHour): bool
     {
         if ($this->relationLoaded('timeSlotBlocks')) {
@@ -106,6 +116,44 @@ class Court extends Model
         $i = abs(crc32((string) $this->id)) % count($files);
 
         return asset('images/courts/'.$files[$i]);
+    }
+
+    /** First uploaded gallery image, or {@see staticImageUrl()}. */
+    public function primaryDisplayImageUrl(): string
+    {
+        if ($this->relationLoaded('approvedGalleryImages')) {
+            $first = $this->approvedGalleryImages->first();
+        } else {
+            $first = $this->approvedGalleryImages()->first();
+        }
+
+        return $first !== null ? $first->publicUrl() : $this->staticImageUrl();
+    }
+
+    /**
+     * Slides for carousels (browse, public court page). Falls back to one static image when no uploads.
+     *
+     * @return list<array{src: string, alt: string}>
+     */
+    public function carouselSlides(): array
+    {
+        $images = $this->relationLoaded('approvedGalleryImages')
+            ? $this->approvedGalleryImages
+            : $this->approvedGalleryImages()->get();
+
+        $slides = [];
+        foreach ($images as $img) {
+            $slides[] = [
+                'src' => $img->publicUrl(),
+                'alt' => (string) ($img->alt_text ?: $this->name),
+            ];
+        }
+
+        if ($slides === []) {
+            $slides[] = ['src' => $this->staticImageUrl(), 'alt' => $this->name];
+        }
+
+        return $slides;
     }
 
     /**

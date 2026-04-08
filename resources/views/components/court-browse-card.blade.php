@@ -19,7 +19,7 @@
     <a href="{{ route('book-now.court', $court) }}" wire:navigate class="block shrink-0">
         <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
             <img
-                src="{{ $court->staticImageUrl() }}"
+                src="{{ $court->primaryDisplayImageUrl() }}"
                 alt="{{ $court->name }}"
                 class="size-full object-cover object-center transition duration-300 group-hover:scale-105"
                 loading="lazy"

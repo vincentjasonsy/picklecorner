@@ -56,7 +56,7 @@
                             class="h-12 w-20 shrink-0 overflow-hidden rounded-lg border border-stone-200 bg-stone-100 dark:border-stone-600 dark:bg-stone-900"
                         >
                             <img
-                                src="{{ $court->staticImageUrl() }}"
+                                src="{{ $court->primaryDisplayImageUrl() }}"
                                 alt="{{ $court->name }}"
                                 class="size-full object-cover object-center"
                                 loading="lazy"

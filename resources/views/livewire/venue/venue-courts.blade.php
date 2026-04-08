@@ -17,23 +17,29 @@
             @else
                 <ul class="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
                     @foreach ($c->courts as $court)
-                        <li class="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
-                            <div class="flex min-w-0 items-center gap-3">
-                                <div
-                                    class="h-10 w-16 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800"
-                                >
-                                    <img
-                                        src="{{ $court->staticImageUrl() }}"
-                                        alt="{{ $court->name }}"
-                                        class="size-full object-cover object-center"
-                                        loading="lazy"
-                                    />
+                        <li
+                            class="space-y-3 border-b border-zinc-100 py-4 last:border-0 dark:border-zinc-800"
+                            wire:key="court-row-{{ $court->id }}"
+                        >
+                            <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
+                                <div class="flex min-w-0 items-center gap-3">
+                                    <div
+                                        class="h-10 w-16 shrink-0 overflow-hidden rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-800"
+                                    >
+                                        <img
+                                            src="{{ $court->galleryImages->first()?->publicUrl() ?? $court->staticImageUrl() }}"
+                                            alt="{{ $court->name }}"
+                                            class="size-full object-cover object-center"
+                                            loading="lazy"
+                                        />
+                                    </div>
+                                    <span class="truncate font-medium text-zinc-900 dark:text-zinc-100">
+                                        {{ $court->name }}
+                                    </span>
                                 </div>
-                                <span class="truncate font-medium text-zinc-900 dark:text-zinc-100">
-                                    {{ $court->name }}
-                                </span>
+                                <span class="text-xs uppercase text-zinc-500">{{ $court->environment }}</span>
                             </div>
-                            <span class="text-xs uppercase text-zinc-500">{{ $court->environment }}</span>
+                            <livewire:venue.court-gallery-editor :court-id="$court->id" :key="'court-gal-'.$court->id" />
                         </li>
                     @endforeach
                 </ul>

@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Database\Factories\CourtClientFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * Each venue has exactly one court admin user ({@see $admin_user_id}); each court admin manages at most one venue.
@@ -66,7 +66,36 @@ class CourtClient extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->cover_image_path);
+        return PublicStorageUrl::forPath($this->cover_image_path);
+    }
+
+    /**
+     * Venue booking page / marketing carousel: gallery rows first, else legacy single cover.
+     *
+     * @return list<array{src: string, alt: string}>
+     */
+    public function carouselSlides(): array
+    {
+        $images = $this->relationLoaded('approvedGalleryImages')
+            ? $this->approvedGalleryImages
+            : $this->approvedGalleryImages()->get();
+
+        $slides = [];
+        foreach ($images as $img) {
+            $slides[] = [
+                'src' => $img->publicUrl(),
+                'alt' => (string) ($img->alt_text ?: $this->name),
+            ];
+        }
+
+        if ($slides === []) {
+            $cover = $this->coverImageUrl();
+            if ($cover !== null) {
+                $slides[] = ['src' => $cover, 'alt' => $this->name];
+            }
+        }
+
+        return $slides;
     }
 
     public function admin(): BelongsTo
@@ -82,6 +111,17 @@ class CourtClient extends Model
     public function courts(): HasMany
     {
         return $this->hasMany(Court::class)->orderBy('sort_order');
+    }
+
+    public function galleryImages(): HasMany
+    {
+        return $this->hasMany(CourtClientGalleryImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    /** Shown on public booking page / carousels only after super-admin approval. */
+    public function approvedGalleryImages(): HasMany
+    {
+        return $this->galleryImages()->whereNotNull('approved_at');
     }
 
     public function weeklyHours(): HasMany

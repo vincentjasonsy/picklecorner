@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Support\PublicStorageUrl;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Storage;
 
 class Booking extends Model
 {
@@ -223,7 +223,7 @@ class Booking extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->payment_proof_path);
+        return PublicStorageUrl::forPath($this->payment_proof_path);
     }
 
     public function scopeNotCancelled($query)

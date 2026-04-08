@@ -21,7 +21,7 @@ class VenueCourts extends Component
     #[Computed]
     public function courtClient()
     {
-        return auth()->user()->administeredCourtClient?->load(['courts']);
+        return auth()->user()->administeredCourtClient?->load(['courts.galleryImages']);
     }
 
     #[Computed]

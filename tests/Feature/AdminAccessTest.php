@@ -90,6 +90,29 @@ class AdminAccessTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_player_cannot_open_gallery_approvals(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $player = User::factory()->player()->create();
+
+        $this->actingAs($player)
+            ->get(route('admin.gallery-approvals'))
+            ->assertForbidden();
+    }
+
+    public function test_court_admin_cannot_open_gallery_approvals(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $admin = User::factory()->courtAdmin()->create();
+        CourtClient::factory()->forAdmin($admin)->create();
+
+        $this->actingAs($admin)
+            ->get(route('admin.gallery-approvals'))
+            ->assertForbidden();
+    }
+
     public function test_internal_play_reminder_command_sends_database_notification_when_eligible(): void
     {
         $this->seed(UserTypeSeeder::class);

@@ -112,6 +112,18 @@
                             >
                                 Court clients
                             </a>
+                            <a
+                                href="{{ route('admin.venue-quick-setup') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.venue-quick-setup')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Quick venue setup
+                            </a>
                         </div>
                     </div>
 
@@ -250,6 +262,18 @@
                                 ])
                             >
                                 Team play reminders
+                            </a>
+                            <a
+                                href="{{ route('admin.gallery-approvals') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.gallery-approvals')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Gallery approvals
                             </a>
                         </div>
                     </div>

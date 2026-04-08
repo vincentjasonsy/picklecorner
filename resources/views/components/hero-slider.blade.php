@@ -22,6 +22,7 @@
 <div
     {{ $attributes->class(['relative']) }}
     wire:ignore
+    x-cloak
     x-data="{
         n: @js(count($slides)),
         i: 0,
@@ -64,11 +65,8 @@
                 src="{{ $slide['src'] }}"
                 alt="{{ $slide['alt'] }}"
                 class="absolute inset-0 size-full object-cover object-center"
-                loading="{{ $idx === 0 ? 'eager' : 'lazy' }}"
+                loading="eager"
                 decoding="async"
-                @if ($idx !== 0)
-                    style="display: none"
-                @endif
             />
         @endforeach
 

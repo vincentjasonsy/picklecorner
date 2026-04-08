@@ -38,7 +38,7 @@ class DeskCourtsLive extends Component
             return collect();
         }
 
-        $courts = Court::orderedForGridColumns($client->courts()->get());
+        $courts = Court::orderedForGridColumns($client->courts()->with('approvedGalleryImages')->get());
 
         $now = now();
         $statuses = Booking::statusesBlockingCourtAvailability();
