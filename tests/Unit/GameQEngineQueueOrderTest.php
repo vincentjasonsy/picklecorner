@@ -57,4 +57,50 @@ class GameQEngineQueueOrderTest extends TestCase
         $this->assertSame(['x'], array_map('strval', $courts[1]['sideA'] ?? []));
         $this->assertSame(['w'], array_map('strval', $courts[1]['sideB'] ?? []));
     }
+
+    public function test_sync_queue_prioritizes_players_with_fewer_games_stable_within_ties(): void
+    {
+        $state = Engine::defaultState();
+        $state['mode'] = 'singles';
+        $state['courtsCount'] = 1;
+        $state['players'] = [
+            ['id' => 'a', 'name' => 'A', 'level' => 3, 'wins' => 2, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'b', 'name' => 'B', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'c', 'name' => 'C', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['a', 'c', 'b'];
+        $state['courts'] = [null];
+
+        $e = new Engine($state);
+        $e->syncQueueFromIdle();
+
+        $this->assertSame(['c', 'b', 'a'], array_map('strval', $e->toArray()['queue']));
+    }
+
+    public function test_fill_courts_singles_orders_by_fewer_games_before_pairing(): void
+    {
+        $state = Engine::defaultState();
+        $state['mode'] = 'singles';
+        $state['shuffleMethod'] = 'random';
+        $state['courtsCount'] = 2;
+        $state['players'] = [
+            ['id' => 'w', 'name' => 'W', 'level' => 3, 'wins' => 5, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'x', 'name' => 'X', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'y', 'name' => 'Y', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'z', 'name' => 'Z', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['w', 'z', 'y', 'x'];
+        $state['courts'] = [null, null];
+
+        $e = new Engine($state);
+        $e->fillCourts(1_700_000_000_000);
+
+        $courts = $e->toArray()['courts'];
+        $this->assertIsArray($courts[0]);
+        $this->assertIsArray($courts[1]);
+        $this->assertSame(['z'], array_map('strval', $courts[0]['sideA'] ?? []));
+        $this->assertSame(['y'], array_map('strval', $courts[0]['sideB'] ?? []));
+        $this->assertSame(['x'], array_map('strval', $courts[1]['sideA'] ?? []));
+        $this->assertSame(['w'], array_map('strval', $courts[1]['sideB'] ?? []));
+    }
 }

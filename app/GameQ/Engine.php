@@ -668,6 +668,51 @@ class Engine
     }
 
     /**
+     * Total completed matches (wins + losses) for fair queue / fill ordering.
+     *
+     * @param  array<string, mixed>  $p
+     */
+    private static function totalGamesPlayed(array $p): int
+    {
+        return (int) ($p['wins'] ?? 0) + (int) ($p['losses'] ?? 0);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $players
+     * @return list<array<string, mixed>>
+     */
+    private function sortIdlePlayersForFillByGamesThenMethod(array $players, string $method): array
+    {
+        $byGames = [];
+        foreach (array_values($players) as $p) {
+            $g = self::totalGamesPlayed($p);
+            if (! isset($byGames[$g])) {
+                $byGames[$g] = [];
+            }
+            $byGames[$g][] = $p;
+        }
+        ksort($byGames, SORT_NUMERIC);
+        $out = [];
+        foreach ($byGames as $group) {
+            foreach ($this->sortPlayersForMethod($group, $method) as $row) {
+                $out[] = $row;
+            }
+        }
+
+        return $out;
+    }
+
+    private function totalGamesForQueueId(string|int $id): int
+    {
+        $p = $this->playerById($id);
+        if (! $p) {
+            return PHP_INT_MAX;
+        }
+
+        return self::totalGamesPlayed($p);
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $poolPlayers
      * @return list<list<string|int>>
      */
@@ -705,8 +750,8 @@ class Engine
         }
         /*
          * Non-team doubles: $poolPlayers order already comes from orderedPoolForFill() —
-         * queue members first (in list order), then idle-not-in-queue sorted by shuffleMethod.
-         * Pair consecutively; do not shuffle/sort again or Fill courts ignores the queue.
+         * queue members first (fewest games first, stable ties), then idle-not-in-queue sorted by
+         * games played then shuffleMethod. Pair consecutively; do not shuffle/sort again or Fill courts ignores the queue.
          */
         $arr = array_values($poolPlayers);
         $sides = [];
@@ -740,7 +785,7 @@ class Engine
         }
         $sortedRest = array_map(
             fn ($p) => $p['id'],
-            $this->sortPlayersForMethod($restPlayers, (string) $this->state['shuffleMethod'])
+            $this->sortIdlePlayersForFillByGamesThenMethod($restPlayers, (string) $this->state['shuffleMethod'])
         );
         $orderedIds = array_merge($inQueue, $sortedRest);
         $out = [];
@@ -757,6 +802,7 @@ class Engine
     public function fillCourts(?int $nowMs = null): void
     {
         $this->ensureCourtSlots();
+        $this->syncQueueFromIdle();
         $pool = $this->orderedPoolForFill();
         $sides = $this->buildSides($pool);
         $emptyIdx = [];
@@ -1095,11 +1141,24 @@ class Engine
                 $next[] = $id;
             }
         }
-        $this->state['queue'] = array_values(array_filter($next, function ($qid) {
+        $filtered = array_values(array_filter($next, function ($qid) {
             $pl = $this->playerById($qid);
 
             return $pl && empty($pl['disabled']) && empty($pl['skipShuffle']);
         }));
+        $prio = [];
+        foreach ($filtered as $i => $id) {
+            $prio[(string) $id] = $i;
+        }
+        usort($filtered, function ($a, $b) use ($prio) {
+            $cmp = $this->totalGamesForQueueId($a) <=> $this->totalGamesForQueueId($b);
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+
+            return ($prio[(string) $a] ?? 0) <=> ($prio[(string) $b] ?? 0);
+        });
+        $this->state['queue'] = $filtered;
     }
 
     public function clearCourt(int $i): void
