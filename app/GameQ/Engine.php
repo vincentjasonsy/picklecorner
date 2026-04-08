@@ -1348,6 +1348,8 @@ class Engine
     }
 
     /**
+     * Session leaderboard: wins first, then tie-breakers that favor larger samples over short hot streaks.
+     *
      * @return list<array<string, mixed>>
      */
     public function rankings(): array
@@ -1368,6 +1370,19 @@ class Engine
             $bw = (int) ($b['wins'] ?? 0);
             if ($bw !== $aw) {
                 return $bw <=> $aw;
+            }
+            if ($aw > 0) {
+                $aplay = (int) ($a['played'] ?? 0);
+                $bplay = (int) ($b['played'] ?? 0);
+                if ($bplay !== $aplay) {
+                    return $bplay <=> $aplay;
+                }
+            } elseif ($aw === 0) {
+                $al = (int) ($a['losses'] ?? 0);
+                $bl = (int) ($b['losses'] ?? 0);
+                if ($al !== $bl) {
+                    return $al <=> $bl;
+                }
             }
             $ap = (int) ($a['pct'] ?? 0);
             $bp = (int) ($b['pct'] ?? 0);
