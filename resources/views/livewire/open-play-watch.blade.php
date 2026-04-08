@@ -30,6 +30,11 @@
                 <h1 class="font-display mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
                     <x-gameq-mark class="text-white [&>span:first-child]:text-white" />
                 </h1>
+                @if (! $loadFailed && trim((string) ($game['sessionTitle'] ?? '')) !== '')
+                    <p class="mt-3 text-lg font-semibold leading-snug text-white sm:text-xl">
+                        {{ trim((string) $game['sessionTitle']) }}
+                    </p>
+                @endif
                 @if (! $loadFailed)
                     <p class="mt-3 text-sm leading-relaxed text-slate-300">
                         {{ ($game['mode'] ?? '') === 'doubles' ? 'Doubles' : 'Singles' }}

@@ -66,6 +66,7 @@ class Engine
             'h2hPlayerA' => '',
             'h2hPlayerB' => '',
             'shareError' => '',
+            'sessionTitle' => '',
         ];
     }
 
@@ -110,11 +111,12 @@ class Engine
             $merged['courtLineupDraft'] = [];
         }
 
-        foreach (['lineupEditError', 'importError', 'newName', 'newTeamId', 'bulkPlayerList', 'bulkAddFeedback', 'h2hPlayerA', 'h2hPlayerB', 'shareError'] as $sk) {
+        foreach (['lineupEditError', 'importError', 'newName', 'newTeamId', 'bulkPlayerList', 'bulkAddFeedback', 'h2hPlayerA', 'h2hPlayerB', 'shareError', 'sessionTitle'] as $sk) {
             if (! isset($merged[$sk]) || ! is_string($merged[$sk])) {
                 $merged[$sk] = is_scalar($merged[$sk] ?? null) ? (string) ($merged[$sk] ?? '') : '';
             }
         }
+        $merged['sessionTitle'] = mb_substr(trim($merged['sessionTitle']), 0, 120);
         $nl = $merged['newLevel'] ?? 3;
         $merged['newLevel'] = is_numeric($nl) ? (int) $nl : 3;
 
@@ -139,6 +141,8 @@ class Engine
         $this->state['courts'] = is_array($merged['courts'] ?? null) ? array_values($merged['courts']) : [];
         $this->state['completedMatches'] = is_array($merged['completedMatches'] ?? null) ? array_values($merged['completedMatches']) : [];
         $this->state['h2h'] = is_array($merged['h2h'] ?? null) ? $merged['h2h'] : [];
+        $st = $merged['sessionTitle'] ?? '';
+        $this->state['sessionTitle'] = is_string($st) ? mb_substr(trim($st), 0, 120) : '';
         if ($clearShare) {
             $this->state['shareUuid'] = '';
             $this->state['shareSecret'] = '';
@@ -164,6 +168,7 @@ class Engine
             'shuffleMethod' => $this->state['shuffleMethod'],
             'courtsCount' => $this->state['courtsCount'],
             'timeLimitMinutes' => $this->state['timeLimitMinutes'],
+            'sessionTitle' => mb_substr(trim((string) ($this->state['sessionTitle'] ?? '')), 0, 120),
             'players' => $this->cloneState($this->state['players']),
             'queue' => $this->cloneState($this->state['queue']),
             'courts' => $this->cloneState($this->state['courts']),
@@ -199,6 +204,7 @@ class Engine
             'h2hPlayerA' => $this->state['h2hPlayerA'],
             'h2hPlayerB' => $this->state['h2hPlayerB'],
             'shareError' => $this->state['shareError'],
+            'sessionTitle' => $this->state['sessionTitle'],
         ]);
     }
 

@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -32,10 +33,6 @@ class OpenPlayOrganizer extends Component
     public ?array $historyQuota = null;
 
     public string $historyError = '';
-
-    public bool $historyBusy = false;
-
-    public string $historySaveTitle = '';
 
     public bool $peopleModalOpen = false;
 
@@ -79,6 +76,7 @@ class OpenPlayOrganizer extends Component
 
         $this->refreshHistorySessions();
         $this->maybeLoadFromQueryParam();
+        $this->hydrateCanonicalShareUuid();
     }
 
     protected function persist(): void
@@ -91,8 +89,12 @@ class OpenPlayOrganizer extends Component
     {
         try {
             $e = new Engine($this->state);
+            $json = json_encode($e->sharePayload(), JSON_THROW_ON_ERROR);
+            if (in_array('xxh128', hash_algos(), true)) {
+                return hash('xxh128', $json);
+            }
 
-            return hash('xxh128', json_encode($e->sharePayload(), JSON_THROW_ON_ERROR));
+            return hash('sha256', $json);
         } catch (\Throwable) {
             return null;
         }
@@ -115,6 +117,160 @@ class OpenPlayOrganizer extends Component
         $uuid ??= (string) ($this->state['shareUuid'] ?? '');
         if ($uuid !== '') {
             session()->forget('gameq_share_sent_hash_'.$uuid);
+        }
+    }
+
+    protected function accountSessionCacheKey(string|int $userId, ?int $linkedId): string
+    {
+        $suffix = $linkedId !== null ? (string) $linkedId : 'new';
+
+        return 'gameq_account_payload_hash_'.$userId.'_'.$suffix;
+    }
+
+    protected function rememberAccountSessionPayloadHash(string $hash): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+        /** @var User $user */
+        $user = Auth::user();
+        $linked = $this->state['linkedOpenPlaySessionId'] ?? null;
+        $lid = is_numeric($linked) ? (int) $linked : null;
+        session([$this->accountSessionCacheKey($user->getKey(), $lid) => $hash]);
+    }
+
+    protected function lastSavedAccountSessionHash(): ?string
+    {
+        if (! Auth::check()) {
+            return null;
+        }
+        /** @var User $user */
+        $user = Auth::user();
+        $linked = $this->state['linkedOpenPlaySessionId'] ?? null;
+        $lid = is_numeric($linked) ? (int) $linked : null;
+
+        $v = session($this->accountSessionCacheKey($user->getKey(), $lid));
+
+        return is_string($v) ? $v : null;
+    }
+
+    protected function sessionHasPersistableActivity(): bool
+    {
+        $players = $this->state['players'] ?? [];
+        if (is_array($players) && count($players) > 0) {
+            return true;
+        }
+        $queue = $this->state['queue'] ?? [];
+        if (is_array($queue) && count($queue) > 0) {
+            return true;
+        }
+        $completed = $this->state['completedMatches'] ?? [];
+        if (is_array($completed) && count($completed) > 0) {
+            return true;
+        }
+        foreach ($this->state['courts'] ?? [] as $c) {
+            if ($c !== null && is_array($c)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Persist GameQ snapshot to open_play_sessions (create or update), deduped like live-share sync.
+     */
+    protected function syncAccountSessionIfNeeded(): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+        if (($this->state['uiPhase'] ?? '') !== 'session') {
+            return;
+        }
+
+        $hash = $this->sharePayloadHashForCurrentState();
+        if ($hash === null) {
+            return;
+        }
+
+        $linked = $this->state['linkedOpenPlaySessionId'] ?? null;
+        $linkedId = is_numeric($linked) ? (int) $linked : null;
+
+        if ($linkedId === null && ! $this->sessionHasPersistableActivity()) {
+            return;
+        }
+
+        if ($hash === $this->lastSavedAccountSessionHash()) {
+            return;
+        }
+
+        /** @var User $user */
+        $user = Auth::user();
+
+        try {
+            $e = new Engine($this->state);
+            $data = $e->sharePayload();
+            $players = $data['players'] ?? [];
+            if (! is_array($players) || count($players) > OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
+                return;
+            }
+            $encoded = json_encode($data);
+            if ($encoded === false || strlen($encoded) > 512000) {
+                return;
+            }
+
+            if ($linkedId !== null) {
+                $session = $user->openPlaySessions()->whereKey($linkedId)->first();
+                if (! $session instanceof OpenPlaySession) {
+                    $this->state['linkedOpenPlaySessionId'] = null;
+                    $this->persist();
+
+                    return;
+                }
+                $titleFromState = mb_substr(trim((string) ($this->state['sessionTitle'] ?? '')), 0, 120);
+                if ($titleFromState !== '') {
+                    $session->title = $titleFromState;
+                }
+                $session->payload = $data;
+                $session->save();
+                $this->rememberAccountSessionPayloadHash($hash);
+                $this->refreshHistorySessions();
+
+                return;
+            }
+
+            $quota = OpenPlaySession::quotaForUser($user);
+            if ($quota['remaining'] <= 0) {
+                Log::info('GameQ account autosave skipped: monthly quota exhausted', ['user_id' => $user->getKey()]);
+
+                return;
+            }
+
+            $fromSession = mb_substr(trim((string) ($this->state['sessionTitle'] ?? '')), 0, 120);
+            $title = $fromSession !== '' ? $fromSession : 'Hosted · '.now()->timezone(config('app.timezone'))->format('M j, Y g:i a');
+            $session = $user->openPlaySessions()->create([
+                'title' => $title,
+                'payload' => $data,
+            ]);
+            $uuid = (string) ($this->state['shareUuid'] ?? '');
+            $secret = (string) ($this->state['shareSecret'] ?? '');
+            if ($uuid !== '' && $secret !== '') {
+                $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
+                if ($share && Hash::check($secret, $share->secret_hash)) {
+                    $share->forceFill(['open_play_session_id' => $session->id])->save();
+                }
+            }
+            $this->state['linkedOpenPlaySessionId'] = $session->id;
+            $this->historyQuota = OpenPlaySession::quotaForUser($user);
+            $this->persist();
+            $this->rememberAccountSessionPayloadHash($hash);
+            $this->refreshHistorySessions();
+        } catch (\Throwable $ex) {
+            Log::warning('GameQ account autosave failed', [
+                'user_id' => $user->getKey(),
+                'message' => $ex->getMessage(),
+            ]);
         }
     }
 
@@ -371,6 +527,7 @@ class OpenPlayOrganizer extends Component
     {
         $this->persist();
         $this->syncSharePayloadToServerIfNeeded();
+        $this->syncAccountSessionIfNeeded();
     }
 
     public function resetSession(): void
@@ -399,12 +556,16 @@ class OpenPlayOrganizer extends Component
     protected function performShareRevoke(): void
     {
         $uuid = (string) ($this->state['shareUuid'] ?? '');
-        $secret = (string) ($this->state['shareSecret'] ?? '');
-        if ($uuid === '' || $secret === '') {
+        if ($uuid === '') {
             return;
         }
         $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
-        if ($share && Hash::check($secret, $share->secret_hash)) {
+        $secret = (string) ($this->state['shareSecret'] ?? '');
+        $userId = Auth::id();
+        $secretOk = $secret !== '' && $share && Hash::check($secret, $share->secret_hash);
+        $ownerOk = $userId && $share && $share->user_id !== null
+            && (string) $share->user_id === (string) $userId;
+        if ($share && ($secretOk || $ownerOk)) {
             $share->delete();
         }
         $this->forgetSentSharePayloadHash($uuid);
@@ -413,6 +574,22 @@ class OpenPlayOrganizer extends Component
         $this->state['shareSyncEnabled'] = false;
         $this->state['shareError'] = '';
         $this->persist();
+    }
+
+    /** Restore public watch URL from the signed-in user’s single live share (host key may still be empty). */
+    protected function hydrateCanonicalShareUuid(): void
+    {
+        if (! Auth::check()) {
+            return;
+        }
+        if (! empty($this->state['shareUuid'])) {
+            return;
+        }
+        $row = OpenPlayShare::query()->where('user_id', Auth::id())->orderBy('id')->first();
+        if ($row) {
+            $this->state['shareUuid'] = $row->uuid;
+            $this->persist();
+        }
     }
 
     public function revokeSharing(): void
@@ -450,7 +627,7 @@ class OpenPlayOrganizer extends Component
         try {
             $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
             if (! $share || ! Hash::check($secret, $share->secret_hash)) {
-                $this->state['shareError'] = 'Share key was rejected. Create a new link.';
+                $this->state['shareError'] = 'Share key was rejected. Reconnect as host (watch URL stays the same).';
                 $this->state['shareSyncEnabled'] = false;
                 $this->persist();
 
@@ -482,6 +659,20 @@ class OpenPlayOrganizer extends Component
         $this->shareBusy = true;
         $this->state['shareError'] = '';
         try {
+            if (! Auth::check()) {
+                $this->state['shareError'] = 'Sign in to enable live watch.';
+                $this->persist();
+
+                return;
+            }
+            /** @var User $user */
+            $user = Auth::user();
+            if (! $user instanceof User) {
+                $this->state['shareError'] = 'Sign in to enable live watch.';
+                $this->persist();
+
+                return;
+            }
             $e = new Engine($this->state);
             $payload = $e->sharePayload();
             $players = $payload['players'] ?? [];
@@ -490,28 +681,82 @@ class OpenPlayOrganizer extends Component
 
                 return;
             }
-            $secret = Str::random(48);
             $sid = $this->state['linkedOpenPlaySessionId'] ?? null;
             $sessionFk = null;
             if ($sid !== null && is_numeric($sid)) {
                 $sid = (int) $sid;
-                if (Auth::user()->openPlaySessions()->whereKey($sid)->exists()) {
+                if ($user->openPlaySessions()->whereKey($sid)->exists()) {
                     $sessionFk = $sid;
                 }
             }
+
+            $uuid = (string) ($this->state['shareUuid'] ?? '');
+            $clientSecret = (string) ($this->state['shareSecret'] ?? '');
+
+            if ($uuid !== '' && $clientSecret !== '') {
+                $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
+                if ($share && Hash::check($clientSecret, $share->secret_hash)) {
+                    $legacyNoOwner = $share->user_id === null;
+                    $ownerOk = $legacyNoOwner || (string) $share->user_id === (string) $user->getKey();
+                    if ($ownerOk) {
+                        $share->forceFill([
+                            'payload' => $payload,
+                            'open_play_session_id' => $sessionFk ?? $share->open_play_session_id,
+                            'user_id' => $share->user_id ?? $user->getKey(),
+                        ])->save();
+                        $this->state['shareUuid'] = $share->uuid;
+                        $this->state['shareSecret'] = $clientSecret;
+                        $this->state['shareSyncEnabled'] = true;
+                        $this->persist();
+                        $this->rememberSentSharePayloadHash();
+
+                        return;
+                    }
+                }
+            }
+
+            $canonical = OpenPlayShare::query()
+                ->where('user_id', $user->getKey())
+                ->orderBy('id')
+                ->first();
+            if ($canonical) {
+                $newSecret = Str::random(48);
+                $canonical->forceFill([
+                    'payload' => $payload,
+                    'secret_hash' => Hash::make($newSecret),
+                    'open_play_session_id' => $sessionFk ?? $canonical->open_play_session_id,
+                ])->save();
+                $this->state['shareUuid'] = $canonical->uuid;
+                $this->state['shareSecret'] = $newSecret;
+                $this->state['shareSyncEnabled'] = true;
+                $this->persist();
+                $this->rememberSentSharePayloadHash();
+
+                return;
+            }
+
+            $newSecret = Str::random(48);
             $share = OpenPlayShare::query()->create([
+                'user_id' => $user->getKey(),
                 'open_play_session_id' => $sessionFk,
                 'uuid' => (string) Str::uuid(),
-                'secret_hash' => Hash::make($secret),
+                'secret_hash' => Hash::make($newSecret),
                 'payload' => $payload,
             ]);
             $this->state['shareUuid'] = $share->uuid;
-            $this->state['shareSecret'] = $secret;
+            $this->state['shareSecret'] = $newSecret;
             $this->state['shareSyncEnabled'] = true;
             $this->persist();
             $this->rememberSentSharePayloadHash();
         } catch (\Throwable $ex) {
-            $this->state['shareError'] = 'Could not create share link.';
+            Log::warning('OpenPlayOrganizer::startSharing failed', [
+                'message' => $ex->getMessage(),
+                'exception' => $ex::class,
+            ]);
+            $this->state['shareError'] = 'Could not enable live share.';
+            if (config('app.debug')) {
+                $this->state['shareError'] .= ' '.$ex->getMessage();
+            }
             $this->persist();
         } finally {
             $this->shareBusy = false;
@@ -538,50 +783,6 @@ class OpenPlayOrganizer extends Component
         return rtrim((string) url('/open-play/watch'), '/').'/'.$uuid;
     }
 
-    public function saveToHistory(): void
-    {
-        $this->historyBusy = true;
-        $this->historyError = '';
-        try {
-            /** @var User $user */
-            $user = Auth::user();
-            $e = new Engine($this->state);
-            $data = $e->sharePayload();
-            $quota = OpenPlaySession::quotaForUser($user);
-            if ($quota['remaining'] <= 0) {
-                $this->historyError = sprintf(
-                    'You can save up to %d GameQ sessions to your account each calendar month.',
-                    OpenPlaySession::MONTHLY_SAVE_LIMIT
-                );
-                $this->historyQuota = $quota;
-
-                return;
-            }
-            $title = trim($this->historySaveTitle) !== '' ? trim($this->historySaveTitle) : null;
-            $session = $user->openPlaySessions()->create([
-                'title' => $title ?? 'Hosted · '.now()->timezone(config('app.timezone'))->format('M j, Y g:i a'),
-                'payload' => $data,
-            ]);
-            $uuid = (string) ($this->state['shareUuid'] ?? '');
-            $secret = (string) ($this->state['shareSecret'] ?? '');
-            if ($uuid !== '' && $secret !== '') {
-                $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
-                if ($share && Hash::check($secret, $share->secret_hash)) {
-                    $share->forceFill(['open_play_session_id' => $session->id])->save();
-                }
-            }
-            $this->state['linkedOpenPlaySessionId'] = $session->id;
-            $this->historySaveTitle = '';
-            $this->historyQuota = OpenPlaySession::quotaForUser($user);
-            $this->persist();
-            $this->refreshHistorySessions();
-        } catch (\Throwable) {
-            $this->historyError = 'Could not save (check your connection and try again).';
-        } finally {
-            $this->historyBusy = false;
-        }
-    }
-
     public function loadHistorySession(int $id): void
     {
         $this->historyError = '';
@@ -597,6 +798,16 @@ class OpenPlayOrganizer extends Component
             }
             $this->withEngine(fn (Engine $e) => $e->applyImportedPayload($payload, ['clearShare' => true]));
             $this->state['linkedOpenPlaySessionId'] = $id;
+            $this->state['sessionTitle'] = mb_substr(trim((string) $session->title), 0, 120);
+            $live = OpenPlayShare::query()
+                ->where('user_id', $user->getKey())
+                ->where('open_play_session_id', $id)
+                ->orderByDesc('id')
+                ->first()
+                ?? OpenPlayShare::query()->where('user_id', $user->getKey())->orderBy('id')->first();
+            if ($live) {
+                $this->state['shareUuid'] = $live->uuid;
+            }
             $this->state['importError'] = '';
             $this->activeTab = 'play';
             $this->state['uiPhase'] = 'session';

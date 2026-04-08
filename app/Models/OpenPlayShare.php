@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OpenPlayShare extends Model
 {
     protected $fillable = [
+        'user_id',
         'open_play_session_id',
         'uuid',
         'secret_hash',
@@ -32,5 +33,13 @@ class OpenPlayShare extends Model
     public function openPlaySession(): BelongsTo
     {
         return $this->belongsTo(OpenPlaySession::class, 'open_play_session_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 }

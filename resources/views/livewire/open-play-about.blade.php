@@ -88,7 +88,7 @@
                             Where your data lives
                         </h2>
                         <p class="mt-4 text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            While you host, queues, matchups, and timers run on the server in your logged-in session (Livewire), so refresh or switching devices won’t lose your GameQ state. When you’re logged in, you can <span class="font-medium text-zinc-800 dark:text-zinc-200">record sessions you hosted</span> in your history (up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new entries per calendar month), search and filter them here, and reopen any session in GameQ.
+                            While you host, queues, matchups, and timers run on the server in your logged-in session (Livewire), so refresh or switching devices won’t lose your GameQ state. When you’re logged in, GameQ also <span class="font-medium text-zinc-800 dark:text-zinc-200">saves your hosted snapshot to your account</span> as you go (creating up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new saved sessions per calendar month; reopening or continuing one updates that row). They appear under <span class="font-medium text-zinc-800 dark:text-zinc-200">Your sessions</span> in GameQ and on this page, where you can search, filter, and reopen any session.
                         </p>
                     </section>
 
@@ -162,7 +162,7 @@
                             @if ($historySearch !== '' || $historyMonth !== '')
                                 No sessions match your filters. Try another search or month.
                             @else
-                                No history yet. Open GameQ, run a session, then use <span class="font-medium text-zinc-800 dark:text-zinc-200">Add to history</span> — each entry is one session you hosted.
+                                No sessions yet. Saved sessions in your account show up here and under <span class="font-medium text-zinc-800 dark:text-zinc-200">Your sessions</span> when you start GameQ.
                             @endif
                         </p>
                     @else
@@ -195,7 +195,7 @@
                         to see sessions you’ve hosted, search your history, and reopen one in GameQ.
                     </p>
                     <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
-                        Up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} uses per calendar month (each save counts as one use).
+                        Up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new session records per calendar month (each new record counts as one use).
                     </p>
                 @endauth
             </div>

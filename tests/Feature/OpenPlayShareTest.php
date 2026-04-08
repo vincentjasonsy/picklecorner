@@ -52,6 +52,39 @@ class OpenPlayShareTest extends TestCase
         $this->assertDatabaseCount('open_play_shares', 1);
     }
 
+    public function test_authenticated_user_second_share_store_reuses_same_uuid(): void
+    {
+        $user = User::factory()->create();
+        $payload = [
+            'mode' => 'singles',
+            'shuffleMethod' => 'random',
+            'courtsCount' => 2,
+            'timeLimitMinutes' => 0,
+            'sessionTitle' => 'Court night',
+            'players' => [['id' => 'a', 'name' => 'Alex', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'teamId' => '']],
+            'queue' => [],
+            'courts' => [null, null],
+            'completedMatches' => [],
+            'h2h' => [],
+        ];
+
+        $first = $this->actingAs($user)->postJson(route('open-play.share.store'), [
+            'data' => $payload,
+        ]);
+        $first->assertCreated();
+        $uuid = $first->json('uuid');
+
+        $second = $this->actingAs($user)->postJson(route('open-play.share.store'), [
+            'data' => array_merge($payload, ['sessionTitle' => 'Updated']),
+        ]);
+        $second->assertOk();
+        $this->assertSame($uuid, $second->json('uuid'));
+        $this->assertDatabaseCount('open_play_shares', 1);
+        $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
+        $this->assertNotNull($share);
+        $this->assertSame('Updated', $share->payload['sessionTitle'] ?? null);
+    }
+
     public function test_share_store_can_attach_saved_session_id(): void
     {
         $user = User::factory()->create();
@@ -172,6 +205,7 @@ class OpenPlayShareTest extends TestCase
             'secret_hash' => bcrypt('test-secret'),
             'payload' => [
                 'mode' => 'singles',
+                'sessionTitle' => 'Friday ladder',
                 'players' => [['id' => '1', 'name' => 'Sam', 'level' => 4, 'wins' => 1, 'losses' => 0, 'disabled' => false, 'teamId' => '']],
                 'queue' => ['1'],
                 'courts' => [null],
@@ -186,6 +220,7 @@ class OpenPlayShareTest extends TestCase
         $this->get(route('open-play.watch', $share))
             ->assertOk()
             ->assertSee('GameQ · Live', false)
+            ->assertSee('Friday ladder', false)
             ->assertSee('Sam', false)
             ->assertSee('Playing today', false)
             ->assertSee('wire:poll.1s="refreshWatch"', false);

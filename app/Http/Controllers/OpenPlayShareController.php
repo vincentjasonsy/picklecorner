@@ -45,13 +45,33 @@ class OpenPlayShareController extends Controller
             return response()->json(['message' => 'Payload too large.'], 422);
         }
 
+        $userId = $request->user()->getKey();
+        $existing = OpenPlayShare::query()
+            ->where('user_id', $userId)
+            ->orderBy('id')
+            ->first();
+
         $secret = Str::random(48);
-        $share = OpenPlayShare::query()->create([
-            'open_play_session_id' => $validated['open_play_session_id'] ?? null,
-            'uuid' => (string) Str::uuid(),
-            'secret_hash' => Hash::make($secret),
-            'payload' => $validated['data'],
-        ]);
+        $sessionFk = $validated['open_play_session_id'] ?? null;
+
+        if ($existing) {
+            $existing->forceFill([
+                'payload' => $validated['data'],
+                'secret_hash' => Hash::make($secret),
+                'open_play_session_id' => $sessionFk ?? $existing->open_play_session_id,
+            ])->save();
+            $share = $existing->fresh();
+            $status = 200;
+        } else {
+            $share = OpenPlayShare::query()->create([
+                'user_id' => $userId,
+                'open_play_session_id' => $sessionFk,
+                'uuid' => (string) Str::uuid(),
+                'secret_hash' => Hash::make($secret),
+                'payload' => $validated['data'],
+            ]);
+            $status = 201;
+        }
 
         return response()->json(
             [
@@ -59,7 +79,7 @@ class OpenPlayShareController extends Controller
                 'secret' => $secret,
                 'watch_url' => route('open-play.watch', $share),
             ],
-            201,
+            $status,
         );
     }
 

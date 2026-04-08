@@ -177,6 +177,19 @@
                 @if ($setupStep === 1)
                     <div class="space-y-5">
                         <h2 class="font-display text-lg font-extrabold text-zinc-900 dark:text-white">Session rules</h2>
+                        <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300" for="gq-setup-session-title">
+                            Session name
+                            <input
+                                id="gq-setup-session-title"
+                                type="text"
+                                maxlength="120"
+                                wire:model.live="state.sessionTitle"
+                                class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                placeholder="e.g. Tuesday open play · Court 2"
+                                autocomplete="off"
+                            />
+                        </label>
+                        <p class="text-xs text-zinc-500 dark:text-zinc-400">Shown in the host header while you run the queue. You can leave it blank.</p>
                         <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                             Format
                             <select wire:model.live="state.mode" class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100">
@@ -390,6 +403,10 @@
                         <h2 class="font-display text-lg font-extrabold text-zinc-900 dark:text-white">Ready</h2>
                         @php $sug = $eq->setupSuggestedCourtsCount(); $estRot3 = $eq->setupEstimatedRotationMinutes(); @endphp
                         <ul class="space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+                            <li>
+                                <span class="text-zinc-500">Session name:</span>
+                                <span class="font-medium">{{ trim($state['sessionTitle'] ?? '') !== '' ? trim($state['sessionTitle']) : '—' }}</span>
+                            </li>
                             <li><span class="text-zinc-500">Format:</span> <span class="font-medium capitalize">{{ $state['mode'] ?? 'singles' }}</span></li>
                             <li><span class="text-zinc-500">Pairing:</span> <span class="font-medium">{{ $eq->shuffleMethodLabel() }}</span></li>
                             <li><span class="text-zinc-500">Courts:</span> <span class="font-medium">{{ (int) ($state['courtsCount'] ?? 1) }}</span></li>
@@ -472,7 +489,18 @@
                     >
                         End session
                     </button>
-                    <h1 class="font-display min-w-0 truncate text-lg font-extrabold text-zinc-900 dark:text-white">Hosting</h1>
+                    <div class="min-w-0 flex-1 basis-full sm:basis-auto">
+                        <h1 class="font-display truncate text-lg font-extrabold text-zinc-900 dark:text-white">
+                            @if (trim($state['sessionTitle'] ?? '') !== '')
+                                {{ trim($state['sessionTitle']) }}
+                            @else
+                                Hosting
+                            @endif
+                        </h1>
+                        @if (trim($state['sessionTitle'] ?? '') !== '')
+                            <p class="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Hosting</p>
+                        @endif
+                    </div>
                 </div>
                 <div class="flex w-full shrink-0 items-center gap-2 sm:w-auto">
                     <button
@@ -712,28 +740,33 @@
                     <div class="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-sm dark:border-emerald-900/40 dark:from-emerald-950/25 dark:to-zinc-950/80">
                         <p class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300/90">Share live</p>
                         <p class="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            Spectators can follow this session on the watch page. Create a link once, then copy it anytime.
+                            You have one live watch URL per account. Copy it anytime; reconnect this device to push updates if the host key was cleared.
                         </p>
                         <div class="mt-3 space-y-2">
                             @if (empty($state['shareUuid'] ?? ''))
                                 <div>
                                     <button type="button" class="rounded-2xl bg-zinc-800 px-3 py-2 text-sm font-semibold text-white dark:bg-zinc-200 dark:text-zinc-900" wire:click="startSharing" wire:loading.attr="disabled" @disabled($shareBusy)>
-                                        <span wire:loading.remove wire:target="startSharing">Create link</span>
+                                        <span wire:loading.remove wire:target="startSharing">Enable live watch</span>
                                         <span wire:loading wire:target="startSharing">Working…</span>
                                     </button>
                                 </div>
                             @endif
-                            @if (! empty($state['shareUuid']) && empty($state['shareSecret'] ?? ''))
-                                <p class="text-xs text-amber-800 dark:text-amber-200/90">Host key missing — create a new link to share.</p>
-                                <button type="button" class="rounded-2xl bg-zinc-800 px-3 py-2 text-xs font-semibold text-white dark:bg-zinc-200 dark:text-zinc-900" wire:click="startSharing" wire:loading.attr="disabled" @disabled($shareBusy)>New link</button>
-                            @endif
-                            @if (! empty($state['shareUuid']) && ! empty($state['shareSecret'] ?? ''))
+                            @if (! empty($state['shareUuid'] ?? ''))
                                 <div class="flex flex-wrap gap-2">
                                     <input type="text" readonly class="min-w-0 flex-1 rounded border border-zinc-200 bg-white px-2 py-1.5 text-xs dark:border-zinc-600 dark:bg-zinc-950" value="{{ $this->shareWatchUrl() }}" />
                                     <button type="button" class="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs font-semibold dark:border-zinc-600" wire:click="copyShareLink">
                                         {{ $shareCopied ? 'Copied' : 'Copy' }}
                                     </button>
                                 </div>
+                            @endif
+                            @if (! empty($state['shareUuid']) && empty($state['shareSecret'] ?? ''))
+                                <p class="text-xs text-amber-800 dark:text-amber-200/90">Host key missing on this device — reconnect to enable syncing. The watch URL does not change.</p>
+                                <button type="button" class="rounded-2xl bg-zinc-800 px-3 py-2 text-xs font-semibold text-white dark:bg-zinc-200 dark:text-zinc-900" wire:click="startSharing" wire:loading.attr="disabled" @disabled($shareBusy)>
+                                    <span wire:loading.remove wire:target="startSharing">Reconnect as host</span>
+                                    <span wire:loading wire:target="startSharing">Working…</span>
+                                </button>
+                            @endif
+                            @if (! empty($state['shareUuid']) && ! empty($state['shareSecret'] ?? ''))
                                 <div class="flex flex-wrap items-center gap-2 text-xs">
                                     <span class="text-zinc-600 dark:text-zinc-400">Live updates:</span>
                                     @if (! empty($state['shareSyncEnabled']))
@@ -1065,40 +1098,6 @@
                                 @endif
                             </section>
                         </div>
-
-                        <details class="rounded-2xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-                            <summary class="cursor-pointer text-sm font-semibold text-zinc-800 dark:text-zinc-200">Save to account history</summary>
-                            <div class="mt-4 space-y-4 border-t border-zinc-200 pt-4 dark:border-zinc-800">
-                                <div>
-                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                                        <input
-                                            type="text"
-                                            wire:model.live="historySaveTitle"
-                                            class="min-w-0 flex-1 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
-                                            placeholder="Optional name for this save"
-                                            maxlength="120"
-                                            aria-label="Optional name for saved session"
-                                        />
-                                        <button
-                                            type="button"
-                                            class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:opacity-50"
-                                            wire:click="saveToHistory"
-                                            wire:loading.attr="disabled"
-                                            @disabled($historyBusy || $historySaveDisabled)
-                                        >
-                                            <span wire:loading.remove wire:target="saveToHistory">Save</span>
-                                            <span wire:loading wire:target="saveToHistory">Saving…</span>
-                                        </button>
-                                    </div>
-                                    @if ($historyQuota)
-                                        <p class="mt-1 text-xs text-zinc-500">{{ (int) ($historyQuota['remaining'] ?? 0) }} uses left this month</p>
-                                    @endif
-                                    @if ($historyError !== '')
-                                        <p class="mt-1 text-xs text-red-600">{{ $historyError }}</p>
-                                    @endif
-                                </div>
-                            </div>
-                        </details>
                 </div>
             </div>
         </div>
