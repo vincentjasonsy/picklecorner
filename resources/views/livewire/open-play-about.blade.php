@@ -49,6 +49,14 @@
                 @endauth
             </div>
 
+            <p class="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400 xl:text-left">
+                GameQ is one workspace inside {{ config('app.name') }} —
+                <a href="{{ url('/#tools') }}" wire:navigate class="font-semibold text-sky-700 hover:underline dark:text-sky-400">
+                    see booking, venue, desk &amp; coach tools
+                </a>
+                .
+            </p>
+
             <div class="mt-14 grid gap-8 lg:grid-cols-2 lg:gap-10">
                 <section class="rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/50 lg:p-10">
                     <h2 class="text-xl font-semibold text-zinc-900 dark:text-zinc-100">

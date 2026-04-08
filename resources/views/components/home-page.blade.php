@@ -99,6 +99,13 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                     >
                         Why we built this
                     </a>
+                    <a
+                        href="{{ route('contact') }}"
+                        wire:navigate
+                        class="font-display inline-flex items-center rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-5 py-3 text-sm font-bold uppercase tracking-wide text-emerald-50 backdrop-blur-sm transition hover:bg-emerald-500/25"
+                    >
+                        Venues · Book a demo
+                    </a>
                 </div>
                 <dl class="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-8 sm:max-w-md">
                     <div>
@@ -159,8 +166,152 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
         </div>
     </section>
 
+    {{-- Product tools (who each experience is for) --}}
+    <section id="tools" class="scroll-mt-16 border-b border-zinc-200 bg-zinc-50 py-16 dark:border-zinc-800 dark:bg-zinc-950 sm:py-20">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-2xl text-center">
+                <p class="font-display text-xs font-bold uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
+                    What’s in the app
+                </p>
+                <h2 class="font-display mt-3 text-3xl font-bold uppercase tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+                    Tools for players, venues &amp; staff
+                </h2>
+                <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    {{ config('app.name') }} isn’t only a booking grid — it’s a set of connected workspaces. Here’s what
+                    each role gets after signing in (public browsing works without an account).
+                </p>
+            </div>
+            <ul class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" role="list">
+                <li
+                    class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <x-icon name="calendar" class="size-9 text-emerald-600 dark:text-emerald-400" />
+                    <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">
+                        Book now
+                    </h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Browse partner venues, filter indoor/outdoor and city, see ratings and photos, then book on a
+                        live availability grid — hour by hour, court by court.
+                    </p>
+                    <a
+                        href="{{ route('book-now') }}"
+                        wire:navigate
+                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-emerald-700 hover:underline dark:text-emerald-400"
+                    >
+                        Open Book now →
+                    </a>
+                </li>
+                <li
+                    class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <x-icon name="user-circle" class="size-9 text-teal-600 dark:text-teal-400" />
+                    <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">
+                        Member account
+                    </h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Your locker room: booking history, profile, venue booking flows, optional coach add-ons where
+                        venues enable them, and open-play tools when your club runs sessions.
+                    </p>
+                    <a
+                        href="{{ route('register') }}"
+                        wire:navigate
+                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-teal-700 hover:underline dark:text-teal-400"
+                    >
+                        Create free account →
+                    </a>
+                </li>
+                <li
+                    class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <span class="flex items-center gap-2" aria-hidden="true">
+                        <x-gameq-mark compact />
+                    </span>
+                    <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">
+                        GameQ · open play
+                    </h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Casual sessions at the club: who’s on court, who’s waiting, and scores — without the group-chat
+                        chaos (member sign-in).
+                    </p>
+                    <a
+                        href="{{ route('open-play.about') }}"
+                        wire:navigate
+                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-sky-700 hover:underline dark:text-sky-400"
+                    >
+                        Learn about GameQ →
+                    </a>
+                </li>
+                <li
+                    class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <x-icon name="building-office-2" class="size-9 text-amber-600 dark:text-amber-400" />
+                    <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">
+                        Venue portal
+                    </h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        For club admins: pending booking approvals, weekly hours, courts and slot pricing, venue
+                        settings, customer CRM, reports, gift cards and more on supported plans.
+                    </p>
+                    <a
+                        href="{{ route('login') }}"
+                        wire:navigate
+                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-amber-800 hover:underline dark:text-amber-300"
+                    >
+                        Venue sign-in →
+                    </a>
+                </li>
+                <li
+                    class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <x-icon name="squares-2x2" class="size-9 text-violet-600 dark:text-violet-400" />
+                    <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">
+                        Front desk
+                    </h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        For reception: a live courts board, walk-in booking requests, and a queue so the floor and the
+                        counter stay aligned.
+                    </p>
+                    <a
+                        href="{{ route('login') }}"
+                        wire:navigate
+                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-violet-700 hover:underline dark:text-violet-400"
+                    >
+                        Desk sign-in →
+                    </a>
+                </li>
+                <li
+                    class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <x-icon name="document-text" class="size-9 text-emerald-600 dark:text-emerald-400" />
+                    <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">
+                        Coaches
+                    </h3>
+                    <p class="mt-2 flex-1 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        Coaches on the network can manage which courts they cover, set availability, and (where enabled)
+                        sell sessions and gift cards from a dedicated coach workspace.
+                    </p>
+                    <a
+                        href="{{ route('login') }}"
+                        wire:navigate
+                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-emerald-700 hover:underline dark:text-emerald-400"
+                    >
+                        Coach sign-in →
+                    </a>
+                </li>
+            </ul>
+            <p class="mx-auto mt-10 max-w-2xl text-center text-xs text-zinc-500 dark:text-zinc-400">
+                Platform operators use a separate super-admin console for venues, users, billing, and approvals — not
+                shown here. Questions?
+                <a href="{{ route('contact') }}" wire:navigate class="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
+                    Contact us
+                </a>
+                .
+            </p>
+        </div>
+    </section>
+
     {{-- About --}}
-    <section id="about" class="scroll-mt-16 bg-zinc-50 py-16 dark:bg-zinc-950 sm:py-20">
+    <section id="about" class="scroll-mt-16 bg-white py-16 dark:bg-zinc-900 sm:py-20">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="mx-auto max-w-2xl text-center">
                 <p class="font-display text-xs font-bold uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
@@ -287,9 +438,18 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         Let’s talk courts
                     </h2>
                     <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-                        Questions about partnering, demos, or bringing {{ config('app.name') }} to your venue? Drop us a
-                        line—we read every message.
+                        Questions about partnering, a product walkthrough, or bringing {{ config('app.name') }} to your
+                        venue? Use the contact form — we read every message.
                     </p>
+                    <div class="mt-6">
+                        <a
+                            href="{{ route('contact') }}"
+                            wire:navigate
+                            class="font-display inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:from-emerald-500 hover:to-teal-500"
+                        >
+                            Contact &amp; book a demo
+                        </a>
+                    </div>
                     <ul class="mt-8 space-y-4 text-sm text-zinc-700 dark:text-zinc-300">
                         <li class="flex items-start gap-3">
                             <span
@@ -327,47 +487,24 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                     <p class="font-display text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                         Send a note
                     </p>
-                    <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                        Static preview—connect this form to your mailer or CRM when you are ready.
+                    <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                        Tell us about your club, ask for a live demo, or say hello — we’ll reply by email.
                     </p>
-                    <form class="mt-6 space-y-4" action="#" method="get" onsubmit="return false;">
-                        <div>
-                            <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-400" for="landing-contact-name">Name</label>
-                            <input
-                                id="landing-contact-name"
-                                type="text"
-                                class="mt-1 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                placeholder="Your name"
-                                disabled
-                            />
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-400" for="landing-contact-email">Email</label>
-                            <input
-                                id="landing-contact-email"
-                                type="email"
-                                class="mt-1 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                placeholder="you@example.com"
-                                disabled
-                            />
-                        </div>
-                        <div>
-                            <label class="text-xs font-semibold text-zinc-600 dark:text-zinc-400" for="landing-contact-msg">Message</label>
-                            <textarea
-                                id="landing-contact-msg"
-                                rows="3"
-                                class="mt-1 w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                placeholder="Tell us about your club…"
-                                disabled
-                            ></textarea>
-                        </div>
+                    <div class="mt-6 flex flex-col gap-3">
+                        <a
+                            href="{{ route('contact') }}"
+                            wire:navigate
+                            class="font-display inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:from-emerald-500 hover:to-teal-500"
+                        >
+                            Open contact form
+                        </a>
                         <a
                             href="mailto:{{ $contactEmail }}?subject={{ rawurlencode(config('app.name').' — Contact') }}"
-                            class="font-display inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:from-emerald-500 hover:to-teal-500"
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                         >
-                            Open email instead
+                            Email us directly
                         </a>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

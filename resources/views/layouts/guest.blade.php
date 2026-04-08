@@ -92,8 +92,21 @@
                                 Reviews
                             </a>
                             <a
-                                href="{{ url('/#contact') }}"
+                                href="{{ url('/#tools') }}"
+                                wire:navigate
                                 class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
+                            >
+                                Tools
+                            </a>
+                            <a
+                                href="{{ route('contact') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-2.5 py-2 transition-colors',
+                                    request()->routeIs('contact')
+                                        ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                        : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
+                                ])
                             >
                                 Contact
                             </a>
@@ -256,9 +269,23 @@
                             Reviews
                         </a>
                         <a
-                            href="{{ url('/#contact') }}"
+                            href="{{ url('/#tools') }}"
+                            wire:navigate
                             class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
                             @click="mobileNavOpen = false"
+                        >
+                            Tools
+                        </a>
+                        <a
+                            href="{{ route('contact') }}"
+                            wire:navigate
+                            @click="mobileNavOpen = false"
+                            @class([
+                                'rounded-lg px-3 py-3 transition-colors',
+                                request()->routeIs('contact')
+                                    ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                    : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
+                            ])
                         >
                             Contact
                         </a>
@@ -360,7 +387,8 @@
                         <a href="{{ route('home') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
                         <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
                         <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
-                        <a href="{{ url('/#contact') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
+                        <a href="{{ url('/#tools') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Tools</a>
+                        <a href="{{ route('contact') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
                         <a
                             href="{{ route('open-play.about') }}"
                             wire:navigate

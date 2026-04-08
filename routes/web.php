@@ -33,6 +33,7 @@ use App\Livewire\Coach\CoachGiftCards;
 use App\Livewire\Coach\CoachGiftCardShow;
 use App\Livewire\Coach\CoachHome;
 use App\Livewire\Coach\CoachProfileEdit;
+use App\Livewire\ContactPage;
 use App\Livewire\Desk\DeskCourtsLive;
 use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
@@ -66,6 +67,10 @@ Route::livewire('/', 'home-page')->name('home');
 Route::get('/about', function () {
     return redirect()->route('home')->withFragment('about');
 })->name('about');
+Route::get('/tools', function () {
+    return redirect()->route('home')->withFragment('tools');
+})->name('tools');
+Route::livewire('/contact', ContactPage::class)->name('contact');
 Route::livewire('/book-now', BookNowPage::class)->name('book-now');
 Route::livewire('/book-now/courts/{court}', PublicCourtShow::class)->name('book-now.court');
 Route::livewire('/book-now/venues/{courtClient:slug}/book', VenueBookingPage::class)->name('book-now.venue.book');
