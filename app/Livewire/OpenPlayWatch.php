@@ -33,6 +33,9 @@ class OpenPlayWatch extends Component
 
     public string $toggleBreakError = '';
 
+    /** Shown after a successful take-a-break toggle (survives wire:poll; cleared on next toggle attempt). */
+    public string $toggleBreakSuccess = '';
+
     public ?string $toggleBreakBusyId = null;
 
     public ?string $updatedAtIso = null;
@@ -147,6 +150,7 @@ class OpenPlayWatch extends Component
     protected function applyToggleBreakPayload(string $playerId, bool $wantSkip): void
     {
         $this->toggleBreakError = '';
+        $this->toggleBreakSuccess = '';
         $this->toggleBreakBusyId = $playerId;
         try {
             $this->openPlayShare->refresh();
@@ -181,6 +185,9 @@ class OpenPlayWatch extends Component
             }
             $this->openPlayShare->update(['payload' => $next]);
             $this->refreshWatch();
+            $this->toggleBreakSuccess = $wantSkip
+                ? 'Take a break is on — the host queue is updated.'
+                : 'You’re back in rotation — the host queue is updated.';
         } catch (\Throwable) {
             $this->toggleBreakError = 'Could not update. Try again.';
         } finally {

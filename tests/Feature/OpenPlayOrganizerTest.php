@@ -25,7 +25,6 @@ class OpenPlayOrganizerTest extends TestCase
             ->assertOk()
             ->assertSee('wire:click="startOpenPlayWizard"', false)
             ->assertSee('Start GameQ', false)
-            ->assertSee('Open a saved session', false)
-            ->assertSee('wire:poll.1s="refreshTimers"', false);
+            ->assertSee('Open a saved session', false);
     }
 }

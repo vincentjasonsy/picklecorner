@@ -485,6 +485,15 @@
                 </div>
             </header>
 
+            @if ($takeBreakNotice !== '')
+                <p
+                    class="rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/35 dark:text-emerald-100"
+                    role="status"
+                >
+                    {{ $takeBreakNotice }}
+                </p>
+            @endif
+
             <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-6 2xl:gap-8">
                 {{-- Left: roster --}}
                 <aside
@@ -493,12 +502,25 @@
                     <div class="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60">
                         <h2 class="font-display text-base font-extrabold text-zinc-900 dark:text-white">Roster</h2>
                         <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                            Add players and toggles here; courts and queue stay on the right.
+                            Courts and queue stay on the right. Open roster settings to add or edit players.
                         </p>
-                        <div class="mt-4 space-y-6">
-                            <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                                {{ count($state['players'] ?? []) }} / {{ OpenPlaySession::MAX_PLAYERS_PER_SESSION }} players max
-                            </p>
+                        <div class="mt-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                            <button
+                                type="button"
+                                wire:click="$toggle('rosterSettingsOpen')"
+                                class="flex w-full items-center justify-between gap-2 text-left text-sm font-semibold text-zinc-800 dark:text-zinc-200"
+                                aria-expanded="{{ $rosterSettingsOpen ? 'true' : 'false' }}"
+                            >
+                                <span>
+                                    Roster settings
+                                    <span class="ml-1.5 font-normal text-zinc-500 dark:text-zinc-400">
+                                        ({{ count($state['players'] ?? []) }}/{{ OpenPlaySession::MAX_PLAYERS_PER_SESSION }} players)
+                                    </span>
+                                </span>
+                                <span class="shrink-0 tabular-nums text-zinc-400 dark:text-zinc-500" aria-hidden="true">{{ $rosterSettingsOpen ? 'Hide' : 'Show' }}</span>
+                            </button>
+                            @if ($rosterSettingsOpen)
+                            <div class="mt-4 space-y-6 border-t border-zinc-200 pt-4 dark:border-zinc-800">
                             <div class="flex flex-wrap items-end gap-3">
                                 <label class="min-w-[10rem] grow text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                     Name
@@ -661,6 +683,8 @@
                             </div>
                             @if (count($state['players'] ?? []) === 0)
                                 <p class="text-sm text-zinc-500">No players yet.</p>
+                            @endif
+                            </div>
                             @endif
                         </div>
                     </div>

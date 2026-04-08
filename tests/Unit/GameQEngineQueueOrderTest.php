@@ -1,0 +1,60 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\GameQ\Engine;
+use PHPUnit\Framework\TestCase;
+
+class GameQEngineQueueOrderTest extends TestCase
+{
+    public function test_fill_courts_doubles_keeps_ordered_pool_even_when_shuffle_method_is_random(): void
+    {
+        $state = Engine::defaultState();
+        $state['mode'] = 'doubles';
+        $state['shuffleMethod'] = 'random';
+        $state['courtsCount'] = 1;
+        $state['players'] = [
+            ['id' => 'a', 'name' => 'A', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'b', 'name' => 'B', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'c', 'name' => 'C', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'd', 'name' => 'D', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['d', 'c', 'b', 'a'];
+        $state['courts'] = [null];
+
+        $e = new Engine($state);
+        $e->fillCourts(1_700_000_000_000);
+
+        $court = $e->toArray()['courts'][0];
+        $this->assertIsArray($court);
+        $this->assertSame(['d', 'c'], array_map('strval', $court['sideA'] ?? []));
+        $this->assertSame(['b', 'a'], array_map('strval', $court['sideB'] ?? []));
+    }
+
+    public function test_fill_courts_singles_keeps_queue_order_with_random_shuffle_method(): void
+    {
+        $state = Engine::defaultState();
+        $state['mode'] = 'singles';
+        $state['shuffleMethod'] = 'random';
+        $state['courtsCount'] = 2;
+        $state['players'] = [
+            ['id' => 'w', 'name' => 'W', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'x', 'name' => 'X', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'y', 'name' => 'Y', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'z', 'name' => 'Z', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['z', 'y', 'x', 'w'];
+        $state['courts'] = [null, null];
+
+        $e = new Engine($state);
+        $e->fillCourts(1_700_000_000_000);
+
+        $courts = $e->toArray()['courts'];
+        $this->assertIsArray($courts[0]);
+        $this->assertIsArray($courts[1]);
+        $this->assertSame(['z'], array_map('strval', $courts[0]['sideA'] ?? []));
+        $this->assertSame(['y'], array_map('strval', $courts[0]['sideB'] ?? []));
+        $this->assertSame(['x'], array_map('strval', $courts[1]['sideA'] ?? []));
+        $this->assertSame(['w'], array_map('strval', $courts[1]['sideB'] ?? []));
+    }
+}

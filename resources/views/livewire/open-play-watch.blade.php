@@ -217,6 +217,9 @@
                     @if ($toggleBreakError !== '')
                         <p class="mt-2 rounded-xl border border-red-200/80 bg-red-50/90 px-3 py-2 text-sm text-red-900 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100">{{ $toggleBreakError }}</p>
                     @endif
+                    @if ($toggleBreakSuccess !== '')
+                        <p class="mt-2 rounded-xl border border-emerald-200/80 bg-emerald-50/90 px-3 py-2 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-100" role="status">{{ $toggleBreakSuccess }}</p>
+                    @endif
                     <div class="mt-4 grid gap-3 sm:grid-cols-2">
                         @foreach ($this->rosterPlayers() as $player)
                             <div

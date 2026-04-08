@@ -48,6 +48,12 @@ class OpenPlayOrganizer extends Component
 
     public bool $shareCopied = false;
 
+    /** Show roster add/edit UI (Livewire state survives wire:poll). */
+    public bool $rosterSettingsOpen = false;
+
+    /** Shown after take-a-break changes from the roster or queue (cleared on next toggle). */
+    public string $takeBreakNotice = '';
+
     public $importFile = null;
 
     public function mount(): void
@@ -296,12 +302,44 @@ class OpenPlayOrganizer extends Component
 
     public function toggleSkipShuffle(string $id): void
     {
+        $this->takeBreakNotice = '';
+        $playerName = '';
+        $wasSkipping = false;
+        foreach ($this->state['players'] ?? [] as $p) {
+            if (! is_array($p) || (string) ($p['id'] ?? '') !== $id) {
+                continue;
+            }
+            $wasSkipping = ! empty($p['skipShuffle']);
+            $playerName = trim((string) ($p['name'] ?? ''));
+            break;
+        }
         $this->withEngine(fn (Engine $e) => $e->toggleSkipShuffle($id));
+        $nowSkipping = ! $wasSkipping;
+        $this->takeBreakNotice = $this->takeBreakNoticeMessage($playerName, $nowSkipping);
     }
 
     public function setSkipShuffleFromInput(string $id, bool $checked): void
     {
+        $this->takeBreakNotice = '';
+        $playerName = '';
+        foreach ($this->state['players'] ?? [] as $p) {
+            if (! is_array($p) || (string) ($p['id'] ?? '') !== $id) {
+                continue;
+            }
+            $playerName = trim((string) ($p['name'] ?? ''));
+            break;
+        }
         $this->withEngine(fn (Engine $e) => $e->setSkipShuffleForPlayer($id, $checked));
+        $this->takeBreakNotice = $this->takeBreakNoticeMessage($playerName, $checked);
+    }
+
+    protected function takeBreakNoticeMessage(string $playerName, bool $onBreak): string
+    {
+        $who = $playerName !== '' ? $playerName : 'Player';
+
+        return $onBreak
+            ? "{$who} is on a break — skipped for Fill courts until cleared."
+            : "{$who} is back in rotation for Fill courts.";
     }
 
     public function moveQueueUp(int $i): void

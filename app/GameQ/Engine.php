@@ -703,35 +703,12 @@ class Engine
 
             return $sides;
         }
+        /*
+         * Non-team doubles: $poolPlayers order already comes from orderedPoolForFill() —
+         * queue members first (in list order), then idle-not-in-queue sorted by shuffleMethod.
+         * Pair consecutively; do not shuffle/sort again or Fill courts ignores the queue.
+         */
         $arr = array_values($poolPlayers);
-        if ($method === 'random') {
-            self::shuffleInPlace($arr);
-        } elseif ($method === 'wins') {
-            usort($arr, function ($a, $b) {
-                $aw = (int) ($a['wins'] ?? 0);
-                $bw = (int) ($b['wins'] ?? 0);
-                if ($aw !== $bw) {
-                    return $aw <=> $bw;
-                }
-                $al = (int) ($a['losses'] ?? 0);
-                $bl = (int) ($b['losses'] ?? 0);
-                if ($bl !== $al) {
-                    return $bl <=> $al;
-                }
-
-                return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
-            });
-        } elseif ($method === 'levels') {
-            usort($arr, function ($a, $b) {
-                $al = (int) ($a['level'] ?? 0);
-                $bl = (int) ($b['level'] ?? 0);
-                if ($al !== $bl) {
-                    return $al <=> $bl;
-                }
-
-                return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
-            });
-        }
         $sides = [];
         for ($i = 0; $i + 1 < count($arr); $i += 2) {
             $sides[] = [$arr[$i]['id'], $arr[$i + 1]['id']];
