@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OpenPlaySession extends Model
 {
@@ -33,6 +34,14 @@ class OpenPlaySession extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * @return HasMany<OpenPlayShare, $this>
+     */
+    public function openPlayShares(): HasMany
+    {
+        return $this->hasMany(OpenPlayShare::class, 'open_play_session_id');
     }
 
     public static function countCreatedThisMonthForUser(User $user): int

@@ -107,21 +107,6 @@
             </footer>
         </div>
 
-        @auth
-            @php
-                $gameqEndpoints = [
-                    'shareStore' => route('open-play.share.store'),
-                    'shareApiBase' => url('/open-play/share'),
-                    'watchBase' => url('/open-play/watch'),
-                    'sessionsBase' => url(route('account.open-play.sessions.index', [], false)),
-                ];
-            @endphp
-            {{-- GameQ: endpoints for live share + session history (layout is only used by OpenPlayOrganizer). --}}
-            <script>
-                window.__GAMEQ_ENDPOINTS = {!! json_encode($gameqEndpoints, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_THROW_ON_ERROR) !!};
-            </script>
-        @endauth
-
         @livewireScripts
     </body>
 </html>

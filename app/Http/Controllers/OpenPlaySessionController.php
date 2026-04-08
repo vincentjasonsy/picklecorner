@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\OpenPlaySession;
+use App\Models\OpenPlayShare;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class OpenPlaySessionController extends Controller
 {
@@ -48,6 +50,8 @@ class OpenPlaySessionController extends Controller
         $validated = $request->validate([
             'title' => ['nullable', 'string', 'max:120'],
             'data' => ['required', 'array'],
+            'link_share_uuid' => ['nullable', 'string', 'uuid'],
+            'link_share_secret' => ['nullable', 'string', 'max:200'],
         ]);
 
         $playerCount = is_array($validated['data']['players'] ?? null)
@@ -87,6 +91,15 @@ class OpenPlaySessionController extends Controller
             'title' => $title,
             'payload' => $validated['data'],
         ]);
+
+        $linkUuid = $validated['link_share_uuid'] ?? null;
+        $linkSecret = $validated['link_share_secret'] ?? null;
+        if (is_string($linkUuid) && $linkUuid !== '' && is_string($linkSecret) && $linkSecret !== '') {
+            $share = OpenPlayShare::query()->where('uuid', $linkUuid)->first();
+            if ($share && Hash::check($linkSecret, $share->secret_hash)) {
+                $share->forceFill(['open_play_session_id' => $session->id])->save();
+            }
+        }
 
         return response()->json([
             'session' => [

@@ -3,10 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\OpenPlaySession;
+use App\Models\OpenPlayShare;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class OpenPlaySessionTest extends TestCase
@@ -265,5 +268,49 @@ class OpenPlaySessionTest extends TestCase
                 'message',
                 'GameQ allows at most '.OpenPlaySession::MAX_PLAYERS_PER_SESSION.' players per session.',
             );
+    }
+
+    public function test_deleting_saved_session_cascades_linked_live_shares(): void
+    {
+        $user = User::factory()->create();
+        $session = $user->openPlaySessions()->create([
+            'title' => 'S',
+            'payload' => $this->samplePayload(),
+        ]);
+        $share = OpenPlayShare::query()->create([
+            'open_play_session_id' => $session->id,
+            'uuid' => (string) Str::uuid(),
+            'secret_hash' => Hash::make('x'),
+            'payload' => ['mode' => 'singles', 'players' => []],
+        ]);
+
+        $this->actingAs($user)
+            ->deleteJson(route('account.open-play.sessions.destroy', $session))
+            ->assertOk();
+
+        $this->assertDatabaseMissing('open_play_shares', ['id' => $share->id]);
+    }
+
+    public function test_store_can_link_existing_share_with_secret(): void
+    {
+        $user = User::factory()->create();
+        $plain = 'plain-secret-abc';
+        $share = OpenPlayShare::query()->create([
+            'open_play_session_id' => null,
+            'uuid' => (string) Str::uuid(),
+            'secret_hash' => Hash::make($plain),
+            'payload' => ['mode' => 'singles', 'players' => []],
+        ]);
+
+        $r = $this->actingAs($user)->postJson(route('account.open-play.sessions.store'), [
+            'title' => 'Linked',
+            'data' => $this->samplePayload(),
+            'link_share_uuid' => $share->uuid,
+            'link_share_secret' => $plain,
+        ]);
+
+        $r->assertCreated();
+        $share->refresh();
+        $this->assertSame((int) $r->json('session.id'), (int) $share->open_play_session_id);
     }
 }

@@ -88,7 +88,7 @@
                             Where your data lives
                         </h2>
                         <p class="mt-4 text-base leading-relaxed text-zinc-600 dark:text-zinc-400">
-                            While you run a session, GameQ keeps a copy in your browser so it stays quick and works even if the Wi‑Fi blips. When you’re logged in, you can <span class="font-medium text-zinc-800 dark:text-zinc-200">record sessions you hosted</span> in your history (up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new entries per calendar month), search and filter them here, and reopen any session in GameQ.
+                            While you host, queues, matchups, and timers run on the server in your logged-in session (Livewire), so refresh or switching devices won’t lose your GameQ state. When you’re logged in, you can <span class="font-medium text-zinc-800 dark:text-zinc-200">record sessions you hosted</span> in your history (up to {{ \App\Models\OpenPlaySession::MONTHLY_SAVE_LIMIT }} new entries per calendar month), search and filter them here, and reopen any session in GameQ.
                         </p>
                     </section>
 

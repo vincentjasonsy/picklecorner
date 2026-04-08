@@ -52,6 +52,83 @@ class OpenPlayShareTest extends TestCase
         $this->assertDatabaseCount('open_play_shares', 1);
     }
 
+    public function test_share_store_can_attach_saved_session_id(): void
+    {
+        $user = User::factory()->create();
+        $session = $user->openPlaySessions()->create([
+            'title' => 'H',
+            'payload' => [
+                'mode' => 'singles',
+                'shuffleMethod' => 'random',
+                'courtsCount' => 1,
+                'timeLimitMinutes' => 0,
+                'players' => [],
+                'queue' => [],
+                'courts' => [null],
+                'completedMatches' => [],
+                'h2h' => [],
+            ],
+        ]);
+        $payload = [
+            'mode' => 'singles',
+            'shuffleMethod' => 'random',
+            'courtsCount' => 2,
+            'timeLimitMinutes' => 0,
+            'players' => [['id' => 'a', 'name' => 'Alex', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'teamId' => '']],
+            'queue' => [],
+            'courts' => [null, null],
+            'completedMatches' => [],
+            'h2h' => [],
+        ];
+
+        $response = $this->actingAs($user)->postJson(route('open-play.share.store'), [
+            'data' => $payload,
+            'open_play_session_id' => $session->id,
+        ]);
+
+        $response->assertCreated();
+        $this->assertDatabaseHas('open_play_shares', [
+            'uuid' => $response->json('uuid'),
+            'open_play_session_id' => $session->id,
+        ]);
+    }
+
+    public function test_share_store_rejects_other_users_saved_session_id(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $session = $owner->openPlaySessions()->create([
+            'title' => 'Mine',
+            'payload' => [
+                'mode' => 'singles',
+                'shuffleMethod' => 'random',
+                'courtsCount' => 1,
+                'timeLimitMinutes' => 0,
+                'players' => [],
+                'queue' => [],
+                'courts' => [null],
+                'completedMatches' => [],
+                'h2h' => [],
+            ],
+        ]);
+        $payload = [
+            'mode' => 'singles',
+            'shuffleMethod' => 'random',
+            'courtsCount' => 2,
+            'timeLimitMinutes' => 0,
+            'players' => [['id' => 'a', 'name' => 'Alex', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'teamId' => '']],
+            'queue' => [],
+            'courts' => [null, null],
+            'completedMatches' => [],
+            'h2h' => [],
+        ];
+
+        $this->actingAs($other)->postJson(route('open-play.share.store'), [
+            'data' => $payload,
+            'open_play_session_id' => $session->id,
+        ])->assertUnprocessable();
+    }
+
     public function test_share_store_rejects_more_than_max_players(): void
     {
         $user = User::factory()->create();
@@ -109,7 +186,9 @@ class OpenPlayShareTest extends TestCase
         $this->get(route('open-play.watch', $share))
             ->assertOk()
             ->assertSee('GameQ · Live', false)
-            ->assertSee('Sam', false);
+            ->assertSee('Sam', false)
+            ->assertSee('Playing today', false)
+            ->assertSee('wire:poll.1s="refreshWatch"', false);
     }
 
     public function test_host_can_update_share_payload_with_secret(): void
@@ -192,9 +271,80 @@ class OpenPlayShareTest extends TestCase
             'payload' => ['mode' => 'singles', 'queue' => ['a', 'b']],
         ]);
 
-        $this->getJson(route('open-play.watch.data', $share))
-            ->assertOk()
+        $res = $this->getJson(route('open-play.watch.data', $share));
+        $res->assertOk()
             ->assertJsonPath('data.mode', 'singles')
             ->assertJsonPath('data.queue', ['a', 'b']);
+        $this->assertIsInt($res->json('server_at_ms'));
+    }
+
+    public function test_guest_can_toggle_take_a_break_from_live_watch(): void
+    {
+        $share = OpenPlayShare::query()->create([
+            'uuid' => '990e8400-e29b-41d4-a716-446655440004',
+            'secret_hash' => bcrypt('x'),
+            'payload' => [
+                'mode' => 'singles',
+                'shuffleMethod' => 'random',
+                'courtsCount' => 1,
+                'timeLimitMinutes' => 0,
+                'players' => [
+                    [
+                        'id' => 'p1',
+                        'name' => 'Sam',
+                        'level' => 3,
+                        'wins' => 0,
+                        'losses' => 0,
+                        'disabled' => false,
+                        'skipShuffle' => false,
+                        'teamId' => '',
+                    ],
+                ],
+                'queue' => ['p1'],
+                'courts' => [null],
+                'completedMatches' => [],
+                'h2h' => [],
+            ],
+        ]);
+
+        $this->postJson(route('open-play.watch.toggle-break', $share), [
+            'player_id' => 'p1',
+            'skip_shuffle' => true,
+        ])
+            ->assertOk()
+            ->assertJsonPath('data.players.0.skipShuffle', true)
+            ->assertJsonPath('data.queue', []);
+
+        $share->refresh();
+        $this->assertTrue($share->payload['players'][0]['skipShuffle']);
+        $this->assertSame([], $share->payload['queue']);
+    }
+
+    public function test_toggle_take_a_break_rejects_inactive_player(): void
+    {
+        $share = OpenPlayShare::query()->create([
+            'uuid' => 'aa0e8400-e29b-41d4-a716-446655440005',
+            'secret_hash' => bcrypt('x'),
+            'payload' => [
+                'mode' => 'singles',
+                'players' => [
+                    [
+                        'id' => 'p1',
+                        'name' => 'Sam',
+                        'disabled' => true,
+                        'skipShuffle' => false,
+                    ],
+                ],
+                'queue' => [],
+                'courts' => [],
+                'completedMatches' => [],
+                'h2h' => [],
+            ],
+        ]);
+
+        $this->postJson(route('open-play.watch.toggle-break', $share), [
+            'player_id' => 'p1',
+            'skip_shuffle' => true,
+        ])->assertStatus(422);
     }
 }

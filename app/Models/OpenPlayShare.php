@@ -3,10 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OpenPlayShare extends Model
 {
     protected $fillable = [
+        'open_play_session_id',
         'uuid',
         'secret_hash',
         'payload',
@@ -25,5 +27,10 @@ class OpenPlayShare extends Model
     public function getRouteKeyName(): string
     {
         return 'uuid';
+    }
+
+    public function openPlaySession(): BelongsTo
+    {
+        return $this->belongsTo(OpenPlaySession::class, 'open_play_session_id');
     }
 }

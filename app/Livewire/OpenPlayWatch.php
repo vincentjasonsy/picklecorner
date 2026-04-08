@@ -2,7 +2,12 @@
 
 namespace App\Livewire;
 
+use App\GameQ\Engine;
+use App\Models\OpenPlaySession;
 use App\Models\OpenPlayShare;
+use App\Services\GameQShareToggleBreakPayload;
+use Carbon\Carbon;
+use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -11,17 +16,230 @@ use Livewire\Component;
 #[Title('GameQ · Live (Beta)')]
 class OpenPlayWatch extends Component
 {
+    private const MAX_PAYLOAD_BYTES = 512000;
+
     public OpenPlayShare $openPlayShare;
+
+    /** @var array<string, mixed> */
+    public array $game = [];
+
+    public bool $loadFailed = false;
+
+    public string $h2hPlayerA = '';
+
+    public string $h2hPlayerB = '';
+
+    public bool $h2hCardVisible = true;
+
+    public string $toggleBreakError = '';
+
+    public ?string $toggleBreakBusyId = null;
+
+    public ?string $updatedAtIso = null;
 
     public function mount(OpenPlayShare $openPlayShare): void
     {
         $this->openPlayShare = $openPlayShare;
+        $pref = session($this->sessionH2hCardKey());
+        if ($pref === '0') {
+            $this->h2hCardVisible = false;
+        } elseif ($pref === '1') {
+            $this->h2hCardVisible = true;
+        }
+        $this->refreshWatch();
     }
 
-    public function render()
+    protected function sessionH2hCardKey(): string
     {
+        return 'gameq_watch_h2h_visible_'.$this->openPlayShare->uuid;
+    }
+
+    public function refreshWatch(): void
+    {
+        $this->openPlayShare->refresh();
+        $raw = $this->openPlayShare->payload;
+        if (! is_array($raw)) {
+            $this->loadFailed = true;
+
+            return;
+        }
+        $this->game = (new Engine($raw))->toArray();
+        $this->updatedAtIso = $this->openPlayShare->updated_at?->toIso8601String();
+        $this->loadFailed = false;
+        $this->primeH2hPicks();
+    }
+
+    public function updatedH2hPlayerA(): void
+    {
+        $this->primeH2hPicks();
+    }
+
+    public function updatedH2hPlayerB(): void
+    {
+        $this->primeH2hPicks();
+    }
+
+    public function toggleH2hCard(): void
+    {
+        $this->h2hCardVisible = ! $this->h2hCardVisible;
+        session([$this->sessionH2hCardKey() => $this->h2hCardVisible ? '1' : '0']);
+    }
+
+    protected function primeH2hPicks(): void
+    {
+        $players = $this->game['players'] ?? [];
+        if (! is_array($players)) {
+            return;
+        }
+        $ids = [];
+        foreach ($players as $p) {
+            if (is_array($p) && ! empty($p['id'])) {
+                $ids[] = (string) $p['id'];
+            }
+        }
+        $ids = array_values(array_unique($ids));
+        if ($ids === []) {
+            $this->h2hPlayerA = '';
+            $this->h2hPlayerB = '';
+
+            return;
+        }
+        if ($this->h2hPlayerA === '' || ! in_array($this->h2hPlayerA, $ids, true)) {
+            $this->h2hPlayerA = $ids[0];
+        }
+        if (
+            count($ids) >= 2
+            && (
+                $this->h2hPlayerB === ''
+                || ! in_array($this->h2hPlayerB, $ids, true)
+                || $this->h2hPlayerB === $this->h2hPlayerA
+            )
+        ) {
+            $other = null;
+            foreach ($ids as $id) {
+                if ($id !== $this->h2hPlayerA) {
+                    $other = $id;
+                    break;
+                }
+            }
+            $this->h2hPlayerB = $other ?? $ids[1];
+        }
+        if (count($ids) === 1) {
+            $this->h2hPlayerB = '';
+        }
+    }
+
+    public function engine(): Engine
+    {
+        return new Engine($this->game);
+    }
+
+    public function requestTogglePlayerBreak(string $playerId): void
+    {
+        $p = $this->engine()->playerById($playerId);
+        if (! $p) {
+            return;
+        }
+        $wantSkip = empty($p['skipShuffle']);
+        $this->applyToggleBreakPayload($playerId, $wantSkip);
+    }
+
+    protected function applyToggleBreakPayload(string $playerId, bool $wantSkip): void
+    {
+        $this->toggleBreakError = '';
+        $this->toggleBreakBusyId = $playerId;
+        try {
+            $this->openPlayShare->refresh();
+            $payload = $this->openPlayShare->payload;
+            if (! is_array($payload)) {
+                $this->toggleBreakError = 'Invalid session.';
+
+                return;
+            }
+            [$next, $err] = GameQShareToggleBreakPayload::apply($payload, $playerId, $wantSkip);
+            if ($err !== null) {
+                $this->toggleBreakError = $err;
+
+                return;
+            }
+            $playerCount = is_array($next['players'] ?? null)
+                ? count($next['players'])
+                : 0;
+            if ($playerCount > OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
+                $this->toggleBreakError = sprintf(
+                    'GameQ allows at most %d players per session.',
+                    OpenPlaySession::MAX_PLAYERS_PER_SESSION,
+                );
+
+                return;
+            }
+            $encoded = json_encode($next);
+            if ($encoded === false || strlen($encoded) > self::MAX_PAYLOAD_BYTES) {
+                $this->toggleBreakError = 'Payload too large.';
+
+                return;
+            }
+            $this->openPlayShare->update(['payload' => $next]);
+            $this->refreshWatch();
+        } catch (\Throwable) {
+            $this->toggleBreakError = 'Could not update. Try again.';
+        } finally {
+            $this->toggleBreakBusyId = null;
+        }
+    }
+
+    public function syncedRelativeLabel(): string
+    {
+        if ($this->updatedAtIso === null || $this->updatedAtIso === '') {
+            return '';
+        }
+        try {
+            $d = Carbon::parse($this->updatedAtIso);
+            $sec = max(0, (int) round(now()->getTimestamp() - $d->getTimestamp()));
+            if ($sec < 10) {
+                return 'just now';
+            }
+            if ($sec < 60) {
+                return $sec.'s ago';
+            }
+            $m = intdiv($sec, 60);
+            if ($m < 60) {
+                return $m.' min ago';
+            }
+            $h = intdiv($m, 60);
+            if ($h < 24) {
+                return $h.' h ago';
+            }
+
+            return $d->timezone(config('app.timezone'))->format('M j, g:i a');
+        } catch (\Throwable) {
+            return '';
+        }
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function rosterPlayers(): array
+    {
+        $out = [];
+        foreach ($this->game['players'] ?? [] as $p) {
+            if (is_array($p) && empty($p['disabled'])) {
+                $out[] = $p;
+            }
+        }
+
+        return $out;
+    }
+
+    public function render(): View
+    {
+        $nowMs = (int) round(microtime(true) * 1000);
+        $eq = new Engine($this->game);
+
         return view('livewire.open-play-watch', [
-            'p' => $this->openPlayShare->fresh()->payload ?? [],
+            'eq' => $eq,
+            'nowMs' => $nowMs,
         ]);
     }
 }

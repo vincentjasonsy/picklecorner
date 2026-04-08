@@ -77,6 +77,9 @@ Route::livewire('/book-now/venues/{courtClient:slug}/book', VenueBookingPage::cl
 Route::get('/open-play/watch/{openPlayShare}/data', [OpenPlayShareController::class, 'data'])
     ->middleware('throttle:180,1')
     ->name('open-play.watch.data');
+Route::post('/open-play/watch/{openPlayShare}/toggle-break', [OpenPlayShareController::class, 'togglePlayerBreak'])
+    ->middleware('throttle:30,1')
+    ->name('open-play.watch.toggle-break');
 Route::livewire('/open-play/watch/{openPlayShare}', OpenPlayWatch::class)
     ->middleware('throttle:120,1')
     ->name('open-play.watch');
@@ -99,13 +102,13 @@ Route::middleware(['auth', 'demo.valid'])->post(
 
 Route::middleware(['auth', 'demo.valid'])->group(function (): void {
     Route::post('/open-play/share', [OpenPlayShareController::class, 'store'])
-        ->middleware('throttle:12,1')
+        ->middleware('throttle:60,1,gameq_share_create')
         ->name('open-play.share.store');
     Route::put('/open-play/share/{openPlayShare}', [OpenPlayShareController::class, 'update'])
-        ->middleware('throttle:90,1')
+        ->middleware('throttle:90,1,gameq_share_sync')
         ->name('open-play.share.update');
     Route::delete('/open-play/share/{openPlayShare}', [OpenPlayShareController::class, 'destroy'])
-        ->middleware('throttle:12,1')
+        ->middleware('throttle:30,1,gameq_share_delete')
         ->name('open-play.share.destroy');
 
     Route::prefix('account')->name('account.')->group(function (): void {
@@ -117,19 +120,19 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/court-open-plays/{booking}/host', MemberCourtOpenPlayHost::class)->name('court-open-plays.host');
         Route::livewire('/court-open-plays/{booking}/join', MemberCourtOpenPlayJoin::class)->name('court-open-plays.join');
         Route::get('/open-play/sessions', [OpenPlaySessionController::class, 'index'])
-            ->middleware('throttle:60,1')
+            ->middleware('throttle:60,1,gameq_session_list')
             ->name('open-play.sessions.index');
         Route::post('/open-play/sessions', [OpenPlaySessionController::class, 'store'])
-            ->middleware('throttle:30,1')
+            ->middleware('throttle:30,1,gameq_session_create')
             ->name('open-play.sessions.store');
         Route::get('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'show'])
-            ->middleware('throttle:60,1')
+            ->middleware('throttle:60,1,gameq_session_read')
             ->name('open-play.sessions.show');
         Route::patch('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'update'])
-            ->middleware('throttle:30,1')
+            ->middleware('throttle:30,1,gameq_session_rename')
             ->name('open-play.sessions.update');
         Route::delete('/open-play/sessions/{openPlaySession}', [OpenPlaySessionController::class, 'destroy'])
-            ->middleware('throttle:30,1')
+            ->middleware('throttle:30,1,gameq_session_delete')
             ->name('open-play.sessions.destroy');
         Route::livewire('/tools/gameq', OpenPlayOrganizer::class)->name('open-play');
         Route::get('/tools/pickle-game-q', fn () => redirect('/account/tools/gameq', 301));

@@ -23,11 +23,9 @@ class OpenPlayOrganizerTest extends TestCase
         $this->actingAs($user)
             ->get(route('account.open-play'))
             ->assertOk()
-            ->assertSee('gameqApp', false)
+            ->assertSee('wire:click="startOpenPlayWizard"', false)
             ->assertSee('Start GameQ', false)
             ->assertSee('Open a saved session', false)
-            ->assertSee('__GAMEQ_ENDPOINTS', false)
-            ->assertSee('shareStore', false)
-            ->assertSee(route('open-play.share.store'), false);
+            ->assertSee('wire:poll.1s="refreshTimers"', false);
     }
 }
