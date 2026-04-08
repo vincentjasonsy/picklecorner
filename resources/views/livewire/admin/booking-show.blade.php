@@ -73,13 +73,22 @@
                 @if ($b->user)
                     <span class="font-medium">{{ $b->user->name }}</span>
                     <span class="mt-0.5 block text-xs text-zinc-500">{{ $b->user->email }}</span>
-                    <a
-                        href="{{ route('admin.users.edit', $b->user) }}"
-                        wire:navigate
-                        class="mt-2 inline-block text-xs font-semibold text-emerald-600 dark:text-emerald-400"
-                    >
-                        Edit user
-                    </a>
+                    <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                        <a
+                            href="{{ route('admin.users.summary', $b->user) }}"
+                            wire:navigate
+                            class="text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+                        >
+                            View summary
+                        </a>
+                        <a
+                            href="{{ route('admin.users.edit', $b->user) }}"
+                            wire:navigate
+                            class="text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+                        >
+                            Edit user
+                        </a>
+                    </div>
                 @else
                     —
                 @endif

@@ -63,6 +63,7 @@
                 </div>
                 @php
                     $premiumNav = $venueHasPremiumFeatures ?? false;
+                    $customersNavActive = request()->routeIs('venue.crm.*', 'venue.customers.summary');
                 @endphp
                 <nav
                     class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
@@ -138,52 +139,29 @@
                                 Booking history
                             </a>
                             <a
-                                href="{{ $premiumNav ? route('venue.crm.index') : route('venue.plan') }}"
+                                href="{{ route('venue.crm.index') }}"
                                 wire:navigate
                                 @class([
                                     'rounded-lg px-3 py-2 transition-colors',
-                                    $premiumNav && request()->routeIs('venue.crm.*')
+                                    $customersNavActive
                                         ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                        : ($premiumNav
-                                            ? 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50'
-                                            : 'border border-dashed border-amber-300/90 bg-amber-50/70 text-amber-950 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100'),
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                 ])
                             >
-                                <span class="flex items-start gap-2">
-                                    @unless ($premiumNav)
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke-width="1.5"
-                                            stroke="currentColor"
-                                            class="mt-0.5 h-4 w-4 shrink-0 opacity-80"
-                                            aria-hidden="true"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                                            />
-                                        </svg>
-                                    @endunless
-                                    <span class="min-w-0 flex-1">
-                                        <span class="block">Customers</span>
-                                        <span
-                                            @class([
-                                                'mt-0.5 block text-[11px] font-normal normal-case',
-                                                $premiumNav && request()->routeIs('venue.crm.*')
-                                                    ? 'text-emerald-700/80 dark:text-emerald-300/80'
-                                                    : ($premiumNav ? 'text-zinc-500 dark:text-zinc-400' : 'text-amber-800/90 dark:text-amber-200/90'),
-                                            ])
-                                        >
-                                            @if ($premiumNav)
-                                                Search, profiles &amp; notes
-                                            @else
-                                                Locked — Premium only
-                                            @endif
-                                        </span>
-                                    </span>
+                                <span class="block">Customers</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-[11px] font-normal normal-case',
+                                        $customersNavActive
+                                            ? 'text-emerald-700/80 dark:text-emerald-300/80'
+                                            : 'text-zinc-500 dark:text-zinc-400',
+                                    ])
+                                >
+                                    @if ($premiumNav)
+                                        Search, profiles &amp; notes
+                                    @else
+                                        Who booked your courts
+                                    @endif
                                 </span>
                             </a>
                         </div>
@@ -313,6 +291,38 @@
                             {{ $title ?? 'Venue' }}
                         </h1>
                     </div>
+                    @php
+                        $headerBookingActive = request()->routeIs('venue.bookings.history', 'venue.bookings.show');
+                    @endphp
+                    <nav
+                        class="hidden min-w-0 shrink flex-wrap items-center justify-end gap-x-1 gap-y-1 text-xs font-semibold sm:flex md:gap-x-2 md:text-sm"
+                        aria-label="Venue shortcuts"
+                    >
+                        <a
+                            href="{{ route('venue.bookings.history') }}"
+                            wire:navigate
+                            @class([
+                                'whitespace-nowrap rounded-md px-2 py-1 transition-colors',
+                                $headerBookingActive
+                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                    : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80',
+                            ])
+                        >
+                            Booking history
+                        </a>
+                        <a
+                            href="{{ route('venue.crm.index') }}"
+                            wire:navigate
+                            @class([
+                                'whitespace-nowrap rounded-md px-2 py-1 transition-colors',
+                                $customersNavActive
+                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                    : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80',
+                            ])
+                        >
+                            Customers
+                        </a>
+                    </nav>
                     <x-theme-toggle />
                 </header>
                 <main class="flex-1 p-4 md:p-6">

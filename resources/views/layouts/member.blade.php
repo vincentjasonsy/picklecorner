@@ -342,7 +342,10 @@
                                 {{ $title ?? 'My court' }}
                             </h1>
                         </div>
-                        <x-theme-toggle />
+                        <div class="flex shrink-0 items-center gap-2">
+                            <livewire:notification-bell />
+                            <x-theme-toggle />
+                        </div>
                     </header>
                     <main class="member-court-bg flex-1 p-4 md:p-6">
                         <div class="mx-auto max-w-4xl lg:max-w-5xl">

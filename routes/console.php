@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('demo:purge-expired-accounts')->hourly();
+Schedule::command('internal:send-team-play-reminders')->dailyAt('09:00');

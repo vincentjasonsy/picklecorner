@@ -261,6 +261,13 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
                 @endphp
                 <div class="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
                     <a
+                        href="{{ route('admin.users.summary', $user) }}"
+                        wire:navigate
+                        class="text-xs font-semibold text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+                    >
+                        Summary
+                    </a>
+                    <a
                         href="{{ route('admin.users.edit', $user) }}"
                         wire:navigate
                         class="text-xs font-semibold text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"

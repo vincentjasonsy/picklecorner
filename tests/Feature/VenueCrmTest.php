@@ -18,6 +18,55 @@ class VenueCrmTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_basic_tier_court_admin_can_open_customer_list_only_bookers_shown(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $admin = User::factory()->courtAdmin()->create();
+        $client = CourtClient::factory()->forAdmin($admin)->basicTier()->create();
+        $guest = User::factory()->player()->create();
+        $neverBooked = User::factory()->player()->create();
+
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $starts = Carbon::now(config('app.timezone'));
+        Booking::query()->create([
+            'court_client_id' => $client->id,
+            'court_id' => $court->id,
+            'user_id' => $guest->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 1000,
+            'currency' => 'PHP',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('venue.crm.index'))
+            ->assertOk()
+            ->assertSee($guest->email, escape: false)
+            ->assertDontSee($neverBooked->email, false);
+    }
+
+    public function test_basic_tier_court_admin_cannot_open_crm_contact_notes_page(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $admin = User::factory()->courtAdmin()->create();
+        CourtClient::factory()->forAdmin($admin)->basicTier()->create();
+        $guest = User::factory()->player()->create();
+
+        $this->actingAs($admin)
+            ->get(route('venue.crm.contacts.show', $guest))
+            ->assertRedirect(route('venue.plan'));
+    }
+
     public function test_player_cannot_open_venue_crm(): void
     {
         $this->seed(UserTypeSeeder::class);

@@ -58,6 +58,13 @@
                 @if ($b->user)
                     <span class="font-medium">{{ $b->user->name }}</span>
                     <span class="mt-0.5 block text-xs text-zinc-500">{{ $b->user->email }}</span>
+                    <a
+                        href="{{ route('venue.customers.summary', $b->user) }}"
+                        wire:navigate
+                        class="mt-2 inline-block text-xs font-semibold text-emerald-600 dark:text-emerald-400"
+                    >
+                        Customer summary
+                    </a>
                 @else
                     —
                 @endif

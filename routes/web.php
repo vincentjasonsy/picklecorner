@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
 use App\Http\Controllers\ReportExportController;
@@ -14,11 +15,13 @@ use App\Livewire\Admin\CourtClientCreate;
 use App\Livewire\Admin\CourtClientEdit;
 use App\Livewire\Admin\CourtClientManualBooking;
 use App\Livewire\Admin\GiftCardShow;
+use App\Livewire\Admin\InternalTeamPlayReminders;
 use App\Livewire\Admin\InvoiceCreate;
 use App\Livewire\Admin\InvoiceIndex;
 use App\Livewire\Admin\InvoiceShow;
 use App\Livewire\Admin\ManualBookingHub;
 use App\Livewire\Admin\UserForm;
+use App\Livewire\Admin\UserSummary;
 use App\Livewire\Auth\RegisterPage;
 use App\Livewire\BookNow\VenueBookingPage;
 use App\Livewire\BookNowPage;
@@ -72,11 +75,20 @@ Route::livewire('/open-play/watch/{openPlayShare}', OpenPlayWatch::class)
     ->name('open-play.watch');
 Route::livewire('/open-play', OpenPlayAbout::class)->name('open-play.about');
 
+Route::get('/internal-team-play-reminders/unsubscribe/{user}', [InternalTeamPlayReminderPreferencesController::class, 'unsubscribe'])
+    ->middleware(['signed', 'throttle:24,1'])
+    ->name('internal-team-play-reminders.unsubscribe');
+
 Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
     Route::livewire('/register', RegisterPage::class)->name('register');
     Route::livewire('/try', RegisterPage::class)->name('register.demo');
 });
+
+Route::middleware(['auth', 'demo.valid'])->post(
+    '/internal-team-play-reminders/resubscribe',
+    [InternalTeamPlayReminderPreferencesController::class, 'resubscribe'],
+)->name('internal-team-play-reminders.resubscribe');
 
 Route::middleware(['auth', 'demo.valid'])->group(function (): void {
     Route::post('/open-play/share', [OpenPlayShareController::class, 'store'])
@@ -136,13 +148,14 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/bookings/pending', VenueBookingApprovals::class)->name('bookings.pending');
         Route::livewire('/bookings/history', VenueBookingHistory::class)->name('bookings.history');
         Route::livewire('/bookings/{booking}', VenueBookingShow::class)->name('bookings.show');
+        Route::livewire('/customers', VenueCrmIndex::class)->name('crm.index');
+        Route::livewire('/customers/{user}/summary', UserSummary::class)->name('customers.summary');
         Route::livewire('/courts', VenueCourts::class)->name('courts');
         Route::livewire('/reports', 'venue-reports')->name('reports');
         Route::get('/reports/export/bookings', [ReportExportController::class, 'venueBookings'])
             ->name('reports.export.bookings');
 
         Route::middleware('venue_premium')->group(function (): void {
-            Route::livewire('/customers', VenueCrmIndex::class)->name('crm.index');
             Route::livewire('/customers/{contact}', VenueCrmContact::class)->name('crm.contacts.show');
             Route::livewire('/gift-cards', 'venue-gift-cards-index')->name('gift-cards.index');
             Route::livewire('/gift-cards/{giftCard}', VenueGiftCardShow::class)->name('gift-cards.show');
@@ -167,6 +180,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::livewire('/', 'admin-dashboard')->name('dashboard');
         Route::livewire('/users', 'admin-users-index')->name('users.index');
         Route::livewire('/users/create', UserForm::class)->name('users.create');
+        Route::livewire('/users/{user}/summary', UserSummary::class)->name('users.summary');
         Route::livewire('/users/{user}/edit', UserForm::class)->name('users.edit');
         Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'store'])
             ->name('users.impersonate');
@@ -192,6 +206,8 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::livewire('/court-change-requests', AdminCourtChangeRequests::class)
             ->name('court-change-requests');
         Route::livewire('/activity', ActivityIndex::class)->name('activity.index');
+        Route::livewire('/internal-play-reminders', InternalTeamPlayReminders::class)
+            ->name('internal-play-reminders');
     });
 
 Route::post('/logout', function () {

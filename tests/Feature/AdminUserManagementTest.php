@@ -170,4 +170,30 @@ class AdminUserManagementTest extends TestCase
         $this->assertSame(CourtClient::TIER_PREMIUM, $client->subscription_tier);
         $this->assertTrue($client->hasPremiumSubscription());
     }
+
+    public function test_super_admin_can_view_user_summary(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $super = User::factory()->superAdmin()->create();
+        $player = User::factory()->player()->create();
+
+        $this->actingAs($super)
+            ->get(route('admin.users.summary', $player))
+            ->assertOk()
+            ->assertSee($player->email, false)
+            ->assertSee('Booking history', false);
+    }
+
+    public function test_player_cannot_view_user_summary(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $player = User::factory()->player()->create();
+        $other = User::factory()->player()->create();
+
+        $this->actingAs($player)
+            ->get(route('admin.users.summary', $other))
+            ->assertForbidden();
+    }
 }

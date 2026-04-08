@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             DemoUsersSeeder::class,
             CourtClientSeeder::class,
             BookingSeeder::class,
+            InternalTeamPlayDemoSeeder::class,
         ]);
     }
 }

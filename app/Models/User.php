@@ -50,6 +50,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'demo_expires_at' => 'datetime',
+            'internal_team_play_reminders_unsubscribed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -157,6 +158,15 @@ class User extends Authenticatable
         return UserType::query()
             ->where('id', $this->user_type_id)
             ->where('slug', UserType::SLUG_COACH)
+            ->exists();
+    }
+
+    /** Standard member (player) account — not staff or coach type. */
+    public function isPlayer(): bool
+    {
+        return UserType::query()
+            ->where('id', $this->user_type_id)
+            ->where('slug', UserType::SLUG_USER)
             ->exists();
     }
 

@@ -18,6 +18,15 @@
                 @endif
             </p>
         </div>
+        @if ($isEdit && $user)
+            <a
+                href="{{ route('admin.users.summary', $user) }}"
+                wire:navigate
+                class="shrink-0 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+                View summary
+            </a>
+        @endif
     </div>
 
     <form wire:submit="save" class="space-y-6">

@@ -12,12 +12,23 @@
         >
             ← Customers
         </a>
-        <h1 class="mt-3 font-display text-2xl font-bold text-zinc-900 dark:text-white">{{ $contact->name }}</h1>
-        <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {{ $contact->email }}
-            ·
-            {{ $courtClient->name }}
-        </p>
+        <div class="mt-3 flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <h1 class="font-display text-2xl font-bold text-zinc-900 dark:text-white">{{ $contact->name }}</h1>
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    {{ $contact->email }}
+                    ·
+                    {{ $courtClient->name }}
+                </p>
+            </div>
+            <a
+                href="{{ route('venue.customers.summary', $contact) }}"
+                wire:navigate
+                class="shrink-0 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+            >
+                Full summary
+            </a>
+        </div>
     </div>
 
     @if ($bookingStats)

@@ -12,14 +12,14 @@ class VenueSubscriptionTierTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_basic_tier_redirects_crm_and_gift_cards_to_plan_page(): void
+    public function test_basic_tier_redirects_gift_cards_to_plan_page_but_allows_customer_list(): void
     {
         $this->seed(UserTypeSeeder::class);
 
         $admin = User::factory()->courtAdmin()->create();
         CourtClient::factory()->forAdmin($admin)->basicTier()->create();
 
-        $this->actingAs($admin)->get(route('venue.crm.index'))->assertRedirect(route('venue.plan'));
+        $this->actingAs($admin)->get(route('venue.crm.index'))->assertOk();
         $this->actingAs($admin)->get(route('venue.gift-cards.index'))->assertRedirect(route('venue.plan'));
     }
 
