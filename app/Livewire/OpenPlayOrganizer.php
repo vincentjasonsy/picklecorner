@@ -45,8 +45,11 @@ class OpenPlayOrganizer extends Component
 
     public bool $shareCopied = false;
 
-    /** Show roster add/edit UI (Livewire state survives wire:poll). */
-    public bool $rosterSettingsOpen = false;
+    /** Roster add/edit modal (same pattern as Standings & log). */
+    public bool $rosterModalOpen = false;
+
+    /** Player vs player (H2H quick view) expanded on the host screen. */
+    public bool $h2hSectionOpen = false;
 
     /** Which court’s “Edit lineup” panel is open (keeps open across Livewire updates; raw details/ summary alone does not). */
     public ?int $courtLineupEditorOpen = null;
@@ -349,6 +352,7 @@ class OpenPlayOrganizer extends Component
     public function goToSessionList(): void
     {
         $this->peopleModalOpen = false;
+        $this->rosterModalOpen = false;
         $this->modalTab = 'standings';
         $this->withEngine(fn (Engine $e) => $e->goToSessionListState());
         $this->refreshHistorySessions();
@@ -556,11 +560,13 @@ class OpenPlayOrganizer extends Component
     {
         $this->withEngine(fn (Engine $e) => $e->fullResetState());
         $this->peopleModalOpen = false;
+        $this->rosterModalOpen = false;
     }
 
     public function endHostingSession(): void
     {
         $this->peopleModalOpen = false;
+        $this->rosterModalOpen = false;
         $this->modalTab = 'standings';
         $this->performShareRevoke();
         $this->withEngine(function (Engine $e) {
