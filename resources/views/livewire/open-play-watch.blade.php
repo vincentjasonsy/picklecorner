@@ -59,31 +59,95 @@
 
         @if (! $loadFailed)
             <div class="mt-8 space-y-10 sm:mt-10">
-                {{-- Head-to-head --}}
+                {{-- Standings (same order as host modal) --}}
+                <section class="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:ring-slate-700/50">
+                    <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Standings</h2>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Win–loss from the host session (updates as matches finish)</p>
+                    @php $rankRows = $eq->rankings(); @endphp
+                    @if (count($rankRows) === 0)
+                        <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">No active players yet</p>
+                    @else
+                        <ol class="mt-5 space-y-2">
+                            @foreach ($rankRows as $ri => $r)
+                                <li
+                                    class="flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-sm transition dark:border-slate-800 {{ $ri === 0 ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-white dark:border-amber-900/40 dark:from-amber-950/30 dark:to-slate-900/50' : 'border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/50' }}"
+                                    wire:key="standings-{{ $openPlayShare->uuid }}-{{ $r['id'] }}"
+                                >
+                                    <span class="flex min-w-0 items-center gap-3">
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold tabular-nums {{ $ri === 0 ? 'bg-amber-400/25 text-amber-950 dark:bg-amber-500/20 dark:text-amber-100' : ($ri === 1 ? 'bg-slate-200/90 text-slate-700 dark:bg-slate-600 dark:text-slate-100' : ($ri === 2 ? 'bg-orange-200/50 text-orange-950 dark:bg-orange-500/15 dark:text-orange-100' : 'bg-slate-200/60 text-slate-500 dark:bg-slate-800 dark:text-slate-400')) }}"
+                                        >
+                                            {{ $ri + 1 }}
+                                        </span>
+                                        <a
+                                            href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $r['id']]) }}"
+                                            class="truncate font-semibold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
+                                        >
+                                            {{ $r['name'] }}
+                                        </a>
+                                    </span>
+                                    <span class="shrink-0 text-right tabular-nums">
+                                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ (int) ($r['wins'] ?? 0) }}W · {{ (int) ($r['losses'] ?? 0) }}L</span>
+                                        <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ ! empty($r['played']) ? ($r['pct'] ?? 0).'%' : '—' }}</span>
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ol>
+                    @endif
+                </section>
+
+                {{-- Head-to-head: full pairing breakdown + optional quick compare --}}
                 @if (count($this->rosterPlayers()) >= 2)
-                    <div class="space-y-3">
-                        <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="text-xs font-medium text-slate-500 dark:text-slate-400">
-                                Head-to-head record (optional)
+                    @php $h2hBreakdown = $this->h2hBreakdownRows(); @endphp
+                    <section
+                        class="overflow-hidden rounded-2xl border border-emerald-200/60 bg-white/80 shadow-lg shadow-emerald-900/5 ring-1 ring-emerald-100/80 backdrop-blur-sm dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:ring-emerald-900/30"
+                    >
+                        <div class="border-b border-emerald-100/80 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 px-5 py-4 dark:border-emerald-900/50 dark:from-emerald-950/50 dark:to-teal-950/30">
+                            <p class="font-display text-xs font-bold uppercase tracking-[0.15em] text-emerald-800 dark:text-emerald-200/90">Head-to-head</p>
+                            <p class="mt-1 text-xs text-emerald-700/80 dark:text-emerald-300/70">
+                                Every side vs side record from this session (most-played matchups first)
                             </p>
-                            <button
-                                type="button"
-                                class="touch-manipulation rounded-full border border-slate-200/90 bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/80 transition hover:bg-slate-50 active:scale-[0.98] dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800"
-                                wire:click="toggleH2hCard"
-                                @if ($h2hCardVisible) aria-expanded="true" @else aria-expanded="false" @endif
-                            >
-                                {{ $h2hCardVisible ? 'Hide' : 'Show' }}
-                            </button>
                         </div>
-                        @if ($h2hCardVisible)
-                            <section
-                                class="overflow-hidden rounded-2xl border border-emerald-200/60 bg-white/80 shadow-lg shadow-emerald-900/5 ring-1 ring-emerald-100/80 backdrop-blur-sm dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:ring-emerald-900/30"
-                            >
-                                <div class="border-b border-emerald-100/80 bg-gradient-to-r from-emerald-600/10 to-teal-600/10 px-5 py-4 dark:border-emerald-900/50 dark:from-emerald-950/50 dark:to-teal-950/30">
-                                    <p class="font-display text-xs font-bold uppercase tracking-[0.15em] text-emerald-800 dark:text-emerald-200/90">Head to head</p>
-                                    <p class="mt-1 text-xs text-emerald-700/80 dark:text-emerald-300/70">Singles record from the host</p>
-                                </div>
-                                <div class="p-5">
+                        <div class="p-5">
+                            @if (count($h2hBreakdown) === 0)
+                                <p class="text-sm text-slate-500 dark:text-slate-400">No head-to-head games recorded yet.</p>
+                            @else
+                                <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    @foreach ($h2hBreakdown as $row)
+                                        <li
+                                            class="grid grid-cols-1 gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-4"
+                                            wire:key="h2h-br-{{ $openPlayShare->uuid }}-{{ $row['key'] }}"
+                                        >
+                                            <p class="min-w-0 text-sm font-semibold leading-snug text-slate-900 dark:text-slate-100">
+                                                {{ $row['left'] }}
+                                            </p>
+                                            <div class="flex items-center justify-center gap-2 sm:px-2">
+                                                <span class="font-mono text-base font-bold tabular-nums text-emerald-700 dark:text-emerald-400 sm:text-lg">
+                                                    {{ $row['winsLeft'] }}
+                                                </span>
+                                                <span class="select-none text-slate-300 dark:text-slate-600" aria-hidden="true">–</span>
+                                                <span class="font-mono text-base font-bold tabular-nums text-emerald-700 dark:text-emerald-400 sm:text-lg">
+                                                    {{ $row['winsRight'] }}
+                                                </span>
+                                            </div>
+                                            <p class="min-w-0 text-sm font-semibold leading-snug text-slate-900 sm:text-right dark:text-slate-100">
+                                                {{ $row['right'] }}
+                                            </p>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
+                            <details class="group mt-5 rounded-xl border border-slate-200/90 bg-slate-50/80 open:shadow-sm dark:border-slate-700 dark:bg-slate-950/40">
+                                <summary
+                                    class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-700 marker:hidden dark:text-slate-200 [&::-webkit-details-marker]:hidden"
+                                >
+                                    <span class="inline-flex items-center gap-2">
+                                        Compare two players
+                                        <span class="text-xs font-normal text-slate-500 dark:text-slate-400">(optional)</span>
+                                    </span>
+                                </summary>
+                                <div class="border-t border-slate-200/80 px-4 pb-4 pt-2 dark:border-slate-700/80">
                                     <div class="grid gap-4 sm:grid-cols-2">
                                         <label class="block min-w-0 text-sm font-medium text-slate-700 dark:text-slate-200">
                                             Player A
@@ -128,9 +192,9 @@
                                         @endif
                                     </div>
                                 </div>
-                            </section>
-                        @endif
-                    </div>
+                            </details>
+                        </div>
+                    </section>
                 @endif
 
                 {{-- Courts --}}
@@ -204,7 +268,12 @@
                                 wire:key="queue-{{ $openPlayShare->uuid }}-{{ $qi }}-{{ $qid }}"
                             >
                                 <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 font-display text-sm font-bold text-white shadow-md shadow-emerald-900/20">{{ $qi + 1 }}</span>
-                                <span class="min-w-0 flex-1 truncate text-base font-semibold text-slate-900 dark:text-slate-100">{{ $eq->playerStandingsLabel($qid) }}</span>
+                                <a
+                                    href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $qid]) }}"
+                                    class="min-w-0 flex-1 truncate text-base font-semibold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
+                                >
+                                    {{ $eq->playerStandingsLabel($qid) }}
+                                </a>
                             </li>
                         @endforeach
                     </ul>
@@ -232,7 +301,12 @@
                                 wire:key="roster-{{ $openPlayShare->uuid }}-{{ $player['id'] }}"
                             >
                                 <div class="flex items-start justify-between gap-2">
-                                    <p class="truncate text-base font-bold text-slate-900 dark:text-slate-50">{{ $player['name'] ?? '—' }}</p>
+                                    <a
+                                        href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $player['id']]) }}"
+                                        class="truncate text-base font-bold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
+                                    >
+                                        {{ $player['name'] ?? '—' }}
+                                    </a>
                                     @if (! empty($player['skipShuffle']))
                                         <span class="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-900 dark:bg-amber-950/80 dark:text-amber-200">
                                             Sitting out

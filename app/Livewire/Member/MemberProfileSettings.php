@@ -2,6 +2,8 @@
 
 namespace App\Livewire\Member;
 
+use App\GameQ\ProfileOpponentAggregator;
+use App\Models\OpenPlaySession;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
@@ -73,6 +75,16 @@ class MemberProfileSettings extends Component
 
     public function render(): View
     {
-        return view('livewire.member.member-profile-settings');
+        $user = auth()->user();
+        $gameqSessions = OpenPlaySession::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('updated_at')
+            ->get();
+        $gameqProfile = ProfileOpponentAggregator::forUser($user, $gameqSessions);
+
+        return view('livewire.member.member-profile-settings', [
+            'gameqSessionsTotal' => $gameqSessions->count(),
+            'gameqProfile' => $gameqProfile,
+        ]);
     }
 }

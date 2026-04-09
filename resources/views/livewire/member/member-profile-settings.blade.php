@@ -70,6 +70,77 @@
         class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8"
     >
         <div class="flex items-center gap-2">
+            <x-icon name="squares-2x2" class="size-6 text-emerald-600 dark:text-emerald-400" />
+            <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">GameQ opponents</h2>
+        </div>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Wins and losses against people you’ve faced in <span class="font-medium text-zinc-700 dark:text-zinc-300">saved</span> GameQ sessions you hosted. We find you on the roster by matching
+            <span class="font-medium text-zinc-700 dark:text-zinc-300">this display name</span> to a player name (case-insensitive).
+        </p>
+
+        @if ($gameqSessionsTotal === 0)
+            <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                You don’t have any saved GameQ sessions yet. Host in
+                <a href="{{ route('account.open-play') }}" wire:navigate class="font-semibold text-emerald-700 underline decoration-emerald-600/30 underline-offset-2 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">GameQ</a>
+                and save a session to build history here.
+            </p>
+        @elseif ($gameqProfile['sessions_matched'] === 0)
+            <div class="mt-4 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100">
+                None of your {{ $gameqSessionsTotal }} saved session{{ $gameqSessionsTotal === 1 ? '' : 's' }} include a player whose name matches your profile name. Use the same spelling as your roster entry (or update your display name above) so we can attribute matches to you.
+            </div>
+        @elseif ($gameqProfile['matches_counted'] === 0 && count($gameqProfile['opponents']) === 0)
+            <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                You’re on the roster in {{ $gameqProfile['sessions_matched'] }} saved session{{ $gameqProfile['sessions_matched'] === 1 ? '' : 's' }}, but there are no finished matches in the log yet.
+            </p>
+        @else
+            <div class="mt-6 space-y-6">
+                @if (count($gameqProfile['opponents']) > 0)
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Against (by player)</p>
+                        <ul class="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach ($gameqProfile['opponents'] as $row)
+                                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 first:pt-0">
+                                    <span class="min-w-0 font-medium text-zinc-900 dark:text-zinc-100">{{ $row['displayName'] }}</span>
+                                    <span class="shrink-0 text-right">
+                                        <span class="font-mono text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                                            {{ $row['wins'] }}W · {{ $row['losses'] }}L
+                                        </span>
+                                        @if (($row['ties'] ?? 0) > 0)
+                                            <span class="ml-2 text-[11px] text-zinc-400 dark:text-zinc-500">{{ $row['ties'] }} tie{{ $row['ties'] === 1 ? '' : 's' }}</span>
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (count($gameqProfile['partners']) > 0)
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Same side (doubles partners)</p>
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Games where you shared a side — not wins/losses “against” them.</p>
+                        <ul class="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach ($gameqProfile['partners'] as $row)
+                                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 first:pt-0">
+                                    <span class="min-w-0 font-medium text-zinc-900 dark:text-zinc-100">{{ $row['displayName'] }}</span>
+                                    <span class="shrink-0 font-mono text-sm tabular-nums text-zinc-600 dark:text-zinc-400">{{ $row['games'] }} {{ $row['games'] === 1 ? 'game' : 'games' }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <p class="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+                    Based on {{ $gameqProfile['matches_counted'] }} finished match{{ $gameqProfile['matches_counted'] === 1 ? '' : 'es' }} across {{ $gameqProfile['sessions_matched'] }} session{{ $gameqProfile['sessions_matched'] === 1 ? '' : 's' }}. Duplicate names on different people are merged by name.
+                </p>
+            </div>
+        @endif
+    </section>
+
+    <section
+        class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8"
+    >
+        <div class="flex items-center gap-2">
             <x-icon name="lock-closed" class="size-6 text-emerald-600 dark:text-emerald-400" />
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Password</h2>
         </div>

@@ -1463,6 +1463,195 @@ class Engine
     }
 
     /**
+     * All head-to-head rows involving this player (singles or doubles), sorted by games played then opponent label.
+     *
+     * @return list<array{opponentLabel: string, winsSelf: int, winsOpp: int, games: int}>
+     */
+    public function headToHeadRowsForPlayer(string|int $playerId): array
+    {
+        $pid = (string) $playerId;
+        $rows = [];
+        foreach ($this->state['h2h'] ?? [] as $key => $row) {
+            if (! is_string($key) || ! is_array($row)) {
+                continue;
+            }
+            $parts = explode('||', $key, 2);
+            $low = $parts[0] ?? '';
+            $high = $parts[1] ?? '';
+            $idsLow = $low !== '' ? explode(',', $low) : [];
+            $idsHigh = $high !== '' ? explode(',', $high) : [];
+            $inLow = false;
+            foreach ($idsLow as $x) {
+                if ((string) $x === $pid) {
+                    $inLow = true;
+                    break;
+                }
+            }
+            $inHigh = false;
+            foreach ($idsHigh as $x) {
+                if ((string) $x === $pid) {
+                    $inHigh = true;
+                    break;
+                }
+            }
+            if (! $inLow && ! $inHigh) {
+                continue;
+            }
+            $winsLow = (int) ($row['winsLow'] ?? 0);
+            $winsHigh = (int) ($row['winsHigh'] ?? 0);
+            if ($inLow) {
+                $winsSelf = $winsLow;
+                $winsOpp = $winsHigh;
+                $opponentLabel = $this->sideLabels($idsHigh);
+            } else {
+                $winsSelf = $winsHigh;
+                $winsOpp = $winsLow;
+                $opponentLabel = $this->sideLabels($idsLow);
+            }
+            $games = $winsSelf + $winsOpp;
+            $rows[] = [
+                'opponentLabel' => $opponentLabel,
+                'winsSelf' => $winsSelf,
+                'winsOpp' => $winsOpp,
+                'games' => $games,
+            ];
+        }
+        usort($rows, function ($a, $b) {
+            $g = ($b['games'] ?? 0) <=> ($a['games'] ?? 0);
+            if ($g !== 0) {
+                return $g;
+            }
+
+            return strcmp((string) ($a['opponentLabel'] ?? ''), (string) ($b['opponentLabel'] ?? ''));
+        });
+
+        return $rows;
+    }
+
+    /**
+     * Per-opponent groups of completed matches for this player, newest game first in each group.
+     * Groups are sorted by number of games played, then opponent label.
+     *
+     * @return list<array{pairingKey: string, opponentLabel: string, winsSelf: int, winsOpp: int, games: int, lines: list<array{scoreSelf: float, scoreOpp: float, won: bool|null, at: int}>}>
+     */
+    public function playerOpponentGameBreakdown(string|int $playerId): array
+    {
+        $pid = (string) $playerId;
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log)) {
+            return [];
+        }
+
+        /** @var array<string, list<array{opponentLabel: string, scoreSelf: float, scoreOpp: float, won: bool|null, at: int}>> $buckets */
+        $buckets = [];
+
+        foreach ($log as $m) {
+            if (! is_array($m)) {
+                continue;
+            }
+            $sideA = array_values(is_array($m['sideA'] ?? null) ? $m['sideA'] : []);
+            $sideB = array_values(is_array($m['sideB'] ?? null) ? $m['sideB'] : []);
+            $inA = $this->sideContainsPlayerId($sideA, $pid);
+            $inB = $this->sideContainsPlayerId($sideB, $pid);
+            if (! $inA && ! $inB) {
+                continue;
+            }
+            $scoreA = isset($m['scoreA']) && is_numeric($m['scoreA']) ? (float) $m['scoreA'] : 0.0;
+            $scoreB = isset($m['scoreB']) && is_numeric($m['scoreB']) ? (float) $m['scoreB'] : 0.0;
+            if (is_nan($scoreA)) {
+                $scoreA = 0.0;
+            }
+            if (is_nan($scoreB)) {
+                $scoreB = 0.0;
+            }
+            $winA = $scoreA > $scoreB;
+            $winB = $scoreB > $scoreA;
+            $oppSide = $inA ? $sideB : $sideA;
+            $opponentLabel = $this->sideLabels($oppSide);
+            $sSelf = $inA ? $scoreA : $scoreB;
+            $sOpp = $inA ? $scoreB : $scoreA;
+            $won = null;
+            if ($winA || $winB) {
+                $won = $inA ? $winA : $winB;
+            }
+            $key = self::h2hStorageKey($sideA, $sideB);
+            $at = (int) ($m['at'] ?? 0);
+            $buckets[$key] ??= [];
+            $buckets[$key][] = [
+                'opponentLabel' => $opponentLabel,
+                'scoreSelf' => $sSelf,
+                'scoreOpp' => $sOpp,
+                'won' => $won,
+                'at' => $at,
+            ];
+        }
+
+        $out = [];
+        foreach ($buckets as $key => $lines) {
+            usort($lines, function (array $a, array $b): int {
+                return ($b['at'] ?? 0) <=> ($a['at'] ?? 0);
+            });
+            $wins = 0;
+            $losses = 0;
+            foreach ($lines as $ln) {
+                if ($ln['won'] === true) {
+                    $wins++;
+                } elseif ($ln['won'] === false) {
+                    $losses++;
+                }
+            }
+            $oppLabel = $lines[0]['opponentLabel'] ?? '';
+            $out[] = [
+                'pairingKey' => $key,
+                'opponentLabel' => $oppLabel,
+                'winsSelf' => $wins,
+                'winsOpp' => $losses,
+                'games' => count($lines),
+                'lines' => $lines,
+            ];
+        }
+
+        usort($out, function (array $a, array $b): int {
+            $g = ($b['games'] ?? 0) <=> ($a['games'] ?? 0);
+            if ($g !== 0) {
+                return $g;
+            }
+
+            return strcmp((string) ($a['opponentLabel'] ?? ''), (string) ($b['opponentLabel'] ?? ''));
+        });
+
+        return $out;
+    }
+
+    public function formatMatchScoreDisplay(float $x): string
+    {
+        if (is_nan($x)) {
+            return '0';
+        }
+        if (floor($x) == $x) {
+            return (string) (int) $x;
+        }
+
+        $s = rtrim(rtrim(number_format($x, 2, '.', ''), '0'), '.');
+
+        return $s !== '' ? $s : '0';
+    }
+
+    /**
+     * @param  list<string|int>  $side
+     */
+    private function sideContainsPlayerId(array $side, string $pid): bool
+    {
+        foreach ($side as $id) {
+            if (self::idEqual($id, $pid)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @return array{winsA: int, winsB: int, lowFirst: bool}|null
      */
     public function pairH2hSummary(string|int|null $idA, string|int|null $idB): ?array

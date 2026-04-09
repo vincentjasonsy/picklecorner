@@ -46,7 +46,9 @@ use App\Livewire\Member\MemberDashboard;
 use App\Livewire\Member\MemberProfileSettings;
 use App\Livewire\OpenPlayAbout;
 use App\Livewire\OpenPlayOrganizer;
+use App\Livewire\OpenPlayPlayerH2h;
 use App\Livewire\OpenPlayWatch;
+use App\Livewire\OpenPlayWatchPlayerH2h;
 use App\Livewire\PublicCourtShow;
 use App\Livewire\Venue\VenueBookingApprovals;
 use App\Livewire\Venue\VenueBookingHistory;
@@ -80,6 +82,10 @@ Route::get('/open-play/watch/{openPlayShare}/data', [OpenPlayShareController::cl
 Route::post('/open-play/watch/{openPlayShare}/toggle-break', [OpenPlayShareController::class, 'togglePlayerBreak'])
     ->middleware('throttle:30,1')
     ->name('open-play.watch.toggle-break');
+Route::livewire('/open-play/watch/{openPlayShare}/player/{playerId}', OpenPlayWatchPlayerH2h::class)
+    ->where('playerId', '[^/]+')
+    ->middleware('throttle:120,1')
+    ->name('open-play.watch.player');
 Route::livewire('/open-play/watch/{openPlayShare}', OpenPlayWatch::class)
     ->middleware('throttle:120,1')
     ->name('open-play.watch');
@@ -135,6 +141,9 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
             ->middleware('throttle:30,1,gameq_session_delete')
             ->name('open-play.sessions.destroy');
         Route::livewire('/tools/gameq', OpenPlayOrganizer::class)->name('open-play');
+        Route::livewire('/tools/gameq/player/{playerId}', OpenPlayPlayerH2h::class)
+            ->where('playerId', '[^/]+')
+            ->name('open-play.player');
         Route::get('/tools/pickle-game-q', fn () => redirect('/account/tools/gameq', 301));
         Route::get('/open-play', fn () => redirect()->route('account.open-play'))
             ->name('open-play.legacy');

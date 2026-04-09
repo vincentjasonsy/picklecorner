@@ -222,8 +222,36 @@ class OpenPlayShareTest extends TestCase
             ->assertSee('GameQ · Live', false)
             ->assertSee('Friday ladder', false)
             ->assertSee('Sam', false)
+            ->assertSee('Standings', false)
             ->assertSee('Playing today', false)
             ->assertSee('wire:poll.1s="refreshWatch"', false);
+    }
+
+    public function test_guest_can_view_live_watch_player_head_to_head_page(): void
+    {
+        $share = OpenPlayShare::query()->create([
+            'uuid' => '550e8400-e29b-41d4-a716-446655440010',
+            'secret_hash' => bcrypt('test-secret'),
+            'payload' => [
+                'mode' => 'singles',
+                'sessionTitle' => 'Friday ladder',
+                'players' => [['id' => '1', 'name' => 'Sam', 'level' => 4, 'wins' => 1, 'losses' => 0, 'disabled' => false, 'teamId' => '']],
+                'queue' => ['1'],
+                'courts' => [null],
+                'shuffleMethod' => 'random',
+                'courtsCount' => 1,
+                'timeLimitMinutes' => 0,
+                'completedMatches' => [],
+                'h2h' => [],
+            ],
+        ]);
+
+        $this->get(route('open-play.watch.player', ['openPlayShare' => $share, 'playerId' => '1']))
+            ->assertOk()
+            ->assertSee('Sam', false)
+            ->assertSee('Head-to-head', false)
+            ->assertSee('Back to live', false)
+            ->assertSee('wire:poll.2s="refreshGame"', false);
     }
 
     public function test_host_can_update_share_payload_with_secret(): void

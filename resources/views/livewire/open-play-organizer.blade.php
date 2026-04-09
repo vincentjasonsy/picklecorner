@@ -978,7 +978,7 @@
                         </button>
                     </div>
                     <p class="mb-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                        Use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> in the host bar to add or edit players. This modal is for standings, head-to-head, and recent matches.
+                        Use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> in the host bar to add or edit players. Tap a name in <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings</span> for that player’s full head-to-head page.
                     </p>
                     @if ($modalTab === 'standings')
                         <div class="space-y-6">
@@ -996,7 +996,13 @@
                                                 >
                                                     {{ $ri + 1 }}
                                                 </span>
-                                                <span class="truncate font-semibold text-zinc-900 dark:text-zinc-100">{{ $r['name'] }}</span>
+                                                <a
+                                                    href="{{ route('account.open-play.player', ['playerId' => $r['id']]) }}"
+                                                    wire:navigate
+                                                    class="truncate font-semibold text-emerald-800 underline decoration-emerald-600/30 underline-offset-2 hover:text-emerald-700 dark:text-emerald-200 dark:hover:text-emerald-100"
+                                                >
+                                                    {{ $r['name'] }}
+                                                </a>
                                             </span>
                                             <span class="shrink-0 text-right tabular-nums">
                                                 <span class="block text-xs text-zinc-500 dark:text-zinc-400">{{ (int) ($r['wins'] ?? 0) }}W · {{ (int) ($r['losses'] ?? 0) }}L</span>

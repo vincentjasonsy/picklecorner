@@ -29,8 +29,6 @@ class OpenPlayWatch extends Component
 
     public string $h2hPlayerB = '';
 
-    public bool $h2hCardVisible = true;
-
     public string $toggleBreakError = '';
 
     /** Shown after a successful take-a-break toggle (survives wire:poll; cleared on next toggle attempt). */
@@ -43,18 +41,7 @@ class OpenPlayWatch extends Component
     public function mount(OpenPlayShare $openPlayShare): void
     {
         $this->openPlayShare = $openPlayShare;
-        $pref = session($this->sessionH2hCardKey());
-        if ($pref === '0') {
-            $this->h2hCardVisible = false;
-        } elseif ($pref === '1') {
-            $this->h2hCardVisible = true;
-        }
         $this->refreshWatch();
-    }
-
-    protected function sessionH2hCardKey(): string
-    {
-        return 'gameq_watch_h2h_visible_'.$this->openPlayShare->uuid;
     }
 
     public function refreshWatch(): void
@@ -82,10 +69,23 @@ class OpenPlayWatch extends Component
         $this->primeH2hPicks();
     }
 
-    public function toggleH2hCard(): void
+    /**
+     * @return list<array{key: string, left: string, right: string, winsLeft: int, winsRight: int}>
+     */
+    public function h2hBreakdownRows(): array
     {
-        $this->h2hCardVisible = ! $this->h2hCardVisible;
-        session([$this->sessionH2hCardKey() => $this->h2hCardVisible ? '1' : '0']);
+        $rows = $this->engine()->h2hRows();
+        usort($rows, function (array $a, array $b): int {
+            $ga = (int) ($a['winsLeft'] ?? 0) + (int) ($a['winsRight'] ?? 0);
+            $gb = (int) ($b['winsLeft'] ?? 0) + (int) ($b['winsRight'] ?? 0);
+            if ($gb !== $ga) {
+                return $gb <=> $ga;
+            }
+
+            return strcmp((string) ($a['left'] ?? ''), (string) ($b['left'] ?? ''));
+        });
+
+        return $rows;
     }
 
     protected function primeH2hPicks(): void

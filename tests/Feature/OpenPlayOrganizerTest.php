@@ -124,4 +124,33 @@ class OpenPlayOrganizerTest extends TestCase
         $this->assertSame(1, OpenPlaySession::query()->where('user_id', $user->getKey())->count());
         $this->assertSame('Renamed', OpenPlaySession::query()->find($sid)?->title);
     }
+
+    public function test_player_head_to_head_page_loads_for_rostered_player(): void
+    {
+        $user = User::factory()->create();
+        $state = (new Engine([]))->toArray();
+        $state['uiPhase'] = 'session';
+        $state['sessionTitle'] = 'Test night';
+        $state['players'] = [
+            [
+                'id' => 'p-h2h-page',
+                'name' => 'Jamie',
+                'level' => 3,
+                'wins' => 0,
+                'losses' => 0,
+                'disabled' => false,
+                'skipShuffle' => false,
+                'teamId' => '',
+            ],
+        ];
+
+        $this->actingAs($user);
+        session(['gameq_organizer_v2' => $state]);
+
+        $this->get(route('account.open-play.player', ['playerId' => 'p-h2h-page']))
+            ->assertOk()
+            ->assertSee('Jamie', false)
+            ->assertSee('Test night', false)
+            ->assertSee('Head-to-head', false);
+    }
 }
