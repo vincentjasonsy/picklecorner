@@ -1623,6 +1623,138 @@ class Engine
         return $out;
     }
 
+    /**
+     * Completed-match log grouped by each opposing *player* (not whole side). In doubles, a single match
+     * against a pair produces two groups — same scoreline and W/L under each opponent’s name.
+     *
+     * @return list<array{opponentId: string, displayName: string, winsSelf: int, winsOpp: int, ties: int, games: int, lines: list<array{scoreSelf: float, scoreOpp: float, won: bool|null, at: int}>}>
+     */
+    public function perOpponentPlayerBreakdown(string|int $playerId): array
+    {
+        $pid = (string) $playerId;
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log)) {
+            return [];
+        }
+
+        /** @var array<string, array{displayName: string, winsSelf: int, winsOpp: int, ties: int, lines: list<array{scoreSelf: float, scoreOpp: float, won: bool|null, at: int}>}> $byOpp */
+        $byOpp = [];
+
+        foreach ($log as $m) {
+            if (! is_array($m)) {
+                continue;
+            }
+            $sideA = array_values(is_array($m['sideA'] ?? null) ? $m['sideA'] : []);
+            $sideB = array_values(is_array($m['sideB'] ?? null) ? $m['sideB'] : []);
+            $inA = $this->sideContainsPlayerId($sideA, $pid);
+            $inB = $this->sideContainsPlayerId($sideB, $pid);
+            if (! $inA && ! $inB) {
+                continue;
+            }
+            $scoreA = isset($m['scoreA']) && is_numeric($m['scoreA']) ? (float) $m['scoreA'] : 0.0;
+            $scoreB = isset($m['scoreB']) && is_numeric($m['scoreB']) ? (float) $m['scoreB'] : 0.0;
+            if (is_nan($scoreA)) {
+                $scoreA = 0.0;
+            }
+            if (is_nan($scoreB)) {
+                $scoreB = 0.0;
+            }
+            $winA = $scoreA > $scoreB;
+            $winB = $scoreB > $scoreA;
+            $tie = ! $winA && ! $winB;
+            $oppSide = $inA ? $sideB : $sideA;
+            $sSelf = $inA ? $scoreA : $scoreB;
+            $sOpp = $inA ? $scoreB : $scoreA;
+            $won = null;
+            if ($winA || $winB) {
+                $won = $inA ? $winA : $winB;
+            }
+            $at = (int) ($m['at'] ?? 0);
+            $line = [
+                'scoreSelf' => $sSelf,
+                'scoreOpp' => $sOpp,
+                'won' => $won,
+                'at' => $at,
+            ];
+
+            foreach ($oppSide as $oid) {
+                if (self::idEqual($oid, $pid)) {
+                    continue;
+                }
+                $oidStr = (string) $oid;
+                if (! isset($byOpp[$oidStr])) {
+                    $byOpp[$oidStr] = [
+                        'displayName' => $this->playerLabel($oid),
+                        'winsSelf' => 0,
+                        'winsOpp' => 0,
+                        'ties' => 0,
+                        'lines' => [],
+                    ];
+                }
+                if ($tie) {
+                    $byOpp[$oidStr]['ties']++;
+                } elseif ($won === true) {
+                    $byOpp[$oidStr]['winsSelf']++;
+                } elseif ($won === false) {
+                    $byOpp[$oidStr]['winsOpp']++;
+                }
+                $byOpp[$oidStr]['lines'][] = $line;
+            }
+        }
+
+        $out = [];
+        foreach ($byOpp as $oidStr => $row) {
+            usort($row['lines'], function (array $a, array $b): int {
+                return ($b['at'] ?? 0) <=> ($a['at'] ?? 0);
+            });
+            $games = count($row['lines']);
+            $out[] = [
+                'opponentId' => $oidStr,
+                'displayName' => $row['displayName'],
+                'winsSelf' => $row['winsSelf'],
+                'winsOpp' => $row['winsOpp'],
+                'ties' => $row['ties'],
+                'games' => $games,
+                'lines' => $row['lines'],
+            ];
+        }
+
+        usort($out, function (array $a, array $b): int {
+            $ga = ($a['games'] ?? 0);
+            $gb = ($b['games'] ?? 0);
+            if ($gb !== $ga) {
+                return $gb <=> $ga;
+            }
+
+            return strcmp((string) ($a['displayName'] ?? ''), (string) ($b['displayName'] ?? ''));
+        });
+
+        return $out;
+    }
+
+    /** Number of completed matches in the log where this player appears on either side. */
+    public function countCompletedMatchesInvolvingPlayer(string|int $playerId): int
+    {
+        $pid = (string) $playerId;
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log)) {
+            return 0;
+        }
+        $n = 0;
+        foreach ($log as $m) {
+            if (! is_array($m)) {
+                continue;
+            }
+            $sideA = array_values(is_array($m['sideA'] ?? null) ? $m['sideA'] : []);
+            $sideB = array_values(is_array($m['sideB'] ?? null) ? $m['sideB'] : []);
+            if ($this->sideContainsPlayerId($sideA, $pid) || $this->sideContainsPlayerId($sideB, $pid)) {
+                $n++;
+            }
+        }
+
+        return $n;
+    }
+
     public function formatMatchScoreDisplay(float $x): string
     {
         if (is_nan($x)) {

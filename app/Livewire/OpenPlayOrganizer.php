@@ -48,9 +48,6 @@ class OpenPlayOrganizer extends Component
     /** Roster add/edit modal (same pattern as Standings & log). */
     public bool $rosterModalOpen = false;
 
-    /** Player vs player (H2H quick view) expanded on the host screen. */
-    public bool $h2hSectionOpen = false;
-
     /** Which court’s “Edit lineup” panel is open (keeps open across Livewire updates; raw details/ summary alone does not). */
     public ?int $courtLineupEditorOpen = null;
 
@@ -911,16 +908,6 @@ class OpenPlayOrganizer extends Component
             $this->persist();
         }
         $this->importFile = null;
-    }
-
-    /**
-     * @return array<string, mixed>|null
-     */
-    public function pairH2hSummary(?string $a, ?string $b): ?array
-    {
-        $e = new Engine($this->state);
-
-        return $e->pairH2hSummary($a, $b);
     }
 
     public function engine(): Engine

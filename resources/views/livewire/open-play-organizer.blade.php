@@ -663,66 +663,6 @@
                             </div>
                         </div>
 
-                        @if (count($state['players'] ?? []) >= 2)
-                            <div class="rounded-2xl border border-zinc-200/90 bg-gradient-to-br from-white to-zinc-50/80 shadow-sm dark:border-zinc-700 dark:from-zinc-900/90 dark:to-zinc-950/80">
-                                <button
-                                    type="button"
-                                    wire:click="$toggle('h2hSectionOpen')"
-                                    class="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left transition hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40"
-                                    aria-expanded="{{ $h2hSectionOpen ? 'true' : 'false' }}"
-                                >
-                                    <span>
-                                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Player vs player</span>
-                                        <span class="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-500">Singles quick view (full head-to-head is in Standings &amp; log).</span>
-                                    </span>
-                                    <span class="shrink-0 text-xs font-semibold tabular-nums text-zinc-400 dark:text-zinc-500">{{ $h2hSectionOpen ? 'Hide' : 'Show' }}</span>
-                                </button>
-                                @if ($h2hSectionOpen)
-                                    <div class="space-y-4 border-t border-zinc-200/90 px-4 pb-4 pt-2 dark:border-zinc-700">
-                                        <div class="grid gap-3 sm:grid-cols-2">
-                                            <label class="block min-w-0 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                Player A
-                                                <select wire:model.live="state.h2hPlayerA" class="mt-1.5 min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100">
-                                                    @foreach ($state['players'] ?? [] as $hp)
-                                                        <option value="{{ $hp['id'] }}">{{ $hp['name'] }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </label>
-                                            <label class="block min-w-0 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                                Player B
-                                                <select wire:model.live="state.h2hPlayerB" class="mt-1.5 min-h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100">
-                                                    @foreach ($state['players'] ?? [] as $hp)
-                                                        <option value="{{ $hp['id'] }}" @disabled(($state['h2hPlayerA'] ?? '') === (string) ($hp['id'] ?? ''))>{{ $hp['name'] }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </label>
-                                        </div>
-                                        <div class="rounded-xl border border-emerald-200/60 bg-emerald-50/50 px-4 py-3 text-center dark:border-emerald-900/40 dark:bg-emerald-950/20">
-                                            @php
-                                                $ha = $state['h2hPlayerA'] ?? '';
-                                                $hb = $state['h2hPlayerB'] ?? '';
-                                                $pair = $this->pairH2hSummary($ha !== '' ? $ha : null, $hb !== '' ? $hb : null);
-                                            @endphp
-                                            @if ($ha !== '' && $hb !== '' && $ha !== $hb)
-                                                <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-                                                    {{ $eq->playerLabel($ha) }}
-                                                    <span class="mx-2 font-normal text-zinc-400">vs</span>
-                                                    {{ $eq->playerLabel($hb) }}
-                                                </p>
-                                                <p class="mt-2 font-mono text-2xl font-bold tabular-nums text-emerald-800 dark:text-emerald-300">
-                                                    {{ $pair['winsA'] ?? 0 }}
-                                                    <span class="mx-2 text-base font-normal text-zinc-400">–</span>
-                                                    {{ $pair['winsB'] ?? 0 }}
-                                                </p>
-                                            @else
-                                                <p class="text-sm text-zinc-500 dark:text-zinc-400">Pick two different players.</p>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        @endif
-
                         <div class="space-y-4">
                             <section class="min-w-0 space-y-3">
                                 @foreach ($state['courts'] ?? [] as $i => $court)

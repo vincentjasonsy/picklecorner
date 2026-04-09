@@ -32,6 +32,10 @@
         @include('partials.flash-messages')
         @include('partials.impersonation-banner')
 
+        @php
+            $hideGuestPrimaryNav = request()->routeIs(['open-play.watch', 'open-play.watch.player']);
+        @endphp
+
         <div class="flex min-h-screen flex-col">
             <header
                 x-data="{ mobileNavOpen: false }"
@@ -62,6 +66,7 @@
                     </a>
                     <div class="flex shrink-0 items-center gap-2 sm:gap-3">
                         <x-theme-toggle />
+                        @unless ($hideGuestPrimaryNav)
                         {{-- Desktop / large tablet navigation --}}
                         <nav
                             class="hidden items-center gap-1 text-sm font-medium lg:flex"
@@ -225,8 +230,10 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                             </svg>
                         </button>
+                        @endunless
                     </div>
                 </div>
+                @unless ($hideGuestPrimaryNav)
                 {{-- Mobile / small tablet panel --}}
                 <div
                     id="guest-mobile-nav"
@@ -373,6 +380,7 @@
                         @endauth
                     </nav>
                 </div>
+                @endunless
             </header>
 
             <main class="flex-1">
@@ -383,6 +391,7 @@
                 <div
                     class="mx-auto flex max-w-7xl flex-col items-center gap-6 px-4 text-center sm:px-6 lg:px-8"
                 >
+                    @unless ($hideGuestPrimaryNav)
                     <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400" aria-label="Footer">
                         <a href="{{ route('home') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
                         <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
@@ -398,6 +407,7 @@
                         </a>
                         <a href="{{ route('book-now') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Book now</a>
                     </nav>
+                    @endunless
                     <p class="text-xs text-zinc-500 dark:text-zinc-400">
                         &copy; {{ date('Y') }} {{ config('app.name') }}
                     </p>

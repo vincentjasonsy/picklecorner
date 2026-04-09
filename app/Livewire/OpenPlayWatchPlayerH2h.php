@@ -22,6 +22,9 @@ class OpenPlayWatchPlayerH2h extends Component
 
     public ?string $updatedAtIso = null;
 
+    /** Kept in sync with the details element so wire:poll does not collapse Game-by-game scores. */
+    public bool $gameLogExpanded = false;
+
     public function mount(OpenPlayShare $openPlayShare, string $playerId): void
     {
         $this->openPlayShare = $openPlayShare;

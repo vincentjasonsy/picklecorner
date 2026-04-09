@@ -25,10 +25,6 @@ class OpenPlayWatch extends Component
 
     public bool $loadFailed = false;
 
-    public string $h2hPlayerA = '';
-
-    public string $h2hPlayerB = '';
-
     public string $toggleBreakError = '';
 
     /** Shown after a successful take-a-break toggle (survives wire:poll; cleared on next toggle attempt). */
@@ -56,80 +52,6 @@ class OpenPlayWatch extends Component
         $this->game = (new Engine($raw))->toArray();
         $this->updatedAtIso = $this->openPlayShare->updated_at?->toIso8601String();
         $this->loadFailed = false;
-        $this->primeH2hPicks();
-    }
-
-    public function updatedH2hPlayerA(): void
-    {
-        $this->primeH2hPicks();
-    }
-
-    public function updatedH2hPlayerB(): void
-    {
-        $this->primeH2hPicks();
-    }
-
-    /**
-     * @return list<array{key: string, left: string, right: string, winsLeft: int, winsRight: int}>
-     */
-    public function h2hBreakdownRows(): array
-    {
-        $rows = $this->engine()->h2hRows();
-        usort($rows, function (array $a, array $b): int {
-            $ga = (int) ($a['winsLeft'] ?? 0) + (int) ($a['winsRight'] ?? 0);
-            $gb = (int) ($b['winsLeft'] ?? 0) + (int) ($b['winsRight'] ?? 0);
-            if ($gb !== $ga) {
-                return $gb <=> $ga;
-            }
-
-            return strcmp((string) ($a['left'] ?? ''), (string) ($b['left'] ?? ''));
-        });
-
-        return $rows;
-    }
-
-    protected function primeH2hPicks(): void
-    {
-        $players = $this->game['players'] ?? [];
-        if (! is_array($players)) {
-            return;
-        }
-        $ids = [];
-        foreach ($players as $p) {
-            if (is_array($p) && ! empty($p['id'])) {
-                $ids[] = (string) $p['id'];
-            }
-        }
-        $ids = array_values(array_unique($ids));
-        if ($ids === []) {
-            $this->h2hPlayerA = '';
-            $this->h2hPlayerB = '';
-
-            return;
-        }
-        if ($this->h2hPlayerA === '' || ! in_array($this->h2hPlayerA, $ids, true)) {
-            $this->h2hPlayerA = $ids[0];
-        }
-        if (
-            count($ids) >= 2
-            && (
-                $this->h2hPlayerB === ''
-                || ! in_array($this->h2hPlayerB, $ids, true)
-                || $this->h2hPlayerB === $this->h2hPlayerA
-            )
-        ) {
-            $other = null;
-            foreach ($ids as $id) {
-                if ($id !== $this->h2hPlayerA) {
-                    $other = $id;
-                    break;
-                }
-            }
-            $this->h2hPlayerB = $other ?? $ids[1];
-        }
-        if (count($ids) === 1) {
-            $this->h2hPlayerB = '';
-        }
     }
 
     public function engine(): Engine

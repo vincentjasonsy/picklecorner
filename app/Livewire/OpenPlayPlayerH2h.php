@@ -17,6 +17,9 @@ class OpenPlayPlayerH2h extends Component
 
     public bool $playerFound = false;
 
+    /** Kept in sync with the details element so Livewire re-renders do not collapse Game-by-game scores. */
+    public bool $gameLogExpanded = false;
+
     public function mount(string $playerId): void
     {
         $this->playerId = $playerId;
