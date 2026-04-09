@@ -905,7 +905,14 @@
                                                         </div>
                                                         <div class="flex flex-wrap items-center justify-center gap-1.5 sm:shrink-0">
                                                             <button type="button" class="min-h-8 min-w-[5.5rem] rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500" wire:click="completeMatch({{ $i }})">Done</button>
-                                                            <button type="button" class="min-h-8 rounded-lg px-2 text-xs font-semibold text-zinc-500 transition hover:bg-white hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200" wire:click="clearCourt({{ $i }})">Clear</button>
+                                                            <button
+                                                                type="button"
+                                                                class="min-h-8 rounded-lg px-2 text-xs font-semibold text-zinc-500 transition hover:bg-white hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                                                                wire:confirm="Cancel this game without recording a score? Players go back to the queue."
+                                                                wire:click="clearCourt({{ $i }})"
+                                                            >
+                                                                Cancel game
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1017,18 +1024,67 @@
                             </details>
                             <div>
                                 <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Recent matches</p>
-                                <ul class="mt-3 max-h-48 space-y-2 overflow-y-auto pr-1">
-                                    @foreach (array_reverse($state['completedMatches'] ?? []) as $mi => $m)
+                                <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                                    Edit scores, then apply. Use <span class="font-medium text-zinc-600 dark:text-zinc-300">Cancel result</span> to drop a finished match from the tally entirely. On court, <span class="font-medium text-zinc-600 dark:text-zinc-300">Cancel game</span> ends play without recording a score.
+                                </p>
+                                @php $completedLog = $state['completedMatches'] ?? []; @endphp
+                                <ul class="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
+                                    @for ($ri = count($completedLog) - 1; $ri >= 0; $ri--)
+                                        @php $m = $completedLog[$ri]; @endphp
                                         <li
-                                            class="grid grid-cols-1 items-center gap-2 rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-xs shadow-sm sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3 dark:border-zinc-700 dark:bg-zinc-950/60"
-                                            wire:key="match-{{ $mi }}"
+                                            class="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-xs shadow-sm dark:border-zinc-700 dark:bg-zinc-950/60"
+                                            wire:key="match-log-{{ $ri }}"
                                         >
-                                            <span class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-left">{{ $eq->sideLabelsWithStandings($m['sideA'] ?? []) }}</span>
-                                            <span class="justify-self-center rounded-lg bg-zinc-100 px-2.5 py-1 font-mono text-sm font-bold tabular-nums text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100">{{ $m['scoreA'] }} – {{ $m['scoreB'] }}</span>
-                                            <span class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-right">{{ $eq->sideLabelsWithStandings($m['sideB'] ?? []) }}</span>
+                                            <div class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
+                                                <span class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-left">{{ $eq->sideLabelsWithStandings($m['sideA'] ?? []) }}</span>
+                                                <div class="flex flex-wrap items-center justify-center gap-1.5">
+                                                    <label class="sr-only" for="gq-log-a-{{ $ri }}">Side A score</label>
+                                                    <input
+                                                        id="gq-log-a-{{ $ri }}"
+                                                        type="number"
+                                                        min="0"
+                                                        step="any"
+                                                        inputmode="decimal"
+                                                        wire:model="state.completedMatches.{{ $ri }}.scoreA"
+                                                        class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center font-mono text-sm font-bold tabular-nums text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                                                    />
+                                                    <span class="select-none font-mono text-zinc-400" aria-hidden="true">–</span>
+                                                    <label class="sr-only" for="gq-log-b-{{ $ri }}">Side B score</label>
+                                                    <input
+                                                        id="gq-log-b-{{ $ri }}"
+                                                        type="number"
+                                                        min="0"
+                                                        step="any"
+                                                        inputmode="decimal"
+                                                        wire:model="state.completedMatches.{{ $ri }}.scoreB"
+                                                        class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center font-mono text-sm font-bold tabular-nums text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                                                    />
+                                                </div>
+                                                <span class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-right">{{ $eq->sideLabelsWithStandings($m['sideB'] ?? []) }}</span>
+                                            </div>
+                                            <div class="mt-2 flex justify-end border-t border-zinc-100 pt-2 dark:border-zinc-800">
+                                                <button
+                                                    type="button"
+                                                    class="touch-manipulation text-xs font-semibold text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-red-600 hover:decoration-red-400 dark:text-zinc-400 dark:decoration-zinc-600 dark:hover:text-red-400"
+                                                    wire:confirm="Remove this match from the log? It will not count toward standings or head-to-head."
+                                                    wire:click="removeCompletedMatch({{ $ri }})"
+                                                >
+                                                    Cancel result (drop from tally)
+                                                </button>
+                                            </div>
                                         </li>
-                                    @endforeach
+                                    @endfor
                                 </ul>
+                                @if (count($completedLog) > 0)
+                                    <button
+                                        type="button"
+                                        class="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.99] dark:shadow-emerald-950/30 sm:w-auto"
+                                        wire:click="syncStandingsFromCompletedLog"
+                                    >
+                                        <span wire:loading.remove wire:target="syncStandingsFromCompletedLog">Apply scores to standings</span>
+                                        <span wire:loading wire:target="syncStandingsFromCompletedLog">Updating…</span>
+                                    </button>
+                                @endif
                             </div>
                         </div>
                     @endif

@@ -1265,6 +1265,109 @@ class Engine
         return $this->state['scoreDraft'][$i];
     }
 
+    /**
+     * @param  list<string|int>  $sideA
+     * @param  list<string|int>  $sideB
+     */
+    public function applyMatchResultToStandings(array $sideA, array $sideB, float $scoreA, float $scoreB): void
+    {
+        if (is_nan($scoreA)) {
+            $scoreA = 0.0;
+        }
+        if (is_nan($scoreB)) {
+            $scoreB = 0.0;
+        }
+        $winA = $scoreA > $scoreB;
+        $winB = $scoreB > $scoreA;
+        foreach ($sideA as $id) {
+            $p = $this->playerById($id);
+            if ($p) {
+                $idx = $this->playerIndexById($id);
+                if ($idx !== null) {
+                    if ($winA) {
+                        $this->state['players'][$idx]['wins'] = (int) ($this->state['players'][$idx]['wins'] ?? 0) + 1;
+                    } elseif ($winB) {
+                        $this->state['players'][$idx]['losses'] = (int) ($this->state['players'][$idx]['losses'] ?? 0) + 1;
+                    }
+                }
+            }
+        }
+        foreach ($sideB as $id) {
+            $p = $this->playerById($id);
+            if ($p) {
+                $idx = $this->playerIndexById($id);
+                if ($idx !== null) {
+                    if ($winB) {
+                        $this->state['players'][$idx]['wins'] = (int) ($this->state['players'][$idx]['wins'] ?? 0) + 1;
+                    } elseif ($winA) {
+                        $this->state['players'][$idx]['losses'] = (int) ($this->state['players'][$idx]['losses'] ?? 0) + 1;
+                    }
+                }
+            }
+        }
+        if ($winA || $winB) {
+            $this->bumpH2h($sideA, $sideB, $winA);
+        }
+    }
+
+    /**
+     * Recompute player W–L and head-to-head from {@see $this->state['completedMatches']} (e.g. after editing a past score).
+     */
+    public function rebuildStatsFromCompletedMatches(): void
+    {
+        foreach ($this->state['players'] as $i => $p) {
+            if (is_array($p)) {
+                $this->state['players'][$i]['wins'] = 0;
+                $this->state['players'][$i]['losses'] = 0;
+            }
+        }
+        $this->state['h2h'] = [];
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log)) {
+            $this->state['completedMatches'] = [];
+
+            return;
+        }
+        foreach ($log as $k => $m) {
+            if (! is_array($m)) {
+                continue;
+            }
+            $sideA = array_values(is_array($m['sideA'] ?? null) ? $m['sideA'] : []);
+            $sideB = array_values(is_array($m['sideB'] ?? null) ? $m['sideB'] : []);
+            $scoreA = isset($m['scoreA']) && is_numeric($m['scoreA']) ? (float) $m['scoreA'] : 0.0;
+            $scoreB = isset($m['scoreB']) && is_numeric($m['scoreB']) ? (float) $m['scoreB'] : 0.0;
+            if (is_nan($scoreA)) {
+                $scoreA = 0.0;
+            }
+            if (is_nan($scoreB)) {
+                $scoreB = 0.0;
+            }
+            if ($scoreA < 0) {
+                $scoreA = 0.0;
+            }
+            if ($scoreB < 0) {
+                $scoreB = 0.0;
+            }
+            $this->state['completedMatches'][$k]['scoreA'] = $scoreA;
+            $this->state['completedMatches'][$k]['scoreB'] = $scoreB;
+            $this->applyMatchResultToStandings($sideA, $sideB, $scoreA, $scoreB);
+        }
+    }
+
+    /**
+     * Drop a finished match from the log and recompute standings (as if it never counted).
+     */
+    public function removeCompletedMatchAtIndex(int $index): void
+    {
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log) || $index < 0 || $index >= count($log)) {
+            return;
+        }
+        array_splice($this->state['completedMatches'], $index, 1);
+        $this->state['completedMatches'] = array_values($this->state['completedMatches']);
+        $this->rebuildStatsFromCompletedMatches();
+    }
+
     public function completeMatch(int $i, ?int $nowMs = null): void
     {
         $court = $this->state['courts'][$i] ?? null;
@@ -1280,40 +1383,12 @@ class Engine
         if (is_nan($scoreB)) {
             $scoreB = 0.0;
         }
-        $winA = $scoreA > $scoreB;
-        $winB = $scoreB > $scoreA;
-        foreach ($court['sideA'] ?? [] as $id) {
-            $p = $this->playerById($id);
-            if ($p) {
-                $idx = $this->playerIndexById($id);
-                if ($idx !== null) {
-                    if ($winA) {
-                        $this->state['players'][$idx]['wins'] = (int) ($this->state['players'][$idx]['wins'] ?? 0) + 1;
-                    } elseif ($winB) {
-                        $this->state['players'][$idx]['losses'] = (int) ($this->state['players'][$idx]['losses'] ?? 0) + 1;
-                    }
-                }
-            }
-        }
-        foreach ($court['sideB'] ?? [] as $id) {
-            $p = $this->playerById($id);
-            if ($p) {
-                $idx = $this->playerIndexById($id);
-                if ($idx !== null) {
-                    if ($winB) {
-                        $this->state['players'][$idx]['wins'] = (int) ($this->state['players'][$idx]['wins'] ?? 0) + 1;
-                    } elseif ($winA) {
-                        $this->state['players'][$idx]['losses'] = (int) ($this->state['players'][$idx]['losses'] ?? 0) + 1;
-                    }
-                }
-            }
-        }
-        if ($winA || $winB) {
-            $this->bumpH2h($court['sideA'] ?? [], $court['sideB'] ?? [], $winA);
-        }
+        $sideA = array_values($court['sideA'] ?? []);
+        $sideB = array_values($court['sideB'] ?? []);
+        $this->applyMatchResultToStandings($sideA, $sideB, $scoreA, $scoreB);
         $this->state['completedMatches'][] = [
-            'sideA' => array_values($court['sideA'] ?? []),
-            'sideB' => array_values($court['sideB'] ?? []),
+            'sideA' => $sideA,
+            'sideB' => $sideB,
             'scoreA' => $scoreA,
             'scoreB' => $scoreB,
             'at' => $this->nowMs($nowMs),

@@ -447,6 +447,18 @@ class OpenPlayOrganizer extends Component
         $this->withEngine(fn (Engine $e) => $e->completeMatch($i, $now));
     }
 
+    /** Recompute W–L and head-to-head after editing scores in the completed log. */
+    public function syncStandingsFromCompletedLog(): void
+    {
+        $this->withEngine(fn (Engine $e) => $e->rebuildStatsFromCompletedMatches());
+    }
+
+    /** Remove a completed match from the log so it no longer affects standings. */
+    public function removeCompletedMatch(int $index): void
+    {
+        $this->withEngine(fn (Engine $e) => $e->removeCompletedMatchAtIndex($index));
+    }
+
     public function clearCourt(int $i): void
     {
         $this->withEngine(fn (Engine $e) => $e->clearCourt($i));
