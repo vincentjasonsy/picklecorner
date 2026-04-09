@@ -9,12 +9,13 @@
     $historySaveDisabled = is_array($historyQuota ?? null) && (int) ($historyQuota['remaining'] ?? 0) <= 0;
 @endphp
 
-<div
-    class="min-h-0"
+<div class="min-h-0">
     @if ($uiPhase === 'session' && (int) ($state['timeLimitMinutes'] ?? 0) > 0)
-        wire:poll.1s="refreshTimers"
+        <div class="hidden" aria-hidden="true" wire:poll.1s="refreshTimers"></div>
     @endif
->
+    @if ($uiPhase === 'session' && ! empty($state['shareSyncEnabled']) && ! empty($state['shareUuid']) && ! empty($state['shareSecret']))
+        <div class="hidden" aria-hidden="true" wire:poll.2s="pullLiveShareBreakSync"></div>
+    @endif
     {{-- ========== LIST: history table + create ========== --}}
     @if ($uiPhase === 'list')
         <div class="space-y-6">
@@ -522,10 +523,10 @@
                 </p>
             @endif
 
-            <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-6 2xl:gap-8">
+            <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:gap-8 2xl:gap-10">
                 {{-- Left: roster --}}
                 <aside
-                    class="order-2 min-w-0 xl:order-1 xl:w-[min(100%,24rem)] xl:max-w-[40%] xl:shrink-0 xl:sticky xl:top-4 xl:z-10 xl:max-h-[calc(100dvh-6rem)] xl:overflow-y-auto"
+                    class="order-2 min-w-0 xl:order-1 xl:w-[min(100%,30rem)] xl:max-w-[min(100%,46%)] xl:shrink-0 xl:sticky xl:top-4 xl:z-10 xl:max-h-[calc(100dvh-6rem)] xl:overflow-y-auto"
                 >
                     <div class="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60">
                         <h2 class="font-display text-base font-extrabold text-zinc-900 dark:text-white">Roster</h2>
@@ -999,8 +1000,14 @@
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <details class="mx-auto w-full max-w-3xl rounded-lg border border-zinc-200/80 bg-white px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800/40">
-                                                    <summary wire:click="initCourtLineupDraft({{ $i }})" class="cursor-pointer list-none text-xs font-semibold text-zinc-700 marker:content-none dark:text-zinc-200 [&::-webkit-details-marker]:hidden">
+                                                <details
+                                                    class="mx-auto w-full max-w-3xl rounded-lg border border-zinc-200/80 bg-white px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800/40"
+                                                    @if ($courtLineupEditorOpen === $i) open @endif
+                                                >
+                                                    <summary
+                                                        wire:click.prevent="toggleCourtLineupEditor({{ $i }})"
+                                                        class="cursor-pointer list-none text-xs font-semibold text-zinc-700 marker:content-none dark:text-zinc-200 [&::-webkit-details-marker]:hidden"
+                                                    >
                                                         Edit lineup
                                                     </summary>
                                                     @if (! empty($state['courtLineupDraft'][$i] ?? null))
@@ -1013,7 +1020,7 @@
                                                                 <div class="space-y-2">
                                                                     <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Side A</p>
                                                                     @foreach ($slots as $slot)
-                                                                        <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model.live="state.courtLineupDraft.{{ $i }}.a.{{ $slot }}">
+                                                                        <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.a.{{ $slot }}">
                                                                             <option value="">—</option>
                                                                             @foreach ($state['players'] ?? [] as $pl)
                                                                                 @if (empty($pl['disabled']))
@@ -1026,7 +1033,7 @@
                                                                 <div class="space-y-2">
                                                                     <p class="text-[10px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400">Side B</p>
                                                                     @foreach ($slots as $slot)
-                                                                        <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model.live="state.courtLineupDraft.{{ $i }}.b.{{ $slot }}">
+                                                                        <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.b.{{ $slot }}">
                                                                             <option value="">—</option>
                                                                             @foreach ($state['players'] ?? [] as $pl)
                                                                                 @if (empty($pl['disabled']))

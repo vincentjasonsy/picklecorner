@@ -48,6 +48,9 @@ class OpenPlayOrganizer extends Component
     /** Show roster add/edit UI (Livewire state survives wire:poll). */
     public bool $rosterSettingsOpen = false;
 
+    /** Which court’s “Edit lineup” panel is open (keeps open across Livewire updates; raw details/ summary alone does not). */
+    public ?int $courtLineupEditorOpen = null;
+
     /** Shown after take-a-break changes from the roster or queue (cleared on next toggle). */
     public string $takeBreakNotice = '';
 
@@ -414,10 +417,24 @@ class OpenPlayOrganizer extends Component
         $this->withEngine(fn (Engine $e) => $e->initCourtLineupDraft($courtIndex));
     }
 
+    public function toggleCourtLineupEditor(int $courtIndex): void
+    {
+        if ($this->courtLineupEditorOpen === $courtIndex) {
+            $this->courtLineupEditorOpen = null;
+
+            return;
+        }
+        $this->courtLineupEditorOpen = $courtIndex;
+        $this->initCourtLineupDraft($courtIndex);
+    }
+
     public function applyCourtLineupDraft(int $courtIndex): void
     {
         $now = (int) round(microtime(true) * 1000);
         $this->withEngine(fn (Engine $e) => $e->applyCourtLineupDraft($courtIndex, $now));
+        if (($this->state['lineupEditError'] ?? '') === '' && $this->courtLineupEditorOpen === $courtIndex) {
+            $this->courtLineupEditorOpen = null;
+        }
     }
 
     public function completeMatch(int $i): void
@@ -904,6 +921,39 @@ class OpenPlayOrganizer extends Component
     public function refreshTimers(): void
     {
         // no-op: triggers re-render for countdown
+    }
+
+    /**
+     * Pull take-a-break + queue from the stored live share when players update from the watch page.
+     */
+    public function pullLiveShareBreakSync(): void
+    {
+        if (
+            ($this->state['uiPhase'] ?? '') !== 'session'
+            || empty($this->state['shareSyncEnabled'])
+            || empty($this->state['shareUuid'])
+            || empty($this->state['shareSecret'])
+        ) {
+            return;
+        }
+        $uuid = (string) $this->state['shareUuid'];
+        $secret = (string) $this->state['shareSecret'];
+        $share = OpenPlayShare::query()->where('uuid', $uuid)->first();
+        if (! $share || ! Hash::check($secret, $share->secret_hash)) {
+            return;
+        }
+        $payload = $share->payload;
+        if (! is_array($payload)) {
+            return;
+        }
+        $e = new Engine($this->state);
+        if (! $e->applyRemoteWatchBreakSync($payload)) {
+            return;
+        }
+        $this->state = $e->toArray();
+        $this->takeBreakNotice = 'Take a break and queue were updated from the live page.';
+        $this->persist();
+        $this->rememberSentSharePayloadHash();
     }
 
     public function render(): View

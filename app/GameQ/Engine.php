@@ -432,6 +432,74 @@ class Engine
         }
     }
 
+    /**
+     * Apply take-a-break flags and queue from a live-share payload (e.g. after a player toggles break on the watch page).
+     *
+     * @param  array<string, mixed>  $remote
+     */
+    public function applyRemoteWatchBreakSync(array $remote): bool
+    {
+        $rPlayers = $remote['players'] ?? null;
+        $rQueue = $remote['queue'] ?? null;
+        if (! is_array($rPlayers) || ! is_array($rQueue)) {
+            return false;
+        }
+
+        $remoteSkip = [];
+        foreach ($rPlayers as $rp) {
+            if (! is_array($rp) || ($rp['id'] ?? '') === '') {
+                continue;
+            }
+            $remoteSkip[(string) ($rp['id'])] = ! empty($rp['skipShuffle']);
+        }
+
+        $changed = false;
+
+        foreach ($this->state['players'] as $i => $p) {
+            if (! is_array($p) || ($p['id'] ?? '') === '') {
+                continue;
+            }
+            $id = (string) $p['id'];
+            if (! array_key_exists($id, $remoteSkip)) {
+                continue;
+            }
+            $want = $remoteSkip[$id];
+            $have = ! empty($p['skipShuffle']);
+            if ($want !== $have) {
+                $this->state['players'][$i]['skipShuffle'] = $want;
+                $changed = true;
+            }
+        }
+
+        $nextQueue = [];
+        $seenQ = [];
+        foreach ($rQueue as $qid) {
+            $p = $this->playerById($qid);
+            if (! $p || ! empty($p['disabled'])) {
+                continue;
+            }
+            if (($p['id'] ?? '') === '') {
+                continue;
+            }
+            $qk = (string) $p['id'];
+            if (isset($seenQ[$qk])) {
+                continue;
+            }
+            $seenQ[$qk] = true;
+            $nextQueue[] = $p['id'];
+        }
+        $nextQueue = array_values($nextQueue);
+
+        $normLocal = array_map(fn ($x) => (string) $x, $this->state['queue'] ?? []);
+        $normNext = array_map(fn ($x) => (string) $x, $nextQueue);
+        if ($normLocal !== $normNext) {
+            $this->state['queue'] = $nextQueue;
+            $changed = true;
+        }
+
+        return $changed;
+    }
+
     public function primeH2hPicks(): void
     {
         $ids = array_map(fn ($p) => $p['id'] ?? null, $this->state['players']);
