@@ -16,6 +16,7 @@ use App\Livewire\Admin\CoachBookingManagement;
 use App\Livewire\Admin\CourtClientCreate;
 use App\Livewire\Admin\CourtClientEdit;
 use App\Livewire\Admin\CourtClientManualBooking;
+use App\Livewire\Admin\FeaturedVenuesManage;
 use App\Livewire\Admin\GalleryImageApprovals;
 use App\Livewire\Admin\GiftCardShow;
 use App\Livewire\Admin\InternalTeamPlayReminders;
@@ -225,6 +226,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::livewire('/court-clients', 'admin-court-clients-index')->name('court-clients.index');
         Route::livewire('/court-clients/create', CourtClientCreate::class)->name('court-clients.create');
         Route::livewire('/venue-quick-setup', VenueQuickSetup::class)->name('venue-quick-setup');
+        Route::livewire('/featured-venues', FeaturedVenuesManage::class)->name('featured-venues');
         Route::livewire('/court-clients/{courtClient}/edit', CourtClientEdit::class)
             ->name('court-clients.edit');
         Route::livewire('/court-clients/{courtClient}/manual-booking', CourtClientManualBooking::class)

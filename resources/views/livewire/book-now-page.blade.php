@@ -91,6 +91,82 @@
         </div>
     </div>
 
+    @php($featuredVenues = $this->featuredVenueClients())
+    @if ($featuredVenues->isNotEmpty())
+        <section class="mt-12" aria-labelledby="featured-venues-heading">
+            <h2 id="featured-venues-heading" class="font-display text-lg font-bold text-zinc-900 dark:text-white">
+                Featured
+                <span class="font-medium text-zinc-500 dark:text-zinc-400">· {{ $this->effectiveCityForFeatured() }}</span>
+            </h2>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                Hand-picked partner venues in your area — swipe or scroll sideways to explore.
+            </p>
+            <div
+                class="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                role="list"
+            >
+                @foreach ($featuredVenues as $venue)
+                    <article
+                        wire:key="featured-venue-{{ $venue->id }}"
+                        class="flex w-[min(88vw,340px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-white shadow-sm dark:border-amber-900/40 dark:from-amber-950/40 dark:to-zinc-900"
+                        role="listitem"
+                    >
+                        <div class="bg-zinc-100 dark:bg-zinc-800">
+                            <x-image-carousel
+                                :slides="$venue->carouselSlides()"
+                                :interval="6500"
+                                aria-label="{{ $venue->name }} photos"
+                                aspect-class="aspect-[4/3]"
+                                class="w-full"
+                            >
+                                <div
+                                    class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-amber-500 to-orange-900"
+                                    aria-hidden="true"
+                                >
+                                    <span class="font-display text-3xl font-extrabold text-white/90">
+                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
+                                    </span>
+                                </div>
+                            </x-image-carousel>
+                        </div>
+                        <div class="flex flex-1 flex-col p-4">
+                            <p class="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300/90">
+                                Featured venue
+                            </p>
+                            <h3 class="mt-1 font-display text-base font-bold text-zinc-900 dark:text-white">
+                                {{ $venue->name }}
+                            </h3>
+                            @if ($venue->public_rating_average !== null)
+                                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                                    {{ number_format((float) $venue->public_rating_average, 1) }}★ guest rating
+                                    @if ($venue->public_rating_count > 0)
+                                        <span class="text-zinc-500">({{ $venue->public_rating_count }})</span>
+                                    @endif
+                                </p>
+                            @endif
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <a
+                                    href="{{ $this->venueBookUrl($venue) }}"
+                                    wire:navigate
+                                    class="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                                >
+                                    Book
+                                </a>
+                                <a
+                                    href="{{ $this->venueBookUrl($venue) }}#venue-reviews"
+                                    wire:navigate
+                                    class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 hover:border-emerald-300 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+                                >
+                                    Reviews
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                @endforeach
+            </div>
+        </section>
+    @endif
+
     @if ($this->browseVenueRows()->isNotEmpty())
         <section class="mt-12" aria-labelledby="venues-heading">
             <h2 id="venues-heading" class="font-display text-lg font-bold text-zinc-900 dark:text-white">

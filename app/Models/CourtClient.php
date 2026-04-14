@@ -176,6 +176,12 @@ class CourtClient extends Model
         return $this->hasMany(CourtClientInvoice::class)->orderByDesc('created_at');
     }
 
+    /** Super-admin curated placement on Book now for a given city. */
+    public function cityFeaturedPlacements(): HasMany
+    {
+        return $this->hasMany(CityFeaturedCourtClient::class);
+    }
+
     public function venueContactNotes(): HasMany
     {
         return $this->hasMany(VenueContactNote::class)->orderByDesc('created_at');

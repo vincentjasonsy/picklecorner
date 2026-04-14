@@ -19,14 +19,29 @@ use Illuminate\Support\Facades\Storage;
 
 class CourtClientSeeder extends Seeder
 {
-    private const VENUE_COUNT = 20;
+    /** Venues sharing the same {@see CourtClient::$city} string per cluster (within 10–15). */
+    public const VENUES_PER_CITY = 12;
+
+    /** Five demo metros; each gets {@see self::VENUES_PER_CITY} venues for featured / browse density. */
+    public const VENUE_COUNT = 60;
 
     /**
-     * Public listing fields + map pins for each seeded city (same order as {@see $cities} in run()).
+     * @var list<string>
+     */
+    private const CLUSTER_CITY_NAMES = [
+        'Taguig',
+        'Quezon City',
+        'Cebu City',
+        'Davao City',
+        'Makati',
+    ];
+
+    /**
+     * Base listing for each cluster city; per-site address and map pins are derived in {@see venuePublicDetails()}.
      *
      * @var list<array{address: string, phone: string, facebook_url: string, latitude: float, longitude: float, amenities: list<string>}>
      */
-    private const VENUE_PUBLIC_DETAILS = [
+    private const CITY_CLUSTER_PUBLIC_BASE = [
         [
             'address' => '7th Ave cor 26th St, Bonifacio Global City, Taguig, 1634 Metro Manila',
             'phone' => '+63 917 555 0101',
@@ -67,131 +82,30 @@ class CourtClientSeeder extends Seeder
             'longitude' => 121.0244,
             'amenities' => ['Rooftop outdoor', 'Valet parking', 'Pro shop', 'Lounge', 'Restrooms'],
         ],
-        [
-            'address' => 'Ortigas Center, Pasig, 1605 Metro Manila',
-            'phone' => '+63 917 555 0106',
-            'facebook_url' => 'https://www.facebook.com/PickleHubPasig',
-            'latitude' => 14.5864,
-            'longitude' => 121.0613,
-            'amenities' => ['Indoor courts', 'Parking building', 'Locker rooms', 'Coaching desk', 'Drinking water'],
-        ],
-        [
-            'address' => 'EDSA cor Shaw Blvd, Mandaluyong, 1552 Metro Manila',
-            'phone' => '+63 917 555 0107',
-            'facebook_url' => 'https://www.facebook.com/PickleHubMandaluyong',
-            'latitude' => 14.5794,
-            'longitude' => 121.0359,
-            'amenities' => ['Mixed indoor/outdoor', 'Mall parking', 'Restrooms', 'Ball hopper', 'Wi-Fi'],
-        ],
-        [
-            'address' => 'Sucat Rd, Parañaque, 1700 Metro Manila',
-            'phone' => '+63 917 555 0108',
-            'facebook_url' => 'https://www.facebook.com/PickleHubParanaque',
-            'latitude' => 14.4793,
-            'longitude' => 121.0198,
-            'amenities' => ['Outdoor courts', 'Open parking', 'Covered benches', 'Equipment sales', 'Restrooms'],
-        ],
-        [
-            'address' => 'Alabang–Zapote Rd, Las Piñas, 1747 Metro Manila',
-            'phone' => '+63 917 555 0109',
-            'facebook_url' => 'https://www.facebook.com/PickleHubLasPinas',
-            'latitude' => 14.4492,
-            'longitude' => 120.9828,
-            'amenities' => ['Indoor courts', 'Parking', 'Family lounge', 'Locker rooms', 'Vending'],
-        ],
-        [
-            'address' => 'Marikina–Infanta Hwy, Marikina, 1800 Metro Manila',
-            'phone' => '+63 917 555 0110',
-            'facebook_url' => 'https://www.facebook.com/PickleHubMarikina',
-            'latitude' => 14.6507,
-            'longitude' => 121.1029,
-            'amenities' => ['Outdoor courts', 'Street parking', 'Restrooms', 'Night lighting', 'First aid'],
-        ],
-        [
-            'address' => 'Sumulong Hwy, Antipolo, 1870 Rizal',
-            'phone' => '+63 917 555 0111',
-            'facebook_url' => 'https://www.facebook.com/PickleHubAntipolo',
-            'latitude' => 14.6255,
-            'longitude' => 121.1245,
-            'amenities' => ['Mountain-view outdoor', 'Parking', 'Covered rest area', 'Pro shop', 'Drinking water'],
-        ],
-        [
-            'address' => 'Diversion Rd, Mandurriao, Iloilo City, 5000 Iloilo',
-            'phone' => '+63 917 555 0112',
-            'facebook_url' => 'https://www.facebook.com/PickleHubIloilo',
-            'latitude' => 10.7202,
-            'longitude' => 122.5621,
-            'amenities' => ['Indoor courts', 'Parking', 'Locker rooms', 'Coaching', 'Restrooms'],
-        ],
-        [
-            'address' => 'Lacson St, Bacolod, 6100 Negros Occidental',
-            'phone' => '+63 917 555 0113',
-            'facebook_url' => 'https://www.facebook.com/PickleHubBacolod',
-            'latitude' => 10.6407,
-            'longitude' => 122.9689,
-            'amenities' => ['Outdoor courts', 'Parking', 'Bleachers', 'Snack bar', 'Wi-Fi'],
-        ],
-        [
-            'address' => 'CM Recto Ave, Cagayan de Oro, 9000 Misamis Oriental',
-            'phone' => '+63 917 555 0114',
-            'facebook_url' => 'https://www.facebook.com/PickleHubCDO',
-            'latitude' => 8.4542,
-            'longitude' => 124.6319,
-            'amenities' => ['Indoor courts', 'Mall parking', 'Locker rooms', 'Pro shop', 'Restrooms'],
-        ],
-        [
-            'address' => 'Session Rd, Baguio, 2600 Benguet',
-            'phone' => '+63 917 555 0115',
-            'facebook_url' => 'https://www.facebook.com/PickleHubBaguio',
-            'latitude' => 16.4023,
-            'longitude' => 120.5960,
-            'amenities' => ['Cool-climate outdoor', 'Parking', 'Heated lounge', 'Equipment rental', 'Restrooms'],
-        ],
-        [
-            'address' => 'Sta. Rosa–Tagaytay Rd, Santa Rosa, 4026 Laguna',
-            'phone' => '+63 917 555 0116',
-            'facebook_url' => 'https://www.facebook.com/PickleHubSantaRosa',
-            'latitude' => 14.3122,
-            'longitude' => 121.1114,
-            'amenities' => ['Indoor & outdoor', 'Parking', 'Kids area', 'Café', 'Locker rooms'],
-        ],
-        [
-            'address' => 'P. Burgos, Batangas City, 4200 Batangas',
-            'phone' => '+63 917 555 0117',
-            'facebook_url' => 'https://www.facebook.com/PickleHubBatangas',
-            'latitude' => 13.7565,
-            'longitude' => 121.0583,
-            'amenities' => ['Harbor-side outdoor', 'Parking', 'Covered seating', 'Restrooms', 'Drinking water'],
-        ],
-        [
-            'address' => 'San Pedro St, General Santos, 9500 South Cotabato',
-            'phone' => '+63 917 555 0118',
-            'facebook_url' => 'https://www.facebook.com/PickleHubGenSan',
-            'latitude' => 6.1164,
-            'longitude' => 125.1716,
-            'amenities' => ['Indoor courts', 'Parking', 'Locker rooms', 'Front desk', 'Wi-Fi'],
-        ],
-        [
-            'address' => 'Gov. Camins Ave, Zamboanga City, 7000 Zamboanga del Sur',
-            'phone' => '+63 917 555 0119',
-            'facebook_url' => 'https://www.facebook.com/PickleHubZamboanga',
-            'latitude' => 6.9214,
-            'longitude' => 122.0790,
-            'amenities' => ['Outdoor courts', 'Open parking', 'Security', 'Restrooms', 'First aid'],
-        ],
-        [
-            'address' => 'J.C. Aquino Ave, Butuan, 8600 Agusan del Norte',
-            'phone' => '+63 917 555 0120',
-            'facebook_url' => 'https://www.facebook.com/PickleHubButuan',
-            'latitude' => 8.9475,
-            'longitude' => 125.5436,
-            'amenities' => ['Indoor courts', 'Parking', 'Locker rooms', 'Pro shop', 'Drinking water'],
-        ],
     ];
+
+    /**
+     * @return array{address: string, phone: string, facebook_url: string, latitude: float, longitude: float, amenities: list<string>}
+     */
+    private static function venuePublicDetails(int $clusterIndex, int $slotInCity): array
+    {
+        $base = self::CITY_CLUSTER_PUBLIC_BASE[$clusterIndex];
+        $slotInCity = max(1, min(self::VENUES_PER_CITY, $slotInCity));
+
+        return [
+            'address' => $base['address'].' — Site '.$slotInCity,
+            'phone' => $base['phone'],
+            'facebook_url' => $base['facebook_url'],
+            'latitude' => round($base['latitude'] + ($slotInCity - 1) * 0.0018 - 0.0099, 6),
+            'longitude' => round($base['longitude'] + (($slotInCity - 1) % 6) * 0.0017 - 0.00425, 6),
+            'amenities' => $base['amenities'],
+        ];
+    }
 
     /**
      * One court client per court admin (1:1). Run after DemoUsersSeeder.
      *
+     * {@see self::VENUES_PER_CITY} venues share each cluster city name (Taguig, Quezon City, Cebu City, Davao City, Makati).
      * Each venue: 5 indoor courts; outdoor count alternates 3 and 4 across venues.
      * One front-desk user per venue (password: password).
      */
@@ -212,51 +126,52 @@ class CourtClientSeeder extends Seeder
             );
         }
 
-        $cities = [
-            'Taguig', 'Quezon City', 'Cebu City', 'Davao City', 'Makati', 'Pasig', 'Mandaluyong',
-            'Parañaque', 'Las Piñas', 'Marikina', 'Antipolo', 'Iloilo City', 'Bacolod', 'Cagayan de Oro',
-            'Baguio', 'Santa Rosa', 'Batangas City', 'General Santos', 'Zamboanga City', 'Butuan',
-        ];
+        if (count(self::CLUSTER_CITY_NAMES) * self::VENUES_PER_CITY !== self::VENUE_COUNT) {
+            throw new \LogicException('VENUE_COUNT must equal cluster cities × venues per city.');
+        }
 
-        for ($index = 0; $index < self::VENUE_COUNT; $index++) {
-            $i = $index + 1;
-            $slug = 'seed-venue-'.str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-            $city = $cities[$index];
-            $name = "Pickle Hub {$i} — {$city}";
-            $public = self::VENUE_PUBLIC_DETAILS[$index];
+        $globalIndex = 0;
+        foreach (self::CLUSTER_CITY_NAMES as $clusterIndex => $city) {
+            for ($slot = 1; $slot <= self::VENUES_PER_CITY; $slot++) {
+                $globalIndex++;
+                $i = $globalIndex;
+                $slug = 'seed-venue-'.str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+                $name = "Pickle Hub — {$city} #{$slot}";
+                $public = self::venuePublicDetails($clusterIndex, $slot);
 
-            // Alternate 3 and 4 outdoor courts per venue.
-            $outdoorCount = $i % 2 === 1 ? 3 : 4;
+                // Alternate 3 and 4 outdoor courts per venue.
+                $outdoorCount = $i % 2 === 1 ? 3 : 4;
 
-            $hourlyBase = 25000 + ($index * 750);
-            $peakBase = $hourlyBase + 12000;
+                $hourlyBase = 25000 + (($globalIndex - 1) * 750);
+                $peakBase = $hourlyBase + 12000;
 
-            $client = CourtClient::query()->updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $name,
-                    'city' => $city,
-                    'address' => $public['address'],
-                    'phone' => $public['phone'],
-                    'facebook_url' => $public['facebook_url'],
-                    'latitude' => $public['latitude'],
-                    'longitude' => $public['longitude'],
-                    'amenities' => $public['amenities'],
-                    'admin_user_id' => $admins[$index]->id,
-                    'subscription_tier' => CourtClient::TIER_PREMIUM,
-                    'is_active' => true,
-                    'hourly_rate_cents' => $hourlyBase,
-                    'peak_hourly_rate_cents' => $peakBase,
-                    'currency' => 'PHP',
-                    'public_rating_average' => null,
-                    'public_rating_count' => 0,
-                ]
-            );
+                $client = CourtClient::query()->updateOrCreate(
+                    ['slug' => $slug],
+                    [
+                        'name' => $name,
+                        'city' => $city,
+                        'address' => $public['address'],
+                        'phone' => $public['phone'],
+                        'facebook_url' => $public['facebook_url'],
+                        'latitude' => $public['latitude'],
+                        'longitude' => $public['longitude'],
+                        'amenities' => $public['amenities'],
+                        'admin_user_id' => $admins[$globalIndex - 1]->id,
+                        'subscription_tier' => CourtClient::TIER_PREMIUM,
+                        'is_active' => true,
+                        'hourly_rate_cents' => $hourlyBase,
+                        'peak_hourly_rate_cents' => $peakBase,
+                        'currency' => 'PHP',
+                        'public_rating_average' => null,
+                        'public_rating_count' => 0,
+                    ]
+                );
 
-            CourtClientBootstrap::seedVenueCourtsIfEmpty($client, $outdoorCount, 5);
-            $client->load('courts');
-            $this->seedVenueApprovedGallery($client, $index);
-            $this->seedCourtsApprovedGallery($client, $index);
+                CourtClientBootstrap::seedVenueCourtsIfEmpty($client, $outdoorCount, 5);
+                $client->load('courts');
+                $this->seedVenueApprovedGallery($client, $globalIndex - 1);
+                $this->seedCourtsApprovedGallery($client, $globalIndex - 1);
+            }
         }
 
         $this->seedDemoCoachScenario();

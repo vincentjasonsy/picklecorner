@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\CityFeaturedCourtClient;
 use App\Models\Court;
 use App\Models\CourtClient;
 use Illuminate\Contracts\View\View;
@@ -44,6 +45,36 @@ class BookNowPage extends Component
     public function userPreferredCity(): ?string
     {
         return auth()->user()?->preferredCourtBookingCity();
+    }
+
+    /**
+     * City used for the featured-venues strip: explicit filter, then profile/inferred preference, then session default.
+     */
+    public function effectiveCityForFeatured(): ?string
+    {
+        if ($this->city !== null && $this->city !== '') {
+            return $this->city;
+        }
+        if (filled($this->userPreferredCity())) {
+            return $this->userPreferredCity();
+        }
+
+        return $this->nearbyCity();
+    }
+
+    /**
+     * Curated venues for Book now (super-admin), when the viewer’s city matches a configured list.
+     *
+     * @return Collection<int, CourtClient>
+     */
+    public function featuredVenueClients(): Collection
+    {
+        $city = $this->effectiveCityForFeatured();
+        if ($city === null || $city === '') {
+            return collect();
+        }
+
+        return CityFeaturedCourtClient::activeVenuesForCityOrdered($city);
     }
 
     public function setEnvironment(string $value): void
@@ -89,32 +120,91 @@ class BookNowPage extends Component
 
         $courts = $q->get();
 
-        return $this->sortCourtsByPreferredCity($courts);
+        return $this->sortCourtsForBrowse($courts);
     }
 
     /**
+     * Preferred area first (when set), then highest guest rating, then review count, then name.
+     *
      * @param  Collection<int, Court>  $courts
      * @return Collection<int, Court>
      */
-    protected function sortCourtsByPreferredCity(Collection $courts): Collection
+    protected function sortCourtsForBrowse(Collection $courts): Collection
     {
         $preferred = $this->userPreferredCity();
-        if ($preferred === null || $preferred === '') {
-            return $courts;
+
+        return $courts
+            ->sort(fn (Court $a, Court $b): int => $this->compareCourtsForBrowse($a, $b, $preferred))
+            ->values();
+    }
+
+    protected function compareCourtsForBrowse(Court $a, Court $b, ?string $preferred): int
+    {
+        $va = $a->courtClient;
+        $vb = $b->courtClient;
+
+        if ($va !== null && $vb !== null) {
+            return $this->compareVenuesForBrowse($va, $vb, $preferred);
         }
 
-        return $courts->sort(function (Court $a, Court $b) use ($preferred): int {
-            $aLocal = $a->courtClient?->city === $preferred ? 0 : 1;
-            $bLocal = $b->courtClient?->city === $preferred ? 0 : 1;
+        if ($va === null && $vb === null) {
+            return strnatcasecmp((string) $a->name, (string) $b->name);
+        }
+
+        return $va === null ? 1 : -1;
+    }
+
+    /**
+     * @return int<-1, 1>
+     */
+    protected function compareVenuesForBrowse(CourtClient $a, CourtClient $b, ?string $preferred): int
+    {
+        if ($preferred !== null && $preferred !== '') {
+            $aLocal = $a->city === $preferred ? 0 : 1;
+            $bLocal = $b->city === $preferred ? 0 : 1;
             if ($aLocal !== $bLocal) {
                 return $aLocal <=> $bLocal;
             }
+        }
 
-            $aKey = ($a->court_client_id ?? '').':'.($a->sort_order ?? 0).':'.($a->name ?? '');
-            $bKey = ($b->court_client_id ?? '').':'.($b->sort_order ?? 0).':'.($b->name ?? '');
+        $cmp = $this->comparePublicRatingTuples(
+            $a->public_rating_average,
+            (int) ($a->public_rating_count ?? 0),
+            $b->public_rating_average,
+            (int) ($b->public_rating_count ?? 0),
+        );
+        if ($cmp !== 0) {
+            return $cmp;
+        }
 
-            return strnatcasecmp($aKey, $bKey);
-        })->values();
+        return strnatcasecmp((string) $a->name, (string) $b->name);
+    }
+
+    /**
+     * Higher average first; null averages last; then higher review count.
+     *
+     * @return int<-1, 1>
+     */
+    protected function comparePublicRatingTuples(mixed $aAvg, int $aCount, mixed $bAvg, int $bCount): int
+    {
+        $aNull = $aAvg === null || $aAvg === '';
+        $bNull = $bAvg === null || $bAvg === '';
+        if ($aNull && $bNull) {
+            return $bCount <=> $aCount;
+        }
+        if ($aNull) {
+            return 1;
+        }
+        if ($bNull) {
+            return -1;
+        }
+        $af = (float) $aAvg;
+        $bf = (float) $bAvg;
+        if ($af !== $bf) {
+            return $bf <=> $af;
+        }
+
+        return $bCount <=> $aCount;
     }
 
     /**
@@ -127,43 +217,22 @@ class BookNowPage extends Component
         $courts = $this->filteredCourts();
         $counts = $courts->countBy('court_client_id');
 
-        $uniqueVenues = $courts
-            ->map(fn (Court $c) => $c->courtClient)
-            ->filter()
-            ->unique('id')
-            ->values();
-
-        if ($uniqueVenues->isEmpty()) {
+        if ($counts->isEmpty()) {
             return collect();
         }
 
-        $venuesWithGallery = CourtClient::query()
-            ->whereIn('id', $uniqueVenues->pluck('id'))
-            ->with('approvedGalleryImages')
-            ->get()
-            ->keyBy('id');
-
         $preferred = $this->userPreferredCity();
 
-        return $uniqueVenues
-            ->sort(function (CourtClient $a, CourtClient $b) use ($preferred): int {
-                $aLocal = $preferred && $a->city === $preferred ? 0 : 1;
-                $bLocal = $preferred && $b->city === $preferred ? 0 : 1;
-                if ($aLocal !== $bLocal) {
-                    return $aLocal <=> $bLocal;
-                }
-
-                return strnatcasecmp((string) $a->name, (string) $b->name);
-            })
+        return CourtClient::query()
+            ->whereIn('id', $counts->keys())
+            ->with('approvedGalleryImages')
+            ->get()
+            ->sort(fn (CourtClient $a, CourtClient $b): int => $this->compareVenuesForBrowse($a, $b, $preferred))
             ->values()
-            ->map(function (CourtClient $venue) use ($counts, $venuesWithGallery): array {
-                $model = $venuesWithGallery->get($venue->id) ?? $venue;
-
-                return [
-                    'venue' => $model,
-                    'court_count' => (int) ($counts->get($venue->id) ?? 0),
-                ];
-            });
+            ->map(fn (CourtClient $venue): array => [
+                'venue' => $venue,
+                'court_count' => (int) ($counts->get($venue->id) ?? 0),
+            ]);
     }
 
     /** @return Collection<int, string> */
@@ -199,10 +268,11 @@ class BookNowPage extends Component
             return collect();
         }
 
-        return $this->baseCourtsQuery()
+        $courts = $this->baseCourtsQuery()
             ->whereHas('courtClient', fn ($q) => $q->where('city', $city))
-            ->limit(8)
             ->get();
+
+        return $this->sortCourtsForBrowse($courts)->take(8);
     }
 
     /** @return Collection<int, Court> */

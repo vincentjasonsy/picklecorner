@@ -91,11 +91,15 @@ class BookNowBrowseTest extends TestCase
             'is_active' => true,
             'name' => 'A Club',
             'city' => $alphaCity,
+            'public_rating_average' => 5.0,
+            'public_rating_count' => 200,
         ]);
         $clientBeta = CourtClient::factory()->create([
             'is_active' => true,
             'name' => 'B Club',
             'city' => $betaCity,
+            'public_rating_average' => 3.0,
+            'public_rating_count' => 10,
         ]);
 
         foreach ([$clientAlpha, $clientBeta] as $client) {
@@ -168,5 +172,45 @@ class BookNowBrowseTest extends TestCase
 
         $this->assertSame($betaCity, $component->instance()->userPreferredCity());
         $this->assertSame($betaCity, $component->instance()->browseVenueRows()->first()['venue']->city);
+    }
+
+    public function test_book_now_orders_same_area_venues_by_guest_rating(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $city = 'SharedCity';
+
+        $lowerRated = CourtClient::factory()->create([
+            'is_active' => true,
+            'name' => 'Zebra Club',
+            'city' => $city,
+            'public_rating_average' => 3.2,
+            'public_rating_count' => 5,
+        ]);
+        $higherRated = CourtClient::factory()->create([
+            'is_active' => true,
+            'name' => 'Acme Club',
+            'city' => $city,
+            'public_rating_average' => 4.9,
+            'public_rating_count' => 80,
+        ]);
+
+        foreach ([$lowerRated, $higherRated] as $client) {
+            Court::query()->create([
+                'court_client_id' => $client->id,
+                'name' => 'Court '.$client->name,
+                'sort_order' => 0,
+                'environment' => Court::ENV_OUTDOOR,
+                'is_available' => true,
+            ]);
+        }
+
+        $user = User::factory()->player()->create(['home_city' => $city]);
+
+        $rows = Livewire::actingAs($user)->test(BookNowPage::class)->instance()->browseVenueRows();
+
+        $this->assertSame(2, $rows->count());
+        $this->assertSame($higherRated->id, $rows->first()['venue']->id);
+        $this->assertSame($lowerRated->id, $rows->last()['venue']->id);
     }
 }
