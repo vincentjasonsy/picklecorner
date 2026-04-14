@@ -10,6 +10,7 @@ use App\Models\GiftCard;
 use App\Models\User;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
+use App\Services\BookingFeeService;
 use App\Services\CoachAvailabilityService;
 use App\Services\CourtSlotPricing;
 use App\Services\GiftCardService;
@@ -917,6 +918,18 @@ class VenueBookingPage extends Component
         return (int) array_sum(array_column($specs, 'court_gross_cents'));
     }
 
+    #[Computed]
+    public function reviewBookingFeeCents(): int
+    {
+        return BookingFeeService::calculateCentsFromCourtSubtotalCents($this->reviewCourtSubtotalCents);
+    }
+
+    #[Computed]
+    public function reviewCheckoutTotalCents(): int
+    {
+        return $this->reviewEstimateCents + $this->reviewBookingFeeCents;
+    }
+
     /**
      * Best-effort preview (no row lock); submit re-validates.
      */
@@ -931,7 +944,6 @@ class VenueBookingPage extends Component
         if ($specs === []) {
             return 0;
         }
-        $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
         $normalized = GiftCardService::normalizeCode($raw);
         $card = GiftCard::query()
             ->where('code', $normalized)
@@ -944,13 +956,13 @@ class VenueBookingPage extends Component
             return 0;
         }
 
-        return GiftCardService::computeAppliedCents($card, $totalGross);
+        return GiftCardService::computeAppliedCents($card, $this->reviewCheckoutTotalCents);
     }
 
     #[Computed]
     public function reviewBalanceAfterGiftCents(): int
     {
-        return max(0, $this->reviewEstimateCents - $this->reviewGiftEstimateCents);
+        return max(0, $this->reviewCheckoutTotalCents - $this->reviewGiftEstimateCents);
     }
 
     #[Computed]

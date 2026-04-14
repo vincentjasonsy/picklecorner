@@ -95,6 +95,9 @@ class PublicVenueBookingSubmission
             $openPlay,
         ) {
             $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
+            $courtSubtotalCents = (int) array_sum(array_column($specs, 'court_gross_cents'));
+            $bookingFeeCents = BookingFeeService::calculateCentsFromCourtSubtotalCents($courtSubtotalCents);
+            $totalDueForGift = $totalGross + $bookingFeeCents;
 
             $giftCardId = null;
             $giftAppliedTotal = null;
@@ -104,7 +107,7 @@ class PublicVenueBookingSubmission
                     $courtClient->id,
                     $giftCodeRaw,
                 );
-                $giftAppliedTotal = GiftCardService::computeAppliedCents($lockedGiftCard, $totalGross);
+                $giftAppliedTotal = GiftCardService::computeAppliedCents($lockedGiftCard, $totalDueForGift);
                 if ($giftAppliedTotal <= 0) {
                     throw new \InvalidArgumentException('Nothing to apply from this gift card.');
                 }
@@ -112,8 +115,9 @@ class PublicVenueBookingSubmission
             }
 
             $grosses = array_column($specs, 'gross_cents');
+            $grossesForGift = GiftCardService::augmentGrossesWithBookingFee($grosses, $bookingFeeCents);
             $giftSlices = $giftAppliedTotal !== null
-                ? GiftCardService::allocateAppliedCentsAcrossLines($giftAppliedTotal, $grosses)
+                ? GiftCardService::allocateAppliedCentsAcrossLines($giftAppliedTotal, $grossesForGift)
                 : array_fill(0, count($specs), 0);
 
             if ($lockedGiftCard !== null && $giftCardId !== null) {

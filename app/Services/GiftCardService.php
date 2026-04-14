@@ -241,4 +241,37 @@ final class GiftCardService
 
         return $out;
     }
+
+    /**
+     * Split a platform booking fee across line grosses (by share of order total) for gift allocation.
+     *
+     * @param  list<int>  $grossCentsPerLine
+     * @return list<int>
+     */
+    public static function augmentGrossesWithBookingFee(array $grossCentsPerLine, int $bookingFeeCents): array
+    {
+        $n = count($grossCentsPerLine);
+        if ($n === 0 || $bookingFeeCents <= 0) {
+            return $grossCentsPerLine;
+        }
+
+        $G = (int) array_sum($grossCentsPerLine);
+        if ($G <= 0) {
+            $out = $grossCentsPerLine;
+            $out[$n - 1] = ($out[$n - 1] ?? 0) + $bookingFeeCents;
+
+            return $out;
+        }
+
+        $out = [];
+        $assignedFee = 0;
+        for ($i = 0; $i < $n - 1; $i++) {
+            $slice = (int) floor($bookingFeeCents * $grossCentsPerLine[$i] / $G);
+            $out[$i] = $grossCentsPerLine[$i] + $slice;
+            $assignedFee += $slice;
+        }
+        $out[$n - 1] = $grossCentsPerLine[$n - 1] + ($bookingFeeCents - $assignedFee);
+
+        return $out;
+    }
 }

@@ -106,7 +106,7 @@
                     @empty
                         <tr>
                             <td colspan="5" class="px-4 py-16 text-center">
-                                <x-icon name="document-text" class="mx-auto size-12 text-zinc-400 dark:text-zinc-500" />
+                                <x-app-icon name="document-text" class="mx-auto size-12 text-zinc-400 dark:text-zinc-500" />
                                 <p class="mt-4 font-medium text-zinc-700 dark:text-zinc-300">No bookings yet</p>
                                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
                                     When you reserve court time, your matches will appear in this log.

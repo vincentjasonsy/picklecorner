@@ -151,7 +151,7 @@
         >
             <div class="flex items-center justify-between gap-2">
                 <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Coming up</h2>
-                <x-icon name="calendar" class="size-7 text-emerald-600 dark:text-emerald-400" />
+                <x-app-icon name="calendar" class="size-7 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Your next blocks of court time</p>
             <ul class="mt-5 space-y-3">
@@ -191,7 +191,7 @@
         >
             <div class="flex items-center justify-between gap-2">
                 <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Recently played</h2>
-                <x-icon name="clock" class="size-7 text-emerald-600 dark:text-emerald-400" />
+                <x-app-icon name="clock" class="size-7 text-emerald-600 dark:text-emerald-400" />
             </div>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">A quick look back at the action</p>
             <ul class="mt-5 space-y-3">

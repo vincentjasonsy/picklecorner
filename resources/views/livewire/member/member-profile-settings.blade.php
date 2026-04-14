@@ -10,7 +10,7 @@
         class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8"
     >
         <div class="flex items-center gap-2">
-            <x-icon name="user-circle" class="size-6 text-emerald-600 dark:text-emerald-400" />
+            <x-app-icon name="user-circle" class="size-6 text-emerald-600 dark:text-emerald-400" />
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Basics</h2>
         </div>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Name and login email</p>
@@ -70,7 +70,7 @@
         class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8"
     >
         <div class="flex items-center gap-2">
-            <x-icon name="squares-2x2" class="size-6 text-emerald-600 dark:text-emerald-400" />
+            <x-app-icon name="squares-2x2" class="size-6 text-emerald-600 dark:text-emerald-400" />
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">GameQ opponents</h2>
         </div>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
@@ -141,7 +141,7 @@
         class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8"
     >
         <div class="flex items-center gap-2">
-            <x-icon name="lock-closed" class="size-6 text-emerald-600 dark:text-emerald-400" />
+            <x-app-icon name="lock-closed" class="size-6 text-emerald-600 dark:text-emerald-400" />
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Password</h2>
         </div>
         <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Change it anytime — pick something only you’d volley with.</p>

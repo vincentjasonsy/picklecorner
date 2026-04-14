@@ -60,7 +60,7 @@
             </p>
             @if ($client && $client->public_rating_average !== null)
                 <p class="mt-4 inline-flex flex-wrap items-center gap-1 text-base font-semibold text-zinc-800 dark:text-zinc-200">
-                    <x-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
+                    <x-app-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
                     {{ number_format((float) $client->public_rating_average, 1) }}
                     @if ($client->public_rating_count > 0)
                         <span class="font-normal text-zinc-500">

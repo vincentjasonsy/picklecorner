@@ -63,7 +63,7 @@
                     </div>
                     @if ($courtClient->public_rating_average !== null)
                         <p class="inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                            <x-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
+                            <x-app-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
                             {{ number_format((float) $courtClient->public_rating_average, 1) }}
                             @if ($courtClient->public_rating_count > 0)
                                 <span class="font-normal text-zinc-500 dark:text-zinc-400">
@@ -480,9 +480,10 @@
                             </p>
                         @endif
                         @php($giftEst = $this->reviewGiftEstimateCents)
-                        @php($grossTotal = $this->reviewEstimateCents)
                         @php($courtSub = $this->reviewCourtSubtotalCents)
                         @php($coachFee = $this->reviewCoachFeeCents)
+                        @php($bookingFee = $this->reviewBookingFeeCents)
+                        @php($checkoutTotal = $this->reviewCheckoutTotalCents)
                         <div class="mt-3 overflow-x-auto">
                             <table class="w-full min-w-[18rem] border-collapse text-left text-sm text-zinc-800 dark:text-zinc-200">
                                 <thead>
@@ -552,6 +553,17 @@
                                         </tr>
                                     @endif
                                     <tr>
+                                        <td colspan="2" class="pt-2 text-sm text-zinc-700 dark:text-zinc-300">
+                                            Booking Fee
+                                            <span class="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                                {{ currentBookingFeeSetting()->breakdownLabel() }}
+                                            </span>
+                                        </td>
+                                        <td class="pt-2 text-right text-sm tabular-nums text-zinc-800 dark:text-zinc-200">
+                                            {{ Money::formatMinor($bookingFee, $currency) }}
+                                        </td>
+                                    </tr>
+                                    <tr>
                                         <td
                                             colspan="2"
                                             class="pt-2 text-sm font-bold text-zinc-900 dark:text-white"
@@ -559,7 +571,7 @@
                                             Total
                                         </td>
                                         <td class="pt-2 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
-                                            {{ Money::formatMinor($grossTotal, $currency) }}
+                                            {{ Money::formatMinor($checkoutTotal, $currency) }}
                                         </td>
                                     </tr>
                                     @if ($giftEst > 0)
@@ -589,6 +601,14 @@
                                 </tfoot>
                             </table>
                         </div>
+                        <p
+                            class="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-400"
+                            role="note"
+                        >
+                            <span class="font-medium text-zinc-800 dark:text-zinc-300">Service fee</span>
+                            — pricing may change without prior notice. Totals above reflect the rates in effect when
+                            you review this booking.
+                        </p>
                         <div
                             class="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-700"
                             x-data="{}"
