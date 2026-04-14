@@ -6,6 +6,7 @@ use App\Livewire\BookNow\VenueBookingPage;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
+use App\Models\CourtClientClosedDay;
 use App\Models\GiftCard;
 use App\Models\User;
 use App\Services\GiftCardService;
@@ -101,6 +102,35 @@ class VenueBookingPageTest extends TestCase
             ->assertSee('Pick a time', false);
     }
 
+    public function test_venue_closed_day_shows_no_slots_on_public_booking_page(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'closed-day-club']);
+        Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $closedDate = '2031-07-04';
+        CourtClientClosedDay::query()->create([
+            'court_client_id' => $client->id,
+            'closed_on' => $closedDate,
+        ]);
+
+        Livewire::test(VenueBookingPage::class, ['courtClient' => $client])
+            ->set('bookingCalendarDate', $closedDate)
+            ->assertSet('bookingCalendarDate', $closedDate)
+            ->tap(function ($c): void {
+                $this->assertSame([], $c->instance()->slotHoursForSelectedDate());
+                $this->assertTrue($c->instance()->isBookingDateVenueClosure());
+            })
+            ->assertSee('This venue is closed on this date', false);
+    }
+
     public function test_draft_restores_after_login_flag_session(): void
     {
         $this->seed(UserTypeSeeder::class);
@@ -130,6 +160,44 @@ class VenueBookingPageTest extends TestCase
             ->test(VenueBookingPage::class, ['courtClient' => $client])
             ->assertSet('step', 'review')
             ->assertSet('bookingCalendarDate', now()->format('Y-m-d'));
+    }
+
+    public function test_draft_after_login_drops_review_when_date_is_venue_closure(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'restore-closed']);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $closedDate = '2032-01-01';
+        CourtClientClosedDay::query()->create([
+            'court_client_id' => $client->id,
+            'closed_on' => $closedDate,
+        ]);
+
+        $player = User::factory()->player()->create();
+
+        session()->put(VenueBookingPage::DRAFT_SESSION_KEY, [
+            'court_client_id' => $client->id,
+            'booking_calendar_date' => $closedDate,
+            'selected_slots' => [$court->id.'-9'],
+            'payment_method' => 'gcash',
+            'payment_reference' => '',
+            'step' => 'review',
+        ]);
+        session()->put(VenueBookingPage::AFTER_LOGIN_SESSION_KEY, true);
+
+        Livewire::actingAs($player)
+            ->test(VenueBookingPage::class, ['courtClient' => $client])
+            ->assertSet('step', 'times')
+            ->assertSet('selectedSlots', [])
+            ->assertSet('bookingCalendarDate', $closedDate);
     }
 
     public function test_player_can_submit_venue_booking_with_gift_card(): void

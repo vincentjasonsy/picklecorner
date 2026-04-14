@@ -116,7 +116,12 @@
                     <p
                         class="rounded-lg border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-600"
                     >
-                        This date is closed or has no bookable hourly window. Pick another date or adjust venue hours.
+                        @if ($this->isBookingDateVenueClosure())
+                            This calendar day is a <strong class="font-semibold text-zinc-700 dark:text-zinc-300">whole-venue closed day</strong>.
+                            There are no bookable hours — change the date or remove the closure under venue schedule settings.
+                        @else
+                            This date is closed or has no bookable hourly window. Pick another date or adjust venue hours.
+                        @endif
                     </p>
                 @else
                     <div>

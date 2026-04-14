@@ -129,6 +129,17 @@ class CourtClient extends Model
         return $this->hasMany(VenueWeeklyHour::class)->orderBy('day_of_week');
     }
 
+    /** Whole-venue calendar closures (holidays, etc.) — no public bookings that local calendar day. */
+    public function closedDays(): HasMany
+    {
+        return $this->hasMany(CourtClientClosedDay::class)->orderBy('closed_on');
+    }
+
+    public function isClosedOnDate(string $dateYmd): bool
+    {
+        return $this->closedDays()->whereDate('closed_on', $dateYmd)->exists();
+    }
+
     public function giftCards(): HasMany
     {
         return $this->hasMany(GiftCard::class)->orderByDesc('created_at');

@@ -38,7 +38,8 @@
         />
     </div>
 
-    <div class="overflow-x-auto rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+    <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div class="overflow-x-auto">
         <table class="min-w-full divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
             <thead class="bg-zinc-50 text-left text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:bg-zinc-900/80 dark:text-zinc-400">
                 <tr>
@@ -113,9 +114,13 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
-
-    <div>
-        {{ $contacts->links() }}
+        </div>
+        @if ($contacts->hasPages())
+            <div
+                class="border-t border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-400"
+            >
+                {{ $contacts->onEachSide(1)->links() }}
+            </div>
+        @endif
     </div>
 </div>

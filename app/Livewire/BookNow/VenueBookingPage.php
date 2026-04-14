@@ -172,6 +172,12 @@ class VenueBookingPage extends Component
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
 
         $this->clearCoachWhenCheckoutHidden();
+
+        $hydratedDate = $this->normalizedBookingCalendarDate();
+        if ($hydratedDate !== null && $this->courtClient->isClosedOnDate($hydratedDate)) {
+            $this->selectedSlots = [];
+            $this->step = 'times';
+        }
     }
 
     protected function persistDraftForAuthReturn(): void
@@ -287,7 +293,19 @@ class VenueBookingPage extends Component
      */
     public function slotHoursForSelectedDate(): array
     {
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date !== null && $this->courtClient->isClosedOnDate($date)) {
+            return [];
+        }
+
         return VenueScheduleHours::slotStartHoursForDay($this->scheduleRows, $this->bookingDayOfWeek());
+    }
+
+    public function isBookingDateVenueClosure(): bool
+    {
+        $date = $this->normalizedBookingCalendarDate();
+
+        return $date !== null && $this->courtClient->isClosedOnDate($date);
     }
 
     public function bookingCalendarDateLabel(): string
@@ -672,6 +690,16 @@ class VenueBookingPage extends Component
     public function goToReview(): void
     {
         $this->resetErrorBag('selectedSlots');
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date !== null && $this->courtClient->isClosedOnDate($date)) {
+            $this->selectedSlots = [];
+            $this->addError(
+                'selectedSlots',
+                'This date is closed for booking at this venue. Choose another day.',
+            );
+
+            return;
+        }
         $byCourt = $this->selectedSlotsGroupedByCourt();
         if ($byCourt === []) {
             $this->addError('selectedSlots', 'Select at least one open time slot on the grid.');

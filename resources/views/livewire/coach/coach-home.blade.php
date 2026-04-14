@@ -34,7 +34,7 @@
                 wire:navigate
                 class="inline-flex items-center rounded-xl border-2 border-white/40 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
             >
-                Set availability
+                Schedule &amp; rate
             </a>
             <a
                 href="{{ route('account.coach.bookings.calendar') }}"

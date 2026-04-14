@@ -112,11 +112,19 @@
                     <div
                         class="shrink-0 border-b border-zinc-200 px-4 py-2 dark:border-zinc-800 md:px-5"
                     >
-                        <span
-                            class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
-                        >
-                            Player zone
-                        </span>
+                        @if (auth()->user()->isCoach())
+                            <span
+                                class="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-900 dark:bg-violet-950/80 dark:text-violet-200"
+                            >
+                                Coach account
+                            </span>
+                        @else
+                            <span
+                                class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
+                            >
+                                Player zone
+                            </span>
+                        @endif
                     </div>
 
                     <nav
@@ -124,63 +132,65 @@
                         aria-label="Member"
                         @click="if ($event.target.closest('a')) portalNavOpen = false"
                     >
-                        <div>
-                            <p
-                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                            >
-                                Your court
-                            </p>
-                            <div class="flex flex-col gap-1">
-                                <a
-                                    href="{{ route('account.dashboard') }}"
-                                    wire:navigate
-                                    @class([
-                                        'rounded-lg px-3 py-2 transition-colors',
-                                        request()->routeIs('account.dashboard')
-                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                    ])
+                        @unless (auth()->user()->isCoach())
+                            <div>
+                                <p
+                                    class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                                 >
-                                    Home court
-                                </a>
-                                <a
-                                    href="{{ route('account.book') }}"
-                                    wire:navigate
-                                    @class([
-                                        'rounded-lg px-3 py-2 transition-colors',
-                                        request()->routeIs('account.book')
-                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                    ])
-                                >
-                                    Book now
-                                </a>
-                                <a
-                                    href="{{ route('account.bookings') }}"
-                                    wire:navigate
-                                    @class([
-                                        'rounded-lg px-3 py-2 transition-colors',
-                                        request()->routeIs('account.bookings')
-                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                    ])
-                                >
-                                    My games
-                                </a>
-                                <a
-                                    href="{{ route('account.court-open-plays.index') }}"
-                                    wire:navigate
-                                    @class([
-                                        'rounded-lg px-3 py-2 transition-colors',
-                                        request()->routeIs('account.court-open-plays.*')
-                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                            : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                    ])
-                                >
-                                    Court open play
-                                </a>
+                                    Your court
+                                </p>
+                                <div class="flex flex-col gap-1">
+                                    <a
+                                        href="{{ route('account.dashboard') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.dashboard')
+                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Home court
+                                    </a>
+                                    <a
+                                        href="{{ route('account.book') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.book')
+                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Book now
+                                    </a>
+                                    <a
+                                        href="{{ route('account.bookings') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.bookings')
+                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        My games
+                                    </a>
+                                    <a
+                                        href="{{ route('account.court-open-plays.index') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.court-open-plays.*')
+                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Court open play
+                                    </a>
+                                </div>
                             </div>
-                        </div>
+                        @endunless
 
                         @if (auth()->user()->isCoach())
                             <div>
@@ -224,7 +234,7 @@
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Availability
+                                        Schedule &amp; rate
                                     </a>
                                     <a
                                         href="{{ route('account.coach.bookings.calendar') }}"

@@ -7,20 +7,31 @@ use App\Models\UserType;
 use App\Notifications\InternalTeamPlayReminderNotification;
 use App\Support\InternalTeamPlayReminder;
 use Illuminate\Contracts\View\View;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Artisan;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 #[Layout('layouts::admin')]
 #[Title('Team play reminders')]
 class InternalTeamPlayReminders extends Component
 {
+    use WithPagination;
+
+    private int $perPage = 25;
+
     /** all | dormant_10 | eligible | unsubscribed | upcoming | never_booked */
     #[Url]
     public string $filter = 'all';
+
+    public function updatingFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function runScheduledReminders(): void
     {
@@ -84,6 +95,19 @@ class InternalTeamPlayReminders extends Component
             };
         })->values();
 
+        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+
+        $rowsPaginator = new LengthAwarePaginator(
+            $rows->forPage($currentPage, $this->perPage)->values(),
+            $rows->count(),
+            $this->perPage,
+            $currentPage,
+            [
+                'path' => LengthAwarePaginator::resolveCurrentPath(),
+                'query' => request()->query(),
+            ],
+        );
+
         $stats = [
             'members' => $allRows->count(),
             'dormant_10' => $allRows->where('dormant_10_plus', true)->count(),
@@ -93,7 +117,7 @@ class InternalTeamPlayReminders extends Component
         ];
 
         return view('livewire.admin.internal-team-play-reminders', [
-            'rows' => $rows,
+            'rows' => $rowsPaginator,
             'stats' => $stats,
         ]);
     }

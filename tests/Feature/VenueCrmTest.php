@@ -54,6 +54,56 @@ class VenueCrmTest extends TestCase
             ->assertDontSee($neverBooked->email, false);
     }
 
+    public function test_customer_list_is_paginated_after_twenty_two_bookers(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $admin = User::factory()->courtAdmin()->create();
+        $client = CourtClient::factory()->forAdmin($admin)->basicTier()->create();
+
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $tz = config('app.timezone', 'UTC');
+        $base = Carbon::now($tz);
+
+        for ($i = 0; $i < 22; $i++) {
+            $booker = User::factory()->player()->create([
+                'name' => "Z Paginate Guest {$i}",
+                'email' => "paginate_cust_{$i}@example.test",
+            ]);
+            $starts = $base->copy()->addMinutes($i);
+            Booking::query()->create([
+                'court_client_id' => $client->id,
+                'court_id' => $court->id,
+                'user_id' => $booker->id,
+                'starts_at' => $starts,
+                'ends_at' => $starts->copy()->addHour(),
+                'status' => Booking::STATUS_CONFIRMED,
+                'amount_cents' => 1000,
+                'currency' => 'PHP',
+            ]);
+        }
+
+        $this->actingAs($admin)
+            ->get(route('venue.crm.index'))
+            ->assertOk()
+            ->assertSee('paginate_cust_21@example.test', escape: false)
+            ->assertDontSee('paginate_cust_0@example.test', escape: false);
+
+        $this->actingAs($admin)
+            ->get(route('venue.crm.index', ['page' => 2]))
+            ->assertOk()
+            ->assertSee('paginate_cust_0@example.test', escape: false)
+            ->assertSee('paginate_cust_1@example.test', escape: false)
+            ->assertDontSee('paginate_cust_21@example.test', escape: false);
+    }
+
     public function test_basic_tier_court_admin_cannot_open_crm_contact_notes_page(): void
     {
         $this->seed(UserTypeSeeder::class);

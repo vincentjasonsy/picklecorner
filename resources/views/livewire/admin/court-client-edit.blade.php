@@ -564,7 +564,8 @@
             <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
                 Use the <strong>weekday chips</strong> for hourly <strong>pricing</strong> (same pattern as venue hours).
                 Use the <strong>calendar date</strong> below for <strong>availability</strong> — blocks can apply to that
-                date only, every matching weekday, or both.                 Confirmed bookings for players and coaches are on
+                date only, every matching weekday, or both. Use <strong>whole-venue closed days</strong> for holidays
+                (no public bookings that calendar day). Confirmed bookings for players and coaches are on
                 @if ($isVenuePortal)
                     <a
                         href="{{ route('venue.manual-booking') }}"
@@ -594,6 +595,103 @@
                         {{ $label }}
                     </button>
                 @endforeach
+            </div>
+
+            <div
+                class="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+            >
+                <div
+                    class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-5"
+                >
+                    <button
+                        type="button"
+                        wire:click="shiftClosureCalendarMonth(-1)"
+                        class="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    >
+                        Previous
+                    </button>
+                    <h4 class="text-center text-sm font-bold text-zinc-900 dark:text-white sm:text-base">
+                        Whole-venue closed days — {{ $closureMonthLabel }}
+                    </h4>
+                    <button
+                        type="button"
+                        wire:click="shiftClosureCalendarMonth(1)"
+                        class="rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                    >
+                        Next
+                    </button>
+                </div>
+                <p class="border-b border-zinc-200 px-4 py-2 text-xs text-zinc-600 dark:border-zinc-800 dark:text-zinc-400 sm:px-5">
+                    Tap a day to mark the venue closed (holiday) or open again. The
+                    <strong>availability</strong> date below jumps to that day so the grid stays in sync.
+                </p>
+                <div class="overflow-x-auto">
+                    <div class="min-w-[520px]">
+                        <div
+                            class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 text-center text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-400"
+                        >
+                            <div class="px-1 py-2">Mon</div>
+                            <div class="px-1 py-2">Tue</div>
+                            <div class="px-1 py-2">Wed</div>
+                            <div class="px-1 py-2">Thu</div>
+                            <div class="px-1 py-2">Fri</div>
+                            <div class="px-1 py-2">Sat</div>
+                            <div class="px-1 py-2">Sun</div>
+                        </div>
+                        @foreach ($closureMonthWeeks as $week)
+                            <div
+                                class="grid grid-cols-7 divide-x divide-zinc-200 border-b border-zinc-200 last:border-b-0 dark:divide-zinc-800 dark:border-zinc-800"
+                                wire:key="closure-w-{{ $week[0]['date']->format('Y-m-d') }}"
+                            >
+                                @foreach ($week as $day)
+                                    @php
+                                        $closureYmd = $day['date']->format('Y-m-d');
+                                        $closureIsClosed = isset($closureMonthClosedLookup[$closureYmd]);
+                                        $closureIsAvailDate = $closureYmd === $availabilityCalendarDate;
+                                    @endphp
+                                    <div class="p-1 sm:p-1.5" wire:key="closure-d-{{ $closureYmd }}">
+                                        <button
+                                            type="button"
+                                            wire:click="toggleVenueClosedOnCalendarDay('{{ $closureYmd }}')"
+                                            @class([
+                                                'flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-center text-xs font-semibold transition sm:min-h-[3.5rem]',
+                                                'ring-2 ring-emerald-500 ring-offset-1 ring-offset-white dark:ring-emerald-400 dark:ring-offset-zinc-900' => $closureIsAvailDate,
+                                                'border-zinc-200 bg-zinc-50/90 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-500' => ! $day['in_month'],
+                                                'border-zinc-200 bg-white text-zinc-800 hover:border-emerald-400/60 hover:bg-emerald-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-emerald-950/25' => $day['in_month'] && ! $closureIsClosed,
+                                                'border-red-300 bg-red-50 text-red-900 dark:border-red-900/60 dark:bg-red-950/35 dark:text-red-100' => $day['in_month'] && $closureIsClosed,
+                                            ])
+                                        >
+                                            <span class="tabular-nums">{{ $day['date']->timezone($closureCalendarTz)->day }}</span>
+                                            @if ($day['in_month'] && $closureIsClosed)
+                                                <span class="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
+                                                    Closed
+                                                </span>
+                                            @elseif ($day['in_month'])
+                                                <span class="mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">Open</span>
+                                            @endif
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <p class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-200 px-4 py-2 text-[11px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400 sm:px-5">
+                    <span class="inline-flex items-center gap-1.5">
+                        <span
+                            class="size-3 shrink-0 rounded border border-emerald-500 ring-2 ring-emerald-400/50 dark:ring-emerald-500/40"
+                            aria-hidden="true"
+                        ></span>
+                        Emerald ring = availability date
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <span
+                            class="size-3 shrink-0 rounded border border-red-300 bg-red-50 dark:border-red-900/60 dark:bg-red-950/40"
+                            aria-hidden="true"
+                        ></span>
+                        Red = venue closed (no bookings)
+                    </span>
+                </p>
             </div>
 
             @if ($slotGridCourts->isEmpty())
@@ -684,8 +782,9 @@
                     <h4 class="font-display text-base font-bold text-zinc-900 dark:text-white">Availability</h4>
                     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                         Grid follows the <strong>calendar date</strong> (weekday
-                        {{ $dayLabels[$availabilityDow] ?? '' }}). <strong>Blocked</strong> if closed for that weekday
-                        every week and/or blocked for this date only.
+                        {{ $dayLabels[$availabilityDow] ?? '' }}). Matches the
+                        <strong>whole-venue closed days</strong> calendar above. <strong>Blocked</strong> if closed for that
+                        weekday every week and/or blocked for this date only.
                     </p>
                     <div
                         class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4"
@@ -719,8 +818,14 @@
                         <p
                             class="mt-4 rounded-lg border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-600"
                         >
-                            This calendar date is closed or has no bookable hourly window. Pick another date or adjust
-                            venue hours.
+                            @if ($this->isAvailabilityDateVenueClosure())
+                                This calendar day is marked as a <strong class="font-semibold text-zinc-700 dark:text-zinc-300">whole-venue closed day</strong>
+                                (holiday). There are no bookable hours — remove the closure in the calendar above or pick
+                                another date. Weekly venue hours are unchanged.
+                            @else
+                                This calendar date is closed or has no bookable hourly window. Pick another date or adjust
+                                venue hours.
+                            @endif
                         </p>
                     @else
                         <div class="mt-3 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">

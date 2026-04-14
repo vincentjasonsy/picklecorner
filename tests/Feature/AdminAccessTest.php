@@ -76,7 +76,9 @@ class AdminAccessTest extends TestCase
         $this->actingAs($super)
             ->get(route('admin.booking-rates'))
             ->assertOk()
-            ->assertSee('Platform booking service fee', escape: false);
+            ->assertSee('Platform booking service fee', escape: false)
+            ->assertSee('Rate history', escape: false)
+            ->assertSee('Add new rate', escape: false);
     }
 
     public function test_super_admin_can_open_internal_play_reminders_dashboard(): void

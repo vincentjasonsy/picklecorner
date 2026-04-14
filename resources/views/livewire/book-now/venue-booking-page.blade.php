@@ -187,7 +187,11 @@
                         <p
                             class="rounded-xl border border-dashed border-zinc-300 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-600 dark:text-zinc-400"
                         >
-                            This date is closed. Try another day.
+                            @if ($this->isBookingDateVenueClosure())
+                                This venue is closed on this date (for example a holiday). Please pick another day.
+                            @else
+                                This date is closed. Try another day.
+                            @endif
                         </p>
                     @else
                         <div

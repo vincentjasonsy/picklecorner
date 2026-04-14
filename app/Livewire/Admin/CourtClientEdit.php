@@ -4,6 +4,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Court;
 use App\Models\CourtClient;
+use App\Models\CourtClientClosedDay;
 use App\Models\CourtDateSlotBlock;
 use App\Models\CourtTimeSlotBlock;
 use App\Models\CourtTimeSlotSetting;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\ActivityLogger;
+use App\Support\BookingCalendarGrid;
 use App\Support\PesosMoneyForm;
 use App\Support\VenueScheduleHours;
 use Carbon\Carbon;
@@ -67,6 +69,9 @@ class CourtClientEdit extends Component
     /** @var string Y-m-d in app timezone — calendar day for availability grid. */
     public string $availabilityCalendarDate = '';
 
+    /** @var string Y-m — month for venue-wide closure calendar (synced with availability date when you pick a day). */
+    public string $closureCalendarYm = '';
+
     public ?string $slotEditCourtId = null;
 
     public ?int $slotEditHour = null;
@@ -87,14 +92,26 @@ class CourtClientEdit extends Component
     {
         abort_unless($courtClient !== null, 404);
 
-        $this->courtClient = $courtClient->load(['courts.timeSlotSettings', 'courts.timeSlotBlocks', 'weeklyHours']);
+        $this->courtClient = $courtClient->load([
+            'courts.timeSlotSettings',
+            'courts.timeSlotBlocks',
+            'weeklyHours',
+            'closedDays',
+        ]);
         $this->syncVenueFromModel();
         $this->ensureDefaultWeeklyHours();
         $this->courtClient->refresh();
-        $this->courtClient->load(['courts.timeSlotSettings', 'courts.timeSlotBlocks', 'weeklyHours']);
+        $this->courtClient->load([
+            'courts.timeSlotSettings',
+            'courts.timeSlotBlocks',
+            'weeklyHours',
+            'closedDays',
+        ]);
         $this->syncCourtRowsFromDatabase();
         $this->syncScheduleRowsFromDatabase();
-        $this->availabilityCalendarDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
+        $tz = config('app.timezone', 'UTC');
+        $this->availabilityCalendarDate = Carbon::now($tz)->format('Y-m-d');
+        $this->closureCalendarYm = Carbon::parse($this->availabilityCalendarDate, $tz)->format('Y-m');
     }
 
     public function syncVenueFromModel(): void
@@ -220,22 +237,26 @@ class CourtClientEdit extends Component
 
     public function updatedAvailabilityCalendarDate(): void
     {
+        $tz = config('app.timezone', 'UTC');
         try {
-            $this->availabilityCalendarDate = Carbon::parse($this->availabilityCalendarDate, config('app.timezone', 'UTC'))->format('Y-m-d');
+            $this->availabilityCalendarDate = Carbon::parse($this->availabilityCalendarDate, $tz)->format('Y-m-d');
         } catch (\Throwable) {
-            $this->availabilityCalendarDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
+            $this->availabilityCalendarDate = Carbon::now($tz)->format('Y-m-d');
         }
+        $this->closureCalendarYm = Carbon::parse($this->availabilityCalendarDate, $tz)->format('Y-m');
         $this->closeAvailabilityEditor();
     }
 
     public function shiftAvailabilityDate(int $days): void
     {
+        $tz = config('app.timezone', 'UTC');
         try {
-            $d = Carbon::parse($this->availabilityCalendarDate, config('app.timezone', 'UTC'))->addDays($days);
+            $d = Carbon::parse($this->availabilityCalendarDate, $tz)->addDays($days);
         } catch (\Throwable) {
-            $d = Carbon::now(config('app.timezone', 'UTC'))->addDays($days);
+            $d = Carbon::now($tz)->addDays($days);
         }
         $this->availabilityCalendarDate = $d->format('Y-m-d');
+        $this->closureCalendarYm = $d->format('Y-m');
         $this->closeAvailabilityEditor();
     }
 
@@ -253,7 +274,129 @@ class CourtClientEdit extends Component
      */
     public function slotHoursForAvailabilityGrid(): array
     {
+        $date = $this->normalizedAvailabilityCalendarDate();
+        if ($date !== null && $this->courtClient->isClosedOnDate($date)) {
+            return [];
+        }
+
         return $this->computeSlotHoursForDay($this->availabilityDayOfWeek());
+    }
+
+    public function isAvailabilityDateVenueClosure(): bool
+    {
+        $date = $this->normalizedAvailabilityCalendarDate();
+
+        return $date !== null && $this->courtClient->isClosedOnDate($date);
+    }
+
+    public function shiftClosureCalendarMonth(int $deltaMonths): void
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $anchor = Carbon::createFromFormat('Y-m', $this->closureCalendarYm, $tz)
+                ->startOfMonth()
+                ->addMonths($deltaMonths);
+        } catch (\Throwable) {
+            $anchor = Carbon::now($tz)->startOfMonth()->addMonths($deltaMonths);
+        }
+        $this->closureCalendarYm = $anchor->format('Y-m');
+        $this->closeAvailabilityEditor();
+    }
+
+    public function toggleVenueClosedOnCalendarDay(string $ymd): void
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $d = Carbon::parse($ymd, $tz)->format('Y-m-d');
+        } catch (\Throwable) {
+            return;
+        }
+
+        $exists = CourtClientClosedDay::query()
+            ->where('court_client_id', $this->courtClient->id)
+            ->whereDate('closed_on', $d)
+            ->exists();
+
+        if ($exists) {
+            CourtClientClosedDay::query()
+                ->where('court_client_id', $this->courtClient->id)
+                ->whereDate('closed_on', $d)
+                ->delete();
+            session()->flash('status', "Removed whole-venue closure for {$d}.");
+        } else {
+            CourtClientClosedDay::query()->create([
+                'court_client_id' => $this->courtClient->id,
+                'closed_on' => $d,
+            ]);
+            session()->flash('status', "Marked the venue closed on {$d} (no player bookings that day).");
+        }
+
+        $this->availabilityCalendarDate = $d;
+        $this->closureCalendarYm = Carbon::parse($d, $tz)->format('Y-m');
+        $this->closeAvailabilityEditor();
+        unset($this->availabilityDateBlockLookup);
+        $this->courtClient->refresh();
+        $this->courtClient->load([
+            'courts.timeSlotSettings',
+            'courts.timeSlotBlocks',
+            'weeklyHours',
+            'closedDays',
+        ]);
+    }
+
+    /**
+     * @return list<list<array{date: Carbon, in_month: bool, bookings: Collection}>>
+     */
+    protected function buildClosureMonthWeeks(): array
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $monthStart = Carbon::createFromFormat('Y-m', $this->closureCalendarYm, $tz)->startOfMonth();
+        } catch (\Throwable) {
+            $monthStart = Carbon::now($tz)->startOfMonth();
+        }
+
+        return BookingCalendarGrid::build($monthStart, $tz, collect())['weeks'];
+    }
+
+    protected function buildClosureMonthLabel(): string
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $monthStart = Carbon::createFromFormat('Y-m', $this->closureCalendarYm, $tz)->startOfMonth();
+        } catch (\Throwable) {
+            $monthStart = Carbon::now($tz)->startOfMonth();
+        }
+
+        return $monthStart->copy()->timezone($tz)->isoFormat('MMMM YYYY');
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    protected function buildClosureMonthClosedLookup(): array
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $monthStart = Carbon::createFromFormat('Y-m', $this->closureCalendarYm, $tz)->startOfMonth();
+        } catch (\Throwable) {
+            $monthStart = Carbon::now($tz)->startOfMonth();
+        }
+
+        [$gridStart, $gridEnd] = BookingCalendarGrid::visibleGridBounds($monthStart, $tz);
+        $rows = CourtClientClosedDay::query()
+            ->where('court_client_id', $this->courtClient->id)
+            ->whereDate('closed_on', '>=', $gridStart->toDateString())
+            ->whereDate('closed_on', '<=', $gridEnd->toDateString())
+            ->pluck('closed_on');
+
+        $map = [];
+        foreach ($rows as $value) {
+            $key = $value instanceof Carbon ? $value->format('Y-m-d') : Carbon::parse((string) $value, $tz)->format('Y-m-d');
+            $map[$key] = true;
+        }
+
+        return $map;
     }
 
     public function availabilityCalendarDateLabel(): string
@@ -462,7 +605,12 @@ class CourtClientEdit extends Component
         }
 
         $this->courtClient->refresh();
-        $this->courtClient->load(['courts.timeSlotSettings', 'courts.timeSlotBlocks', 'weeklyHours']);
+        $this->courtClient->load([
+            'courts.timeSlotSettings',
+            'courts.timeSlotBlocks',
+            'weeklyHours',
+            'closedDays',
+        ]);
         $this->closeSlotEditor();
 
         session()->flash('status', 'Slot pricing updated.');
@@ -588,7 +736,12 @@ class CourtClientEdit extends Component
         unset($this->availabilityDateBlockLookup);
 
         $this->courtClient->refresh();
-        $this->courtClient->load(['courts.timeSlotSettings', 'courts.timeSlotBlocks', 'weeklyHours']);
+        $this->courtClient->load([
+            'courts.timeSlotSettings',
+            'courts.timeSlotBlocks',
+            'weeklyHours',
+            'closedDays',
+        ]);
 
         session()->flash('status', 'Availability saved.');
     }
@@ -858,7 +1011,7 @@ class CourtClientEdit extends Component
         }
 
         $this->courtClient->refresh();
-        $this->courtClient->load(['weeklyHours', 'courts.timeSlotBlocks']);
+        $this->courtClient->load(['weeklyHours', 'courts.timeSlotBlocks', 'closedDays']);
         $this->syncScheduleRowsFromDatabase();
 
         ActivityLogger::log(
@@ -875,6 +1028,8 @@ class CourtClientEdit extends Component
     {
         $venueId = $this->courtClient->id;
 
+        $tz = config('app.timezone', 'UTC');
+
         return view('livewire.admin.court-client-edit', [
             'courtAdmins' => User::query()
                 ->with('userType')
@@ -889,6 +1044,10 @@ class CourtClientEdit extends Component
                 ->orderBy('name')
                 ->get(),
             'dayLabels' => VenueWeeklyHour::DAY_LABELS,
+            'closureCalendarTz' => $tz,
+            'closureMonthWeeks' => $this->buildClosureMonthWeeks(),
+            'closureMonthLabel' => $this->buildClosureMonthLabel(),
+            'closureMonthClosedLookup' => $this->buildClosureMonthClosedLookup(),
         ]);
     }
 }

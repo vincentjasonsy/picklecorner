@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -19,11 +20,8 @@ class VenueCrmIndex extends Component
 {
     use WithPagination;
 
+    #[Url(except: '')]
     public string $search = '';
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-    ];
 
     public function updatingSearch(): void
     {
@@ -61,10 +59,11 @@ class VenueCrmIndex extends Component
                 });
             })
             ->orderByDesc('venue_stats.last_booking_at')
+            ->orderBy('users.name')
             ->select('users.id', 'users.name', 'users.email')
             ->selectRaw('venue_stats.venue_bookings_count, venue_stats.last_booking_at, coalesce(note_stats.internal_notes_count, 0) as internal_notes_count');
 
-        $contacts = $query->paginate(20);
+        $contacts = $query->paginate(20)->withQueryString();
 
         return view('livewire.venue.venue-crm-index', [
             'courtClient' => $client,

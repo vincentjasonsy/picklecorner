@@ -207,7 +207,19 @@ class CourtClientManualBooking extends Component
      */
     public function slotHoursForSelectedDate(): array
     {
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date !== null && $this->courtClient->isClosedOnDate($date)) {
+            return [];
+        }
+
         return VenueScheduleHours::slotStartHoursForDay($this->scheduleRows, $this->bookingDayOfWeek());
+    }
+
+    public function isBookingDateVenueClosure(): bool
+    {
+        $date = $this->normalizedBookingCalendarDate();
+
+        return $date !== null && $this->courtClient->isClosedOnDate($date);
     }
 
     public function bookingCalendarDateLabel(): string

@@ -27,29 +27,104 @@ class BookingRates extends Component
     public function mount(): void
     {
         abort_unless(auth()->user()?->isSuperAdmin(), 403);
-        $this->loadForm();
+        $this->recordId = $this->defaultFormRecordId();
+        $this->hydrateForm();
     }
 
-    protected function loadForm(): void
+    /**
+     * Prefer the active row for the editor; otherwise the latest row; otherwise null (new defaults).
+     */
+    protected function defaultFormRecordId(): ?int
     {
-        $record = BookingFeeSetting::query()->where('is_active', true)->first()
-            ?? BookingFeeSetting::query()->latest('id')->first();
-
-        if ($record === null) {
-            $this->recordId = null;
-            $this->base_fee = BookingFeeSetting::DEFAULT_BASE_FEE;
-            $this->percentage_fee = BookingFeeSetting::DEFAULT_PERCENTAGE_FEE;
-            $this->max_fee = BookingFeeSetting::DEFAULT_MAX_FEE;
-            $this->is_active = true;
-
-            return;
+        $active = BookingFeeSetting::query()->where('is_active', true)->first();
+        if ($active !== null) {
+            return (int) $active->getKey();
         }
 
-        $this->recordId = $record->id;
+        $latest = BookingFeeSetting::query()->latest('id')->first();
+
+        return $latest !== null ? (int) $latest->getKey() : null;
+    }
+
+    protected function hydrateForm(): void
+    {
+        if ($this->recordId !== null) {
+            $record = BookingFeeSetting::query()->find($this->recordId);
+            if ($record === null) {
+                $this->recordId = null;
+            } else {
+                $this->fillFromModel($record);
+
+                return;
+            }
+        }
+
+        $defaults = currentBookingFeeSetting();
+        $this->base_fee = (string) $defaults->base_fee;
+        $this->percentage_fee = (string) $defaults->percentage_fee;
+        $this->max_fee = $defaults->max_fee !== null ? (string) $defaults->max_fee : '';
+        $this->is_active = true;
+    }
+
+    protected function fillFromModel(BookingFeeSetting $record): void
+    {
         $this->base_fee = (string) $record->base_fee;
         $this->percentage_fee = (string) $record->percentage_fee;
         $this->max_fee = $record->max_fee !== null ? (string) $record->max_fee : '';
         $this->is_active = $record->is_active;
+    }
+
+    /**
+     * Start a new rate row (does not save until you submit the form).
+     */
+    public function startNewRate(): void
+    {
+        $this->resetValidation();
+        $this->recordId = null;
+        $this->hydrateForm();
+        session()->flash('status', 'Fill in the new rate and save. Check “Active” to apply it at checkout (only one rate can be active).');
+    }
+
+    /**
+     * Load an existing row into the form for editing.
+     */
+    public function editRate(int $id): void
+    {
+        $this->resetValidation();
+        $this->recordId = $id;
+        $this->hydrateForm();
+    }
+
+    /**
+     * Return the editor to the currently active rate (or latest).
+     */
+    public function editDefaultRate(): void
+    {
+        $this->resetValidation();
+        $this->recordId = $this->defaultFormRecordId();
+        $this->hydrateForm();
+    }
+
+    public function activateRate(int $id): void
+    {
+        $model = BookingFeeSetting::query()->findOrFail($id);
+        $model->update(['is_active' => true]);
+
+        session()->flash('status', "Rate #{$id} is now the active booking fee.");
+        if ($this->recordId === $id) {
+            $this->hydrateForm();
+        }
+    }
+
+    public function deactivateRate(int $id): void
+    {
+        $model = BookingFeeSetting::query()->findOrFail($id);
+        $model->update(['is_active' => false]);
+
+        session()->flash('status', "Rate #{$id} is deactivated. Checkout uses defaults until you activate a row.");
+        if ($this->recordId === $id) {
+            $this->hydrateForm();
+        }
     }
 
     public function save(): void
@@ -83,11 +158,11 @@ class BookingRates extends Component
             $model->update($payload);
         } else {
             $created = BookingFeeSetting::query()->create($payload);
-            $this->recordId = $created->id;
+            $this->recordId = (int) $created->getKey();
         }
 
-        session()->flash('status', 'Booking rates saved.');
-        $this->loadForm();
+        session()->flash('status', 'Booking rate saved.');
+        $this->hydrateForm();
     }
 
     #[Computed]
@@ -103,12 +178,24 @@ class BookingRates extends Component
     }
 
     /**
+     * Newest first — historical log.
+     *
      * @return Collection<int, BookingFeeSetting>
      */
     #[Computed]
     public function allSettings()
     {
-        return BookingFeeSetting::query()->orderByDesc('updated_at')->get();
+        return BookingFeeSetting::query()->orderByDesc('created_at')->orderByDesc('id')->get();
+    }
+
+    #[Computed]
+    public function formModeLabel(): string
+    {
+        if ($this->recordId === null) {
+            return 'New rate (unsaved draft)';
+        }
+
+        return 'Editing rate #'.$this->recordId;
     }
 
     public function render(): View
