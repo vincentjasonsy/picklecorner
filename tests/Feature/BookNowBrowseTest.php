@@ -60,7 +60,7 @@ class BookNowBrowseTest extends TestCase
 
         $user = User::factory()->player()->create();
 
-        $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('All courts', false);
+        $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('All venues', false);
     }
 
     public function test_inactive_venue_court_not_listed_and_detail_404(): void

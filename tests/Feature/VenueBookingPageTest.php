@@ -78,7 +78,7 @@ class VenueBookingPageTest extends TestCase
             ->assertOk();
     }
 
-    public function test_book_now_page_shows_book_by_venue_section(): void
+    public function test_book_now_page_shows_all_venues_section(): void
     {
         $this->seed(UserTypeSeeder::class);
 
@@ -97,7 +97,7 @@ class VenueBookingPageTest extends TestCase
 
         $this->get(route('book-now'))
             ->assertOk()
-            ->assertSee('Book by venue', false)
+            ->assertSee('All venues', false)
             ->assertSee('Gamma Pickleball', false)
             ->assertSee('Pick a time', false);
     }

@@ -99,144 +99,76 @@
                 <span class="font-medium text-zinc-500 dark:text-zinc-400">· {{ $this->effectiveCityForFeatured() }}</span>
             </h2>
             <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Hand-picked partner venues in your area — swipe or scroll sideways to explore.
+                Hand-picked partner venues in your area — use arrows or swipe to explore.
             </p>
             <div
-                class="mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-                role="list"
+                class="featured-venues-splide splide mt-4 pb-8"
+                data-featured-venues-slider
+                aria-label="Featured venues carousel"
             >
-                @foreach ($featuredVenues as $venue)
-                    <article
-                        wire:key="featured-venue-{{ $venue->id }}"
-                        class="flex w-[min(88vw,340px)] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-white shadow-sm dark:border-amber-900/40 dark:from-amber-950/40 dark:to-zinc-900"
-                        role="listitem"
-                    >
-                        <div class="bg-zinc-100 dark:bg-zinc-800">
-                            <x-image-carousel
-                                :slides="$venue->carouselSlides()"
-                                :interval="6500"
-                                aria-label="{{ $venue->name }} photos"
-                                aspect-class="aspect-[4/3]"
-                                class="w-full"
-                            >
-                                <div
-                                    class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-amber-500 to-orange-900"
-                                    aria-hidden="true"
+                <div class="splide__track">
+                    <ul class="splide__list">
+                        @foreach ($featuredVenues as $venue)
+                            <li class="splide__slide" wire:key="featured-venue-{{ $venue->id }}">
+                                <article
+                                    class="flex h-full flex-col overflow-hidden rounded-2xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-white shadow-sm dark:border-amber-900/40 dark:from-amber-950/40 dark:to-zinc-900"
                                 >
-                                    <span class="font-display text-3xl font-extrabold text-white/90">
-                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
-                                    </span>
-                                </div>
-                            </x-image-carousel>
-                        </div>
-                        <div class="flex flex-1 flex-col p-4">
-                            <p class="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300/90">
-                                Featured venue
-                            </p>
-                            <h3 class="mt-1 font-display text-base font-bold text-zinc-900 dark:text-white">
-                                {{ $venue->name }}
-                            </h3>
-                            @if ($venue->public_rating_average !== null)
-                                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                                    {{ number_format((float) $venue->public_rating_average, 1) }}★ guest rating
-                                    @if ($venue->public_rating_count > 0)
-                                        <span class="text-zinc-500">({{ $venue->public_rating_count }})</span>
-                                    @endif
-                                </p>
-                            @endif
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <a
-                                    href="{{ $this->venueBookUrl($venue) }}"
-                                    wire:navigate
-                                    class="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                                >
-                                    Book
-                                </a>
-                                <a
-                                    href="{{ $this->venueBookUrl($venue) }}#venue-reviews"
-                                    wire:navigate
-                                    class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 hover:border-emerald-300 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
-                                >
-                                    Reviews
-                                </a>
-                            </div>
-                        </div>
-                    </article>
-                @endforeach
+                                    <div class="bg-zinc-100 dark:bg-zinc-800">
+                                        <x-image-carousel
+                                            :slides="$venue->carouselSlides()"
+                                            :interval="6500"
+                                            aria-label="{{ $venue->name }} photos"
+                                            aspect-class="aspect-[4/3]"
+                                            class="w-full"
+                                        >
+                                            <div
+                                                class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-amber-500 to-orange-900"
+                                                aria-hidden="true"
+                                            >
+                                                <span class="font-display text-3xl font-extrabold text-white/90">
+                                                    {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
+                                                </span>
+                                            </div>
+                                        </x-image-carousel>
+                                    </div>
+                                    <div class="flex flex-1 flex-col p-4">
+                                        <p class="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300/90">
+                                            Featured venue
+                                        </p>
+                                        <h3 class="mt-1 font-display text-base font-bold text-zinc-900 dark:text-white">
+                                            {{ $venue->name }}
+                                        </h3>
+                                        @if ($venue->public_rating_average !== null)
+                                            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                                                {{ number_format((float) $venue->public_rating_average, 1) }}★ guest rating
+                                                @if ($venue->public_rating_count > 0)
+                                                    <span class="text-zinc-500">({{ $venue->public_rating_count }})</span>
+                                                @endif
+                                            </p>
+                                        @endif
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <a
+                                                href="{{ $this->venueBookUrl($venue) }}"
+                                                wire:navigate
+                                                class="inline-flex flex-1 items-center justify-center rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                                            >
+                                                Book
+                                            </a>
+                                            <a
+                                                href="{{ $this->venueBookUrl($venue) }}#venue-reviews"
+                                                wire:navigate
+                                                class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-800 hover:border-emerald-300 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+                                            >
+                                                Reviews
+                                            </a>
+                                        </div>
+                                    </div>
+                                </article>
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
             </div>
-        </section>
-    @endif
-
-    @if ($this->browseVenueRows()->isNotEmpty())
-        <section class="mt-12" aria-labelledby="venues-heading">
-            <h2 id="venues-heading" class="font-display text-lg font-bold text-zinc-900 dark:text-white">
-                Book by venue
-            </h2>
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Pick a partner club, then choose court and time on the availability grid.
-            </p>
-            <ul
-                class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
-                role="list"
-            >
-                @foreach ($this->browseVenueRows() as $row)
-                    @php($venue = $row['venue'])
-                    <li
-                        wire:key="browse-venue-{{ $venue->id }}"
-                        class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-                    >
-                        <div class="bg-zinc-100 dark:bg-zinc-800">
-                            <x-image-carousel
-                                :slides="$venue->carouselSlides()"
-                                :interval="6000"
-                                aria-label="{{ $venue->name }} photos"
-                                aspect-class="aspect-[4/3] sm:aspect-[16/10]"
-                                class="w-full"
-                            >
-                                <div
-                                    class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-800 sm:aspect-[16/10]"
-                                    aria-hidden="true"
-                                >
-                                    <span class="font-display text-3xl font-extrabold text-white/90">
-                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
-                                    </span>
-                                </div>
-                            </x-image-carousel>
-                        </div>
-                        <div class="flex flex-1 flex-col p-5">
-                            <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                                Venue
-                            </p>
-                            <h3 class="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-white">
-                                {{ $venue->name }}
-                            </h3>
-                            @if ($venue->city)
-                                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $venue->city }}</p>
-                            @endif
-                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                                {{ $row['court_count'] }} {{ \Illuminate\Support\Str::plural('court', $row['court_count']) }}
-                                match filters
-                            </p>
-                            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                                <a
-                                    href="{{ $this->venueBookUrl($venue) }}"
-                                    wire:navigate
-                                    class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                                >
-                                    Pick a time
-                                </a>
-                                <a
-                                    href="{{ $this->venueBookUrl($venue) }}#venue-reviews"
-                                    wire:navigate
-                                    class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 hover:border-emerald-300 hover:text-emerald-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
-                                >
-                                    Read reviews
-                                </a>
-                            </div>
-                        </div>
-                    </li>
-                @endforeach
-            </ul>
         </section>
     @endif
 
@@ -301,24 +233,90 @@
         </section>
     @endif
 
-    <section class="mt-12" aria-labelledby="all-heading">
-        <h2 id="all-heading" class="font-display text-lg font-bold text-zinc-900 dark:text-white">
-            All courts
+    @php($allVenueRows = $this->browseVenueRows())
+    <section class="mt-12" aria-labelledby="all-venues-heading">
+        <h2 id="all-venues-heading" class="font-display text-lg font-bold text-zinc-900 dark:text-white">
+            All venues
         </h2>
         <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            {{ $this->filteredCourts()->count() }}
-            {{ \Illuminate\Support\Str::plural('court', $this->filteredCourts()->count()) }} match your filters.
+            @if ($allVenueRows->isEmpty())
+                Adjust filters above to find partner clubs with bookable courts.
+            @else
+                {{ $allVenueRows->count() }}
+                {{ \Illuminate\Support\Str::plural('venue', $allVenueRows->count()) }}
+                ·
+                {{ $this->filteredCourts()->count() }}
+                {{ \Illuminate\Support\Str::plural('court', $this->filteredCourts()->count()) }}
+                match your filters.
+            @endif
         </p>
-        @if ($this->filteredCourts()->isEmpty())
+        @if ($allVenueRows->isEmpty())
             <p class="mt-8 rounded-2xl border border-dashed border-zinc-300 py-16 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                No courts match these filters. Try clearing the city or switching indoor / outdoor.
+                No venues match these filters. Try clearing the city or switching indoor / outdoor.
             </p>
         @else
-            <div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                @foreach ($this->filteredCourts() as $c)
-                    <x-court-browse-card :court="$c" />
+            <ul
+                class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+                role="list"
+            >
+                @foreach ($allVenueRows as $row)
+                    @php($venue = $row['venue'])
+                    <li
+                        wire:key="all-venues-{{ $venue->id }}"
+                        class="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+                    >
+                        <div class="bg-zinc-100 dark:bg-zinc-800">
+                            <x-image-carousel
+                                :slides="$venue->carouselSlides()"
+                                :interval="6000"
+                                aria-label="{{ $venue->name }} photos"
+                                aspect-class="aspect-[4/3] sm:aspect-[16/10]"
+                                class="w-full"
+                            >
+                                <div
+                                    class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-800 sm:aspect-[16/10]"
+                                    aria-hidden="true"
+                                >
+                                    <span class="font-display text-3xl font-extrabold text-white/90">
+                                        {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
+                                    </span>
+                                </div>
+                            </x-image-carousel>
+                        </div>
+                        <div class="flex flex-1 flex-col p-5">
+                            <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                Venue
+                            </p>
+                            <h3 class="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-white">
+                                {{ $venue->name }}
+                            </h3>
+                            @if ($venue->city)
+                                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $venue->city }}</p>
+                            @endif
+                            <p class="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                                {{ $row['court_count'] }} {{ \Illuminate\Support\Str::plural('court', $row['court_count']) }}
+                                match filters
+                            </p>
+                            <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                                <a
+                                    href="{{ $this->venueBookUrl($venue) }}"
+                                    wire:navigate
+                                    class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                                >
+                                    Pick a time
+                                </a>
+                                <a
+                                    href="{{ $this->venueBookUrl($venue) }}#venue-reviews"
+                                    wire:navigate
+                                    class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 hover:border-emerald-300 hover:text-emerald-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
+                                >
+                                    Read reviews
+                                </a>
+                            </div>
+                        </div>
+                    </li>
                 @endforeach
-            </div>
+            </ul>
         @endif
     </section>
 </div>

@@ -50,3 +50,38 @@
         cursor: pointer;
     }
 }
+
+/* Splide featured venues (Book now) — theme to match app emerald / zinc */
+@layer components {
+    .featured-venues-splide .splide__arrow {
+        @apply rounded-full border border-zinc-200 bg-white text-zinc-700 shadow-md;
+    }
+
+    .featured-venues-splide .splide__arrow:hover:not(:disabled) {
+        @apply border-emerald-300 text-emerald-800;
+    }
+
+    .featured-venues-splide .splide__arrow:disabled {
+        @apply opacity-40;
+    }
+
+    .dark .featured-venues-splide .splide__arrow {
+        @apply border-zinc-600 bg-zinc-800 text-zinc-100;
+    }
+
+    .dark .featured-venues-splide .splide__arrow:hover:not(:disabled) {
+        @apply border-emerald-600 text-emerald-200;
+    }
+
+    .featured-venues-splide .splide__pagination {
+        @apply bottom-0 gap-2;
+    }
+
+    .featured-venues-splide .splide__pagination__page {
+        @apply h-2 w-2 bg-zinc-300 opacity-100 dark:bg-zinc-600;
+    }
+
+    .featured-venues-splide .splide__pagination__page.is-active {
+        @apply scale-110 bg-emerald-600 dark:bg-emerald-500;
+    }
+}
