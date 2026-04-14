@@ -111,6 +111,113 @@
                             />
                         </div>
                         <div class="sm:col-span-2">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                Public listing (Book now · court page)
+                            </p>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Shown to guests next to reviews. Map appears only when both latitude and longitude are set
+                                (decimal degrees, e.g. 14.5547).
+                            </p>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Street address
+                            </label>
+                            <textarea
+                                wire:model="address"
+                                rows="2"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="Building, street, area"
+                            ></textarea>
+                            @error('address')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Phone
+                            </label>
+                            <input
+                                wire:model="phone"
+                                type="text"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="+63 …"
+                            />
+                            @error('phone')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Facebook or social URL
+                            </label>
+                            <input
+                                wire:model="facebook_url"
+                                type="text"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="https://facebook.com/…"
+                            />
+                            @error('facebook_url')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Latitude
+                            </label>
+                            <input
+                                wire:model="latitude"
+                                type="text"
+                                inputmode="decimal"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="14.5547"
+                            />
+                            @error('latitude')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Longitude
+                            </label>
+                            <input
+                                wire:model="longitude"
+                                type="text"
+                                inputmode="decimal"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm tabular-nums dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="121.0244"
+                            />
+                            @error('longitude')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="sm:col-span-2">
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Amenities (one per line)
+                            </label>
+                            <textarea
+                                wire:model="amenitiesText"
+                                rows="4"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="Parking, locker rooms, equipment rental (one per line)"
+                            ></textarea>
+                            @error('amenitiesText')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div class="sm:col-span-2">
                             <label
                                 class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
                             >

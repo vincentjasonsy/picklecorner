@@ -15,12 +15,16 @@ class CoachProfile extends Model
         'hourly_rate_cents',
         'currency',
         'bio',
+        'public_rating_average',
+        'public_rating_count',
     ];
 
     protected function casts(): array
     {
         return [
             'hourly_rate_cents' => 'integer',
+            'public_rating_average' => 'decimal:1',
+            'public_rating_count' => 'integer',
         ];
     }
 

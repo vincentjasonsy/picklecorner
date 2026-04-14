@@ -36,6 +36,12 @@ class CourtClient extends Model
         'name',
         'slug',
         'city',
+        'address',
+        'phone',
+        'facebook_url',
+        'latitude',
+        'longitude',
+        'amenities',
         'notes',
         'admin_user_id',
         'subscription_tier',
@@ -57,6 +63,9 @@ class CourtClient extends Model
             'peak_hourly_rate_cents' => 'integer',
             'public_rating_average' => 'decimal:1',
             'public_rating_count' => 'integer',
+            'latitude' => 'decimal:7',
+            'longitude' => 'decimal:7',
+            'amenities' => 'array',
         ];
     }
 
@@ -239,5 +248,85 @@ class CourtClient extends Model
     public function hasPremiumSubscription(): bool
     {
         return $this->subscriptionTierNormalized() === self::TIER_PREMIUM;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function publicAmenitiesList(): array
+    {
+        $raw = $this->amenities;
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($raw as $item) {
+            $s = is_string($item) ? trim($item) : '';
+            if ($s !== '') {
+                $out[] = $s;
+            }
+        }
+
+        return array_values($out);
+    }
+
+    public function hasPublicListingExtras(): bool
+    {
+        if ($this->city !== null && trim((string) $this->city) !== '') {
+            return true;
+        }
+        if ($this->address !== null && trim((string) $this->address) !== '') {
+            return true;
+        }
+        if ($this->phone !== null && trim((string) $this->phone) !== '') {
+            return true;
+        }
+        if ($this->facebook_url !== null && trim((string) $this->facebook_url) !== '') {
+            return true;
+        }
+        if ($this->latitude !== null && $this->longitude !== null) {
+            return true;
+        }
+
+        return $this->publicAmenitiesList() !== [];
+    }
+
+    public function openStreetMapEmbedUrl(): ?string
+    {
+        if ($this->latitude === null || $this->longitude === null) {
+            return null;
+        }
+        $lat = (float) $this->latitude;
+        $lon = (float) $this->longitude;
+        $pad = 0.01;
+        $minLon = $lon - $pad;
+        $minLat = $lat - $pad;
+        $maxLon = $lon + $pad;
+        $maxLat = $lat + $pad;
+        $bbox = rawurlencode(implode(',', [$minLon, $minLat, $maxLon, $maxLat]));
+        $marker = rawurlencode($lat.','.$lon);
+
+        return 'https://www.openstreetmap.org/export/embed.html?bbox='.$bbox.'&layer=mapnik&marker='.$marker;
+    }
+
+    /** Google Maps search / directions destination (works with address or coordinates). */
+    public function googleMapsUrl(): ?string
+    {
+        if ($this->latitude !== null && $this->longitude !== null) {
+            return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode((string) $this->latitude.','.(string) $this->longitude);
+        }
+
+        $parts = array_values(array_filter([
+            $this->address !== null ? trim((string) $this->address) : '',
+            $this->city !== null ? trim((string) $this->city) : '',
+            trim((string) $this->name),
+        ], fn (string $s): bool => $s !== ''));
+
+        if ($parts === []) {
+            return null;
+        }
+
+        return 'https://www.google.com/maps/search/?api=1&query='.rawurlencode(implode(', ', $parts));
     }
 }

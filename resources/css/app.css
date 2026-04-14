@@ -24,4 +24,29 @@
     [x-cloak] {
         display: none !important;
     }
+
+    /* Finger pointer on interactive controls (browsers often default to arrow on <button>). */
+    button:not(:disabled),
+    [role='button']:not([aria-disabled='true']),
+    input[type='button']:not(:disabled),
+    input[type='submit']:not(:disabled),
+    input[type='reset']:not(:disabled) {
+        cursor: pointer;
+    }
+
+    button:disabled,
+    input[type='button']:disabled,
+    input[type='submit']:disabled,
+    input[type='reset']:disabled,
+    [role='button'][aria-disabled='true'] {
+        cursor: not-allowed;
+    }
+
+    summary {
+        cursor: pointer;
+    }
+
+    label:has(input[type='file']:not(:disabled)) {
+        cursor: pointer;
+    }
 }

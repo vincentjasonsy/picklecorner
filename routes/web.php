@@ -6,6 +6,7 @@ use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
 use App\Http\Controllers\ReportExportController;
+use App\Http\Controllers\ReviewFromEmailController;
 use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
 use App\Livewire\Admin\BookingHistory;
@@ -22,6 +23,7 @@ use App\Livewire\Admin\InvoiceCreate;
 use App\Livewire\Admin\InvoiceIndex;
 use App\Livewire\Admin\InvoiceShow;
 use App\Livewire\Admin\ManualBookingHub;
+use App\Livewire\Admin\ReviewApprovals;
 use App\Livewire\Admin\UserForm;
 use App\Livewire\Admin\UserSummary;
 use App\Livewire\Admin\VenueQuickSetup;
@@ -100,6 +102,10 @@ Route::livewire('/open-play', OpenPlayAbout::class)->name('open-play.about');
 Route::get('/internal-team-play-reminders/unsubscribe/{user}', [InternalTeamPlayReminderPreferencesController::class, 'unsubscribe'])
     ->middleware(['signed', 'throttle:24,1'])
     ->name('internal-team-play-reminders.unsubscribe');
+
+Route::get('/reviews/write/{user}/{target_type}/{target_id}', ReviewFromEmailController::class)
+    ->middleware(['signed', 'throttle:60,1'])
+    ->name('reviews.write-signed');
 
 Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
@@ -241,6 +247,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::livewire('/internal-play-reminders', InternalTeamPlayReminders::class)
             ->name('internal-play-reminders');
         Route::livewire('/gallery-approvals', GalleryImageApprovals::class)->name('gallery-approvals');
+        Route::livewire('/review-approvals', ReviewApprovals::class)->name('review-approvals');
     });
 
 Route::post('/logout', function () {

@@ -12,12 +12,16 @@ use App\Models\UserType;
 use App\Services\CourtClientBootstrap;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class CourtClientSeeder extends Seeder
 {
+    private const VENUE_COUNT = 20;
+
     /**
      * One court client per court admin (1:1). Run after DemoUsersSeeder.
+     *
+     * Each venue: 5 indoor courts; outdoor count alternates 3 and 4 across venues.
+     * One front-desk user per venue (password: password).
      */
     public function run(): void
     {
@@ -30,49 +34,47 @@ class CourtClientSeeder extends Seeder
             ->orderBy('id')
             ->get();
 
-        if ($admins->count() !== 3) {
+        if ($admins->count() !== self::VENUE_COUNT) {
             throw new \RuntimeException(
-                'Expected exactly 3 court admin users before seeding court clients; found '.$admins->count()
+                'Expected exactly '.self::VENUE_COUNT.' court admin users before seeding court clients; found '.$admins->count()
             );
         }
 
-        $venues = [
-            ['name' => 'Manila Bay Pickle Club', 'city' => 'Taguig'],
-            ['name' => 'Quezon City Court Hub', 'city' => 'Quezon City'],
-            ['name' => 'Cebu Pickle Center', 'city' => 'Cebu City'],
+        $cities = [
+            'Taguig', 'Quezon City', 'Cebu City', 'Davao City', 'Makati', 'Pasig', 'Mandaluyong',
+            'Parañaque', 'Las Piñas', 'Marikina', 'Antipolo', 'Iloilo City', 'Bacolod', 'Cagayan de Oro',
+            'Baguio', 'Santa Rosa', 'Batangas City', 'General Santos', 'Zamboanga City', 'Butuan',
         ];
 
-        // Stored as centavos: 35000 => ₱350/hr, 50000 => ₱500/hr peak, etc.
-        $pricing = [
-            ['hourly' => 35000, 'peak' => 50000],
-            ['hourly' => 30000, 'peak' => 45000],
-            ['hourly' => 28000, 'peak' => 40000],
-        ];
+        for ($index = 0; $index < self::VENUE_COUNT; $index++) {
+            $i = $index + 1;
+            $slug = 'seed-venue-'.str_pad((string) $i, 2, '0', STR_PAD_LEFT);
+            $city = $cities[$index];
+            $name = "Pickle Hub {$i} — {$city}";
 
-        $ratings = [
-            ['avg' => 4.8, 'count' => 214],
-            ['avg' => 4.6, 'count' => 156],
-            ['avg' => 4.9, 'count' => 302],
-        ];
+            // Alternate 3 and 4 outdoor courts per venue.
+            $outdoorCount = $i % 2 === 1 ? 3 : 4;
 
-        foreach ($venues as $index => $venue) {
+            $hourlyBase = 25000 + ($index * 750);
+            $peakBase = $hourlyBase + 12000;
+
             $client = CourtClient::query()->updateOrCreate(
-                ['slug' => Str::slug($venue['name'])],
+                ['slug' => $slug],
                 [
-                    'name' => $venue['name'],
-                    'city' => $venue['city'],
+                    'name' => $name,
+                    'city' => $city,
                     'admin_user_id' => $admins[$index]->id,
                     'subscription_tier' => CourtClient::TIER_PREMIUM,
                     'is_active' => true,
-                    'hourly_rate_cents' => $pricing[$index]['hourly'],
-                    'peak_hourly_rate_cents' => $pricing[$index]['peak'],
+                    'hourly_rate_cents' => $hourlyBase,
+                    'peak_hourly_rate_cents' => $peakBase,
                     'currency' => 'PHP',
-                    'public_rating_average' => $ratings[$index]['avg'],
-                    'public_rating_count' => $ratings[$index]['count'],
+                    'public_rating_average' => round(4.3 + (($index % 7) * 0.08), 1),
+                    'public_rating_count' => 80 + ($index * 17),
                 ]
             );
 
-            CourtClientBootstrap::ensureDefaultCourtsAndSchedule($client);
+            CourtClientBootstrap::seedVenueCourtsIfEmpty($client, $outdoorCount, 5);
         }
 
         $this->seedDemoCoachScenario();
@@ -90,14 +92,14 @@ class CourtClientSeeder extends Seeder
             return;
         }
 
-        $clients = CourtClient::query()->orderBy('name')->get();
-        if ($clients->count() < 3) {
+        $clients = CourtClient::query()->where('slug', 'like', 'seed-venue-%')->orderBy('slug')->get();
+        if ($clients->count() < self::VENUE_COUNT) {
             return;
         }
 
         $verified = ['email_verified_at' => now()];
 
-        foreach ([1, 2, 3] as $i) {
+        for ($i = 1; $i <= self::VENUE_COUNT; $i++) {
             User::query()->updateOrCreate(
                 ['email' => "desk{$i}@picklecorner.ph"],
                 [

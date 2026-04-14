@@ -122,13 +122,22 @@
                             {{ $row['court_count'] }} {{ \Illuminate\Support\Str::plural('court', $row['court_count']) }}
                             match filters
                         </p>
-                        <a
-                            href="{{ $this->venueBookUrl($venue) }}"
-                            wire:navigate
-                            class="mt-4 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
-                        >
-                            Pick a time
-                        </a>
+                        <div class="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                            <a
+                                href="{{ $this->venueBookUrl($venue) }}"
+                                wire:navigate
+                                class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                            >
+                                Pick a time
+                            </a>
+                            <a
+                                href="{{ $this->venueBookUrl($venue) }}#venue-reviews"
+                                wire:navigate
+                                class="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-800 hover:border-emerald-300 hover:text-emerald-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:text-emerald-300"
+                            >
+                                Read reviews
+                            </a>
+                        </div>
                     </li>
                 @endforeach
             </ul>

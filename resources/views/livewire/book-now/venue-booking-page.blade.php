@@ -948,4 +948,32 @@
             @endif
         </div>
     </div>
+
+    <section id="venue-reviews" class="mt-10 scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+            <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">Venue &amp; reviews</h2>
+            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                Location, contact, amenities, and what members say about this club.
+            </p>
+            <div class="mt-8 grid gap-10 lg:grid-cols-2 lg:items-start">
+                <x-venue-public-listing :venue="$courtClient" />
+                <div class="min-w-0">
+                    <livewire:reviews.user-reviews-panel
+                        target-type="venue"
+                        :target-id="$courtClient->id"
+                        :show-heading="false"
+                        :key="'ur-venue-booking-'.$courtClient->id"
+                    />
+                </div>
+            </div>
+        </section>
+
+        @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '')
+            <section id="coach-reviews" class="mt-8 scroll-mt-24 border-t border-zinc-200 pt-8 dark:border-zinc-800">
+            <livewire:reviews.user-reviews-panel
+                target-type="coach"
+                :target-id="$coachUserId"
+                :key="'ur-coach-booking-'.$coachUserId"
+            />
+        </section>
+    @endif
 </div>

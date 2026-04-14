@@ -66,5 +66,16 @@
                 <span class="font-medium text-zinc-500 dark:text-zinc-400">/ hr</span>
             </p>
         @endif
+        @if ($client)
+            <p class="mt-3">
+                <a
+                    href="{{ route('book-now.court', $court) }}#venue-reviews"
+                    wire:navigate
+                    class="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
+                >
+                    Read reviews
+                </a>
+            </p>
+        @endif
     </div>
 </article>

@@ -9,8 +9,8 @@ use Illuminate\Database\Seeder;
 class DemoUsersSeeder extends Seeder
 {
     /**
-     * Seed 20 users: 1 super admin, 3 court admins, 6 coaches, 10 players.
-     * (Court client seeding adds 3 front-desk users, one per venue.)
+     * Demo accounts: 1 super admin, 20 court admins, 5 coaches, 10 players (36 users).
+     * CourtClientSeeder adds 20 front-desk users (one per venue).
      * Password for every account: "password" (hashed via User model's "hashed" cast).
      *
      * Uses updateOrCreate on email so db:seed can be re-run without duplicate errors.
@@ -29,7 +29,7 @@ class DemoUsersSeeder extends Seeder
             ],
         );
 
-        for ($i = 1; $i <= 3; $i++) {
+        for ($i = 1; $i <= 20; $i++) {
             User::query()->updateOrCreate(
                 ['email' => "courtadmin{$i}@picklecorner.ph"],
                 [
@@ -41,7 +41,7 @@ class DemoUsersSeeder extends Seeder
             );
         }
 
-        for ($i = 1; $i <= 6; $i++) {
+        for ($i = 1; $i <= 5; $i++) {
             User::query()->updateOrCreate(
                 ['email' => "coach{$i}@picklecorner.ph"],
                 [

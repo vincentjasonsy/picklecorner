@@ -127,6 +127,29 @@ class AdminAccessTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_super_admin_can_open_review_approvals(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $super = User::factory()->superAdmin()->create();
+
+        $this->actingAs($super)
+            ->get(route('admin.review-approvals'))
+            ->assertOk()
+            ->assertSee('User review approvals', escape: false);
+    }
+
+    public function test_player_cannot_open_review_approvals(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $player = User::factory()->player()->create();
+
+        $this->actingAs($player)
+            ->get(route('admin.review-approvals'))
+            ->assertForbidden();
+    }
+
     public function test_internal_play_reminder_command_sends_database_notification_when_eligible(): void
     {
         $this->seed(UserTypeSeeder::class);

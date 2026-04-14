@@ -55,6 +55,19 @@ class CourtClientEdit extends Component
     /** @see CourtClient::TIER_* (super admin only) */
     public string $subscription_tier = CourtClient::TIER_BASIC;
 
+    public string $address = '';
+
+    public string $phone = '';
+
+    public string $facebook_url = '';
+
+    public string $latitude = '';
+
+    public string $longitude = '';
+
+    /** One amenity per line (shown on public court / venue pages). */
+    public string $amenitiesText = '';
+
     public ?string $admin_user_id = null;
 
     /** @var list<array{id: ?string, environment: string}> */
@@ -140,6 +153,13 @@ class CourtClientEdit extends Component
         )
             ? (string) $c->subscription_tier
             : CourtClient::TIER_BASIC;
+        $this->address = (string) ($c->address ?? '');
+        $this->phone = (string) ($c->phone ?? '');
+        $this->facebook_url = (string) ($c->facebook_url ?? '');
+        $this->latitude = $c->latitude !== null ? (string) $c->latitude : '';
+        $this->longitude = $c->longitude !== null ? (string) $c->longitude : '';
+        $list = $c->publicAmenitiesList();
+        $this->amenitiesText = $list === [] ? '' : implode("\n", $list);
     }
 
     protected function ensureDefaultWeeklyHours(): void
@@ -785,6 +805,25 @@ class CourtClientEdit extends Component
             'name' => ['required', 'string', 'max:255'],
             'slug' => ['required', 'string', 'max:255', Rule::unique('court_clients', 'slug')->ignore($this->courtClient->id)],
             'city' => ['nullable', 'string', 'max:120'],
+            'address' => ['nullable', 'string', 'max:2000'],
+            'phone' => ['nullable', 'string', 'max:64'],
+            'facebook_url' => [
+                'nullable',
+                'string',
+                'max:512',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $v = trim((string) $value);
+                    if ($v === '') {
+                        return;
+                    }
+                    if (filter_var($v, FILTER_VALIDATE_URL) === false) {
+                        $fail('Facebook / social link must be a valid URL (https://…).');
+                    }
+                },
+            ],
+            'latitude' => ['nullable', 'string', 'max:20'],
+            'longitude' => ['nullable', 'string', 'max:20'],
+            'amenitiesText' => ['nullable', 'string', 'max:5000'],
             'notes' => ['nullable', 'string', 'max:5000'],
             'is_active' => ['boolean'],
             'hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
@@ -825,10 +864,60 @@ class CourtClientEdit extends Component
             }
         }
 
+        $latStr = trim((string) ($validated['latitude'] ?? ''));
+        $lngStr = trim((string) ($validated['longitude'] ?? ''));
+        $latitude = null;
+        $longitude = null;
+        if ($latStr !== '' || $lngStr !== '') {
+            if ($latStr === '' || $lngStr === '') {
+                $this->addError('latitude', 'Provide both latitude and longitude for the map pin, or leave both blank.');
+                $this->addError('longitude', 'Provide both latitude and longitude for the map pin, or leave both blank.');
+
+                return;
+            }
+            if (! is_numeric($latStr) || ! is_numeric($lngStr)) {
+                $this->addError('latitude', 'Latitude and longitude must be numbers (e.g. 14.5547).');
+                $this->addError('longitude', 'Latitude and longitude must be numbers (e.g. 121.0244).');
+
+                return;
+            }
+            $latitude = (float) $latStr;
+            $longitude = (float) $lngStr;
+            if ($latitude < -90 || $latitude > 90 || $longitude < -180 || $longitude > 180) {
+                $this->addError('latitude', 'Latitude must be between -90 and 90, longitude between -180 and 180.');
+
+                return;
+            }
+        }
+
+        $amenitiesLines = preg_split('/\r\n|\r|\n/', (string) ($validated['amenitiesText'] ?? '')) ?: [];
+        $amenities = [];
+        foreach ($amenitiesLines as $line) {
+            $t = trim($line);
+            if ($t === '') {
+                continue;
+            }
+            if (mb_strlen($t) > 120) {
+                $this->addError('amenitiesText', 'Each amenity line must be 120 characters or fewer.');
+
+                return;
+            }
+            $amenities[] = $t;
+            if (count($amenities) >= 50) {
+                break;
+            }
+        }
+
         $payload = [
             'name' => $validated['name'],
             'slug' => $validated['slug'],
             'city' => $validated['city'],
+            'address' => $validated['address'] !== '' && $validated['address'] !== null ? $validated['address'] : null,
+            'phone' => $validated['phone'] !== '' && $validated['phone'] !== null ? $validated['phone'] : null,
+            'facebook_url' => $validated['facebook_url'] !== '' && $validated['facebook_url'] !== null ? $validated['facebook_url'] : null,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'amenities' => $amenities === [] ? null : $amenities,
             'notes' => $validated['notes'],
             'is_active' => $validated['is_active'],
             'hourly_rate_cents' => $hourlyCents,
