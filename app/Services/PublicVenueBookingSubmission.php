@@ -94,6 +94,8 @@ class PublicVenueBookingSubmission
             $coachId,
             $openPlay,
         ) {
+            $bookingRequestId = (string) Str::uuid();
+
             $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
             $courtSubtotalCents = (int) array_sum(array_column($specs, 'court_gross_cents'));
             $bookingFeeCents = BookingFeeService::calculateCentsFromCourtSubtotalCents($courtSubtotalCents);
@@ -149,6 +151,7 @@ class PublicVenueBookingSubmission
 
                 $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
+                    'booking_request_id' => $bookingRequestId,
                     'court_id' => $court->id,
                     'user_id' => $booker->id,
                     'coach_user_id' => $coachId,
@@ -200,30 +203,46 @@ class PublicVenueBookingSubmission
         $first = $bookings[0]->fresh();
         $ids = array_map(fn (Booking $b) => $b->id, $bookings);
 
+        $requestId = $first->booking_request_id;
+
         match ($deskPolicy) {
             CourtClient::DESK_BOOKING_POLICY_AUTO_APPROVE => ActivityLogger::log(
                 'booking.desk_auto_approved',
-                ['booking_ids' => $ids, 'policy' => $deskPolicy, 'source' => 'member_public'],
+                [
+                    'booking_ids' => $ids,
+                    'booking_request_id' => $requestId,
+                    'policy' => $deskPolicy,
+                    'source' => 'member_public',
+                ],
                 $first,
                 count($bookings) === 1
                     ? 'Member booking auto-approved'
-                    : count($bookings).' member bookings auto-approved',
+                    : 'Member booking request auto-approved ('.count($bookings).' courts)',
             ),
             CourtClient::DESK_BOOKING_POLICY_AUTO_DENY => ActivityLogger::log(
                 'booking.desk_auto_denied',
-                ['booking_ids' => $ids, 'policy' => $deskPolicy, 'source' => 'member_public'],
+                [
+                    'booking_ids' => $ids,
+                    'booking_request_id' => $requestId,
+                    'policy' => $deskPolicy,
+                    'source' => 'member_public',
+                ],
                 $first,
                 count($bookings) === 1
                     ? 'Member booking auto-denied'
-                    : count($bookings).' member bookings auto-denied',
+                    : 'Member booking request auto-denied ('.count($bookings).' courts)',
             ),
             default => ActivityLogger::log(
                 'booking.desk_submitted',
-                ['booking_ids' => $ids, 'source' => 'member_public'],
+                [
+                    'booking_ids' => $ids,
+                    'booking_request_id' => $requestId,
+                    'source' => 'member_public',
+                ],
                 $first,
                 count($bookings) === 1
                     ? 'Member booking request submitted'
-                    : count($bookings).' member booking requests submitted',
+                    : 'Member booking request submitted ('.count($bookings).' courts)',
             ),
         };
 

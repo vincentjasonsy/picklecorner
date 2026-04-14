@@ -77,6 +77,7 @@ class Booking extends Model
 
     protected $fillable = [
         'court_client_id',
+        'booking_request_id',
         'court_id',
         'user_id',
         'desk_submitted_by',
@@ -224,6 +225,28 @@ class Booking extends Model
         }
 
         return PublicStorageUrl::forPath($this->payment_proof_path);
+    }
+
+    /**
+     * One id per submission: shared by every court row from the same request.
+     * Rows without a batch id (legacy) use this booking’s row id.
+     */
+    public function transactionReference(): string
+    {
+        $rid = $this->booking_request_id;
+        if ($rid !== null && $rid !== '') {
+            return (string) $rid;
+        }
+
+        return (string) $this->id;
+    }
+
+    /** Compact label for dense tables; pair with {@see transactionReference()} in a title attribute. */
+    public function transactionReferenceShort(): string
+    {
+        $ref = $this->transactionReference();
+
+        return strlen($ref) > 12 ? substr($ref, 0, 8).'…' : $ref;
     }
 
     public function scopeNotCancelled($query)

@@ -751,6 +751,8 @@ class CourtClientManualBooking extends Component
             }
         }
 
+        $bookingRequestId = (string) Str::uuid();
+
         try {
             $bookings = DB::transaction(function () use (
                 $specs,
@@ -759,6 +761,7 @@ class CourtClientManualBooking extends Component
                 $desk,
                 $deskStatus,
                 $bookingNotesForCreate,
+                $bookingRequestId,
             ) {
                 $giftCardId = null;
                 $giftAppliedTotal = null;
@@ -814,6 +817,7 @@ class CourtClientManualBooking extends Component
 
                     $booking = Booking::query()->create([
                         'court_client_id' => $this->courtClient->id,
+                        'booking_request_id' => $bookingRequestId,
                         'court_id' => $court->id,
                         'user_id' => $this->manualBookingUserId,
                         'desk_submitted_by' => $desk ? auth()->id() : null,
@@ -865,29 +869,38 @@ class CourtClientManualBooking extends Component
             match ($deskPolicy) {
                 CourtClient::DESK_BOOKING_POLICY_AUTO_APPROVE => ActivityLogger::log(
                     'booking.desk_auto_approved',
-                    ['booking_ids' => $ids, 'policy' => $deskPolicy],
+                    [
+                        'booking_ids' => $ids,
+                        'booking_request_id' => $first->booking_request_id,
+                        'policy' => $deskPolicy,
+                    ],
                     $first,
                     count($bookings) === 1
                         ? 'Desk booking auto-approved'
-                        : count($bookings).' desk bookings auto-approved',
+                        : 'Desk booking request auto-approved ('.count($bookings).' courts)',
                 ),
                 CourtClient::DESK_BOOKING_POLICY_AUTO_DENY => ActivityLogger::log(
                     'booking.desk_auto_denied',
-                    ['booking_ids' => $ids, 'policy' => $deskPolicy],
+                    [
+                        'booking_ids' => $ids,
+                        'booking_request_id' => $first->booking_request_id,
+                        'policy' => $deskPolicy,
+                    ],
                     $first,
                     count($bookings) === 1
                         ? 'Desk booking auto-denied'
-                        : count($bookings).' desk bookings auto-denied',
+                        : 'Desk booking request auto-denied ('.count($bookings).' courts)',
                 ),
                 default => ActivityLogger::log(
                     'booking.desk_submitted',
                     [
                         'booking_ids' => $ids,
+                        'booking_request_id' => $first->booking_request_id,
                     ],
                     $first,
                     count($bookings) === 1
                         ? 'Desk booking request submitted'
-                        : count($bookings).' desk booking requests submitted',
+                        : 'Desk booking request submitted ('.count($bookings).' courts)',
                 ),
             };
         } else {
@@ -895,6 +908,7 @@ class CourtClientManualBooking extends Component
                 'booking.created_manual',
                 [
                     'booking_ids' => $ids,
+                    'booking_request_id' => $first->booking_request_id,
                     'payment_method' => $first->payment_method,
                     'payment_reference' => $first->payment_reference,
                     'has_payment_proof' => $first->payment_proof_path !== null,
@@ -902,7 +916,7 @@ class CourtClientManualBooking extends Component
                 $first,
                 count($bookings) === 1
                     ? "Manual booking created for “{$this->courtClient->name}”"
-                    : count($bookings).' manual bookings created for “'.$this->courtClient->name.'”',
+                    : 'Manual booking request created ('.count($bookings).' courts) for “'.$this->courtClient->name.'”',
             );
         }
 
@@ -918,27 +932,30 @@ class CourtClientManualBooking extends Component
             $bookings,
         )));
 
+        $refAppend = $bookings[0] ?? null;
+        $refSuffix = $refAppend !== null ? ' Reference: '.$refAppend->transactionReference().'.' : '';
+
         if ($desk) {
             $flash = match ($deskPolicy) {
                 CourtClient::DESK_BOOKING_POLICY_AUTO_APPROVE => count($bookings) === 1
                     ? 'Booking confirmed automatically (venue setting).'
-                    : count($bookings).' bookings confirmed automatically (venue setting).',
+                    : 'Booking confirmed automatically (venue setting) — '.count($bookings).' courts.',
                 CourtClient::DESK_BOOKING_POLICY_AUTO_DENY => count($bookings) === 1
                     ? 'Booking was not accepted (venue auto-deny setting).'
-                    : 'Bookings were not accepted (venue auto-deny setting).',
+                    : 'Booking was not accepted (venue auto-deny setting) — '.count($bookings).' courts.',
                 default => count($bookings) === 1
                     ? 'Booking request sent to your venue admin for approval.'
-                    : count($bookings).' booking requests sent to your venue admin for approval.',
+                    : 'Booking request ('.count($bookings).' courts) sent to your venue admin for approval.',
             };
         } else {
             $flash = count($bookings) === 1
                 ? 'Manual booking created.'
-                : count($bookings).' manual bookings created.';
+                : 'Manual booking created ('.count($bookings).' courts).';
             if ($giftTotal > 0) {
                 $flash .= ' Gift card applied: '.Money::formatMinor($giftTotal).' total.';
             }
         }
-        session()->flash('status', $flash);
+        session()->flash('status', $flash.$refSuffix);
     }
 
     protected function bookingOverlapsCourt(string $courtId, Carbon $starts, Carbon $ends): bool

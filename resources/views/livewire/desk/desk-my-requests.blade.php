@@ -21,6 +21,7 @@
                 <thead>
                     <tr class="border-b border-stone-200 bg-stone-50/80 dark:border-stone-700 dark:bg-stone-800/50">
                         <th class="px-4 py-3.5 font-semibold text-stone-700 dark:text-stone-300">Submitted</th>
+                        <th class="px-4 py-3.5 font-semibold text-stone-700 dark:text-stone-300">Reference</th>
                         <th class="px-4 py-3.5 font-semibold text-stone-700 dark:text-stone-300">Guest</th>
                         <th class="px-4 py-3.5 font-semibold text-stone-700 dark:text-stone-300">Court</th>
                         <th class="px-4 py-3.5 font-semibold text-stone-700 dark:text-stone-300">Reservation</th>
@@ -35,6 +36,12 @@
                         >
                             <td class="px-4 py-3.5 text-stone-600 dark:text-stone-400">
                                 {{ $b->created_at?->timezone(config('app.timezone'))->isoFormat('MMM D, h:mm a') }}
+                            </td>
+                            <td
+                                class="max-w-[9rem] px-4 py-3.5 font-mono text-xs text-stone-600 dark:text-stone-400"
+                                title="{{ $b->transactionReference() }}"
+                            >
+                                {{ $b->transactionReferenceShort() }}
                             </td>
                             <td class="px-4 py-3.5">
                                 <p class="font-medium text-stone-900 dark:text-stone-100">
@@ -58,7 +65,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-12 text-center text-stone-500">
+                            <td colspan="6" class="px-4 py-12 text-center text-stone-500">
                                 Nothing in the log yet. Start with
                                 <a
                                     href="{{ route('desk.booking-request') }}"

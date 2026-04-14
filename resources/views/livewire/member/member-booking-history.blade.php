@@ -61,6 +61,7 @@
                 <thead class="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
                     <tr class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                         <th class="px-4 py-3">When</th>
+                        <th class="px-4 py-3">Ref.</th>
                         <th class="px-4 py-3">Venue</th>
                         <th class="px-4 py-3">Court</th>
                         <th class="px-4 py-3">Status</th>
@@ -78,6 +79,12 @@
                                     –
                                     {{ $b->ends_at?->timezone($tz)->format('g:i A') }}
                                 </span>
+                            </td>
+                            <td
+                                class="max-w-[5.5rem] px-4 py-3 font-mono text-xs text-zinc-500 dark:text-zinc-400"
+                                title="{{ $b->transactionReference() }}"
+                            >
+                                {{ $b->transactionReferenceShort() }}
                             </td>
                             <td class="px-4 py-3">
                                 <span class="font-medium">{{ $b->courtClient?->name ?? '—' }}</span>
@@ -116,7 +123,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-16 text-center">
+                            <td colspan="7" class="px-4 py-16 text-center">
                                 <x-app-icon name="document-text" class="mx-auto size-12 text-zinc-400 dark:text-zinc-500" />
                                 <p class="mt-4 font-medium text-zinc-700 dark:text-zinc-300">No bookings yet</p>
                                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">

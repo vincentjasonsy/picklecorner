@@ -74,6 +74,13 @@
 
     <dl class="grid gap-5 rounded-2xl border border-zinc-200 bg-white p-6 text-sm shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:grid-cols-2">
         <div class="sm:col-span-2">
+            <dt class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Reference</dt>
+            <dd class="mt-2 break-all font-mono text-xs text-zinc-700 dark:text-zinc-300">
+                {{ $b->transactionReference() }}
+            </dd>
+        </div>
+
+        <div class="sm:col-span-2">
             <dt class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">When</dt>
             <dd class="mt-2 text-base font-medium text-zinc-900 dark:text-zinc-100">
                 {{ $b->starts_at?->timezone($tz)->isoFormat('dddd, MMM D, YYYY') ?? '—' }}

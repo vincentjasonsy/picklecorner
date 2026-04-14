@@ -5,6 +5,8 @@ namespace App\Livewire\Venue;
 use App\Models\Booking;
 use App\Services\ActivityLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -26,20 +28,33 @@ class VenueBookingApprovals extends Component
         return $c ? $c->fresh() : null;
     }
 
+    /**
+     * Pending bookings grouped by a single submission (same booking_request_id).
+     * Legacy rows without booking_request_id are one group each.
+     *
+     * @return Collection<int, Collection<int, Booking>>
+     */
     #[Computed]
-    public function pendingBookings()
+    public function pendingBookingGroups(): Collection
     {
         $c = $this->courtClient;
         if (! $c) {
             return collect();
         }
 
-        return Booking::query()
+        $all = Booking::query()
             ->where('court_client_id', $c->id)
             ->where('status', Booking::STATUS_PENDING_APPROVAL)
             ->with(['user', 'court', 'deskSubmitter'])
             ->orderBy('starts_at')
             ->get();
+
+        return $all
+            ->groupBy(fn (Booking $b) => $b->booking_request_id !== null && $b->booking_request_id !== ''
+                ? 'req:'.$b->booking_request_id
+                : 'single:'.$b->id)
+            ->map(fn (Collection $bookings) => $bookings->sortBy('starts_at')->values())
+            ->values();
     }
 
     public function approve(string $bookingId): void
@@ -49,21 +64,39 @@ class VenueBookingApprovals extends Component
             return;
         }
 
-        $booking->status = Booking::STATUS_CONFIRMED;
-        $booking->save();
+        $group = $this->pendingBookingsInSameRequest($booking);
+        $ids = $group->pluck('id')->all();
 
+        DB::transaction(function () use ($ids): void {
+            Booking::query()->whereIn('id', $ids)->update(['status' => Booking::STATUS_CONFIRMED]);
+        });
+
+        $first = $group->first();
         ActivityLogger::log(
             'booking.desk_approved',
-            ['booking_id' => $booking->id],
-            $booking,
-            'Desk booking request approved',
+            [
+                'booking_ids' => $ids,
+                'booking_request_id' => $first?->booking_request_id,
+            ],
+            $first,
+            count($ids) === 1
+                ? 'Desk booking request approved'
+                : 'Desk booking request approved ('.count($ids).' courts)',
             null,
-            $booking->court_client_id,
+            $first?->court_client_id,
         );
 
-        unset($this->pendingBookings);
+        unset($this->pendingBookingGroups);
 
-        session()->flash('status', 'Booking approved.');
+        $ref = $first?->transactionReference() ?? '';
+        $refPart = $ref !== '' ? ' Reference: '.$ref.'.' : '';
+
+        session()->flash(
+            'status',
+            (count($ids) === 1
+                ? 'Booking request approved.'
+                : 'Booking request approved ('.count($ids).' courts).').$refPart,
+        );
     }
 
     public function openDeny(string $bookingId): void
@@ -89,28 +122,52 @@ class VenueBookingApprovals extends Component
             return;
         }
 
+        $group = $this->pendingBookingsInSameRequest($booking);
         $note = trim($this->denyReason);
-        $booking->status = Booking::STATUS_DENIED;
-        $prevNotes = $booking->notes;
-        $booking->notes = $prevNotes
-            ? $prevNotes."\n\nDenied: ".$note
-            : 'Denied: '.$note;
-        $booking->save();
+        $denyLine = 'Denied: '.$note;
+
+        DB::transaction(function () use ($group, $denyLine): void {
+            foreach ($group as $b) {
+                $prevNotes = $b->notes;
+                $b->status = Booking::STATUS_DENIED;
+                $b->notes = $prevNotes
+                    ? $prevNotes."\n\n".$denyLine
+                    : $denyLine;
+                $b->save();
+            }
+        });
+
+        $first = $group->first();
+        $ids = $group->pluck('id')->all();
 
         ActivityLogger::log(
             'booking.desk_denied',
-            ['booking_id' => $booking->id, 'reason' => $note],
-            $booking,
-            'Desk booking request denied',
+            [
+                'booking_ids' => $ids,
+                'booking_request_id' => $first?->booking_request_id,
+                'reason' => $note,
+            ],
+            $first,
+            count($ids) === 1
+                ? 'Desk booking request denied'
+                : 'Desk booking request denied ('.count($ids).' courts)',
             null,
-            $booking->court_client_id,
+            $first?->court_client_id,
         );
 
         $this->denyBookingId = null;
         $this->denyReason = '';
-        unset($this->pendingBookings);
+        unset($this->pendingBookingGroups);
 
-        session()->flash('status', 'Booking request denied.');
+        $ref = $first?->transactionReference() ?? '';
+        $refPart = $ref !== '' ? ' Reference: '.$ref.'.' : '';
+
+        session()->flash(
+            'status',
+            (count($ids) === 1
+                ? 'Booking request denied.'
+                : 'Booking request denied ('.count($ids).' courts).').$refPart,
+        );
     }
 
     protected function findPendingBooking(string $id): ?Booking
@@ -125,6 +182,23 @@ class VenueBookingApprovals extends Component
             ->where('court_client_id', $c->id)
             ->where('status', Booking::STATUS_PENDING_APPROVAL)
             ->first();
+    }
+
+    /**
+     * @return Collection<int, Booking>
+     */
+    protected function pendingBookingsInSameRequest(Booking $booking): Collection
+    {
+        if ($booking->booking_request_id === null || $booking->booking_request_id === '') {
+            return collect([$booking]);
+        }
+
+        return Booking::query()
+            ->where('court_client_id', $booking->court_client_id)
+            ->where('status', Booking::STATUS_PENDING_APPROVAL)
+            ->where('booking_request_id', $booking->booking_request_id)
+            ->orderBy('starts_at')
+            ->get();
     }
 
     public function slotLabel(Booking $b): string

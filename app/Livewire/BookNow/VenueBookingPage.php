@@ -1157,6 +1157,11 @@ class VenueBookingPage extends Component
             $flash .= ' Open play enabled — share the link from Account → Court open play after the venue confirms.';
         }
 
+        $firstBooking = $bookings[0] ?? null;
+        if ($firstBooking !== null) {
+            $flash .= ' Reference: '.$firstBooking->transactionReference().'.';
+        }
+
         session()->flash('status', $flash);
 
         $this->redirect($this->backUrl(), navigate: true);

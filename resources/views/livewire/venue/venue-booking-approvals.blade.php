@@ -44,7 +44,7 @@
         </p>
     @endif
 
-    @if ($this->pendingBookings->isEmpty())
+    @if ($this->pendingBookingGroups->isEmpty())
         <p class="rounded-xl border border-dashed border-zinc-300 px-6 py-10 text-center text-sm text-zinc-500 dark:border-zinc-600">
             @if ($isManualPolicy)
                 No pending manual booking requests from desk staff.
@@ -54,40 +54,56 @@
         </p>
     @else
         <ul class="space-y-4">
-            @foreach ($this->pendingBookings as $b)
+            @foreach ($this->pendingBookingGroups as $group)
+                @php($head = $group->first())
                 <li
-                    wire:key="pend-{{ $b->id }}"
+                    wire:key="pend-req-{{ $head->booking_request_id ?? $head->id }}"
                     class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
                 >
                     <div class="flex flex-wrap items-start justify-between gap-3">
-                        <div>
-                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ $b->user?->name ?? 'Guest' }}</p>
-                            <p class="text-xs text-zinc-500">{{ $b->user?->email }}</p>
-                            <p class="mt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                                {{ $b->court?->name ?? 'Court' }}
-                                ·
-                                {{ $this->slotLabel($b) }}
-                            </p>
-                            @if ($b->deskSubmitter)
-                                <p class="mt-1 text-xs text-zinc-500">
-                                    Submitted by desk: {{ $b->deskSubmitter->name }}
+                        <div class="min-w-0 flex-1">
+                            <p class="font-medium text-zinc-900 dark:text-zinc-100">{{ $head->user?->name ?? 'Guest' }}</p>
+                            <p class="text-xs text-zinc-500">{{ $head->user?->email }}</p>
+                            @if ($group->count() > 1)
+                                <p class="mt-1 text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                                    One request · {{ $group->count() }} courts
                                 </p>
                             @endif
-                            @if ($b->notes)
-                                <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $b->notes }}</p>
+                            <p
+                                class="mt-1 break-all font-mono text-[11px] leading-snug text-zinc-500 dark:text-zinc-400"
+                                title="Use this reference when contacting support"
+                            >
+                                Reference: {{ $head->transactionReference() }}
+                            </p>
+                            <ul class="mt-3 space-y-2 text-sm text-zinc-700 dark:text-zinc-300">
+                                @foreach ($group as $b)
+                                    <li wire:key="pend-line-{{ $b->id }}" class="border-l-2 border-zinc-200 pl-3 dark:border-zinc-600">
+                                        <span class="font-medium">{{ $b->court?->name ?? 'Court' }}</span>
+                                        <span class="text-zinc-500"> · </span>
+                                        {{ $this->slotLabel($b) }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                            @if ($head->deskSubmitter)
+                                <p class="mt-2 text-xs text-zinc-500">
+                                    Submitted by desk: {{ $head->deskSubmitter->name }}
+                                </p>
+                            @endif
+                            @if ($head->notes)
+                                <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $head->notes }}</p>
                             @endif
                         </div>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex shrink-0 flex-wrap gap-2">
                             <button
                                 type="button"
-                                wire:click="approve('{{ $b->id }}')"
+                                wire:click="approve('{{ $head->id }}')"
                                 class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-white hover:bg-emerald-700"
                             >
                                 Approve
                             </button>
                             <button
                                 type="button"
-                                wire:click="openDeny('{{ $b->id }}')"
+                                wire:click="openDeny('{{ $head->id }}')"
                                 class="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 dark:border-zinc-600 dark:text-zinc-300"
                             >
                                 Deny
