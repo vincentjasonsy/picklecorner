@@ -111,7 +111,7 @@
                                 >
                                     Create a free account
                                 </a>
-                                to track bookings under My corner.
+                                to track bookings under My Corner.
                             </p>
                         @endguest
                     </div>

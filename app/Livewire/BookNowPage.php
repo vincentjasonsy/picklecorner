@@ -19,15 +19,31 @@ class BookNowPage extends Component
     public function mount(): void
     {
         if (! session()->has('book_now_nearby_city')) {
-            $default = CourtClient::query()
-                ->where('is_active', true)
-                ->whereNotNull('city')
-                ->orderBy('city')
-                ->value('city');
+            $default = $this->resolvedDefaultNearbyCity();
             if ($default !== null) {
                 session(['book_now_nearby_city' => $default]);
             }
         }
+    }
+
+    protected function resolvedDefaultNearbyCity(): ?string
+    {
+        $fromUser = auth()->user()?->preferredCourtBookingCity();
+        if (filled($fromUser)) {
+            return $fromUser;
+        }
+
+        return CourtClient::query()
+            ->where('is_active', true)
+            ->whereNotNull('city')
+            ->orderBy('city')
+            ->value('city');
+    }
+
+    /** City used to rank courts when browsing (profile or inferred bookings). */
+    public function userPreferredCity(): ?string
+    {
+        return auth()->user()?->preferredCourtBookingCity();
     }
 
     public function setEnvironment(string $value): void
@@ -71,7 +87,34 @@ class BookNowPage extends Component
             $q->whereHas('courtClient', fn ($q) => $q->where('city', $this->city));
         }
 
-        return $q->get();
+        $courts = $q->get();
+
+        return $this->sortCourtsByPreferredCity($courts);
+    }
+
+    /**
+     * @param  Collection<int, Court>  $courts
+     * @return Collection<int, Court>
+     */
+    protected function sortCourtsByPreferredCity(Collection $courts): Collection
+    {
+        $preferred = $this->userPreferredCity();
+        if ($preferred === null || $preferred === '') {
+            return $courts;
+        }
+
+        return $courts->sort(function (Court $a, Court $b) use ($preferred): int {
+            $aLocal = $a->courtClient?->city === $preferred ? 0 : 1;
+            $bLocal = $b->courtClient?->city === $preferred ? 0 : 1;
+            if ($aLocal !== $bLocal) {
+                return $aLocal <=> $bLocal;
+            }
+
+            $aKey = ($a->court_client_id ?? '').':'.($a->sort_order ?? 0).':'.($a->name ?? '');
+            $bKey = ($b->court_client_id ?? '').':'.($b->sort_order ?? 0).':'.($b->name ?? '');
+
+            return strnatcasecmp($aKey, $bKey);
+        })->values();
     }
 
     /**
@@ -100,8 +143,18 @@ class BookNowPage extends Component
             ->get()
             ->keyBy('id');
 
+        $preferred = $this->userPreferredCity();
+
         return $uniqueVenues
-            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->sort(function (CourtClient $a, CourtClient $b) use ($preferred): int {
+                $aLocal = $preferred && $a->city === $preferred ? 0 : 1;
+                $bLocal = $preferred && $b->city === $preferred ? 0 : 1;
+                if ($aLocal !== $bLocal) {
+                    return $aLocal <=> $bLocal;
+                }
+
+                return strnatcasecmp((string) $a->name, (string) $b->name);
+            })
             ->values()
             ->map(function (CourtClient $venue) use ($counts, $venuesWithGallery): array {
                 $model = $venuesWithGallery->get($venue->id) ?? $venue;
@@ -116,12 +169,21 @@ class BookNowPage extends Component
     /** @return Collection<int, string> */
     public function cityPills(): Collection
     {
-        return CourtClient::query()
+        $cities = CourtClient::query()
             ->where('is_active', true)
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')
             ->pluck('city');
+
+        $preferred = $this->userPreferredCity();
+        if ($preferred === null || $preferred === '' || ! $cities->contains($preferred)) {
+            return $cities;
+        }
+
+        $rest = $cities->filter(fn (string $c) => $c !== $preferred)->values();
+
+        return collect([$preferred])->merge($rest)->values();
     }
 
     public function nearbyCity(): ?string
@@ -146,11 +208,19 @@ class BookNowPage extends Component
     /** @return Collection<int, Court> */
     public function topRatedCourts(): Collection
     {
-        return Court::query()
+        $preferred = $this->userPreferredCity();
+
+        $q = Court::query()
             ->select('courts.*')
             ->join('court_clients', 'courts.court_client_id', '=', 'court_clients.id')
             ->where('court_clients.is_active', true)
-            ->where('courts.is_available', true)
+            ->where('courts.is_available', true);
+
+        if (filled($preferred)) {
+            $q->orderByRaw('CASE WHEN court_clients.city = ? THEN 0 ELSE 1 END', [$preferred]);
+        }
+
+        return $q
             ->orderByRaw('court_clients.public_rating_average IS NULL')
             ->orderByDesc('court_clients.public_rating_average')
             ->orderByDesc('court_clients.public_rating_count')

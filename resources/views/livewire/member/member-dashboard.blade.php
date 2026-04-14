@@ -159,7 +159,7 @@
                     <li
                         class="flex flex-col gap-1 rounded-xl border border-zinc-100 bg-zinc-50/80 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/50 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <div>
+                        <div class="min-w-0 flex-1">
                             <p class="font-semibold text-zinc-900 dark:text-zinc-100">
                                 {{ $b->courtClient?->name ?? 'Venue' }}
                             </p>
@@ -171,11 +171,20 @@
                                 {{ $b->starts_at?->timezone($tz)->format('g:i A') }}
                             </p>
                         </div>
-                        <span
-                            class="shrink-0 self-start rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200"
-                        >
-                            {{ Booking::statusDisplayLabel($b->status) }}
-                        </span>
+                        <div class="flex shrink-0 flex-col items-end gap-2 sm:flex-row sm:items-center">
+                            <span
+                                class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-200"
+                            >
+                                {{ Booking::statusDisplayLabel($b->status) }}
+                            </span>
+                            <a
+                                href="{{ route('account.bookings.show', $b) }}"
+                                wire:navigate
+                                class="text-xs font-bold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400"
+                            >
+                                View details
+                            </a>
+                        </div>
                     </li>
                 @empty
                     <li class="rounded-xl border border-dashed border-zinc-200 py-10 text-center dark:border-zinc-700">

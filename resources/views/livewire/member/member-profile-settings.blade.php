@@ -13,7 +13,9 @@
             <x-app-icon name="user-circle" class="size-6 text-emerald-600 dark:text-emerald-400" />
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Basics</h2>
         </div>
-        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Name and login email</p>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Name, login email, and your usual area for finding courts faster on Book now.
+        </p>
 
         <form wire:submit="saveProfile" class="mt-6 space-y-5">
             <div>
@@ -54,6 +56,29 @@
                     <p class="mt-1 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
             </div>
+            @if ($homeCityOptions->isNotEmpty())
+                <div>
+                    <label
+                        for="member-home-city"
+                        class="block text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                    >
+                        Preferred area (optional)
+                    </label>
+                    <select
+                        wire:model="home_city"
+                        id="member-home-city"
+                        class="mt-1.5 block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/30 transition focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400"
+                    >
+                        <option value="">No preference</option>
+                        @foreach ($homeCityOptions as $cityName)
+                            <option value="{{ $cityName }}">{{ $cityName }}</option>
+                        @endforeach
+                    </select>
+                    @error('home_city')
+                        <p class="mt-1 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                    @enderror
+                </div>
+            @endif
             <button
                 type="submit"
                 class="inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500 dark:shadow-emerald-950/40"

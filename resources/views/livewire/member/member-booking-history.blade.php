@@ -10,7 +10,8 @@
     <div>
         <h1 class="font-display text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">My games</h1>
         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Every court you’ve booked — newest first. Nice work keeping the rallies going.
+            Every court you’ve booked — newest first. Use <strong class="font-semibold text-zinc-700 dark:text-zinc-300">View</strong> for
+            full date, time, payment, and venue links.
         </p>
     </div>
 
@@ -64,6 +65,7 @@
                         <th class="px-4 py-3">Court</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3 text-right">Amount</th>
+                        <th class="px-4 py-3 text-right">Details</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -102,10 +104,19 @@
                                     <span class="text-zinc-400">—</span>
                                 @endif
                             </td>
+                            <td class="whitespace-nowrap px-4 py-3 text-right">
+                                <a
+                                    href="{{ route('account.bookings.show', $b) }}"
+                                    wire:navigate
+                                    class="font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
+                                >
+                                    View
+                                </a>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-4 py-16 text-center">
+                            <td colspan="6" class="px-4 py-16 text-center">
                                 <x-app-icon name="document-text" class="mx-auto size-12 text-zinc-400 dark:text-zinc-500" />
                                 <p class="mt-4 font-medium text-zinc-700 dark:text-zinc-300">No bookings yet</p>
                                 <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">

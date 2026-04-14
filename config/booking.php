@@ -40,4 +40,22 @@ return [
 
     'review_mail_link_ttl_days' => (int) env('BOOKING_REVIEW_MAIL_LINK_TTL_DAYS', 30),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Member account “book soon” popup (My Corner)
+    |--------------------------------------------------------------------------
+    |
+    | Shown on member pages when the user has no upcoming booking as booker and
+    | has not booked for at least member_booking_nudge_after_days (or registered
+    | long enough with no bookings yet). Dismissal is cached per user for
+    | member_booking_nudge_dismiss_hours.
+    |
+    */
+
+    'member_booking_nudge_after_days' => (int) env('MEMBER_BOOKING_NUDGE_AFTER_DAYS', 10),
+
+    'member_booking_nudge_never_booked_after_days' => (int) env('MEMBER_BOOKING_NUDGE_NEVER_BOOKED_DAYS', 2),
+
+    'member_booking_nudge_dismiss_hours' => (int) env('MEMBER_BOOKING_NUDGE_DISMISS_HOURS', 72),
+
 ];

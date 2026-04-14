@@ -2,10 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Livewire\BookNowPage;
+use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
+use App\Models\User;
+use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use Tests\TestCase;
 
 class BookNowBrowseTest extends TestCase
@@ -44,7 +49,7 @@ class BookNowBrowseTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $user = \App\Models\User::factory()->player()->create();
+        $user = User::factory()->player()->create();
 
         $this->actingAs($user)->get(route('book-now'))->assertOk();
     }
@@ -53,7 +58,7 @@ class BookNowBrowseTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $user = \App\Models\User::factory()->player()->create();
+        $user = User::factory()->player()->create();
 
         $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('All courts', false);
     }
@@ -73,5 +78,95 @@ class BookNowBrowseTest extends TestCase
 
         $this->get(route('book-now'))->assertOk()->assertDontSee('Hidden');
         $this->get(route('book-now.court', $court))->assertNotFound();
+    }
+
+    public function test_book_now_prioritizes_venues_matching_member_home_city(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $alphaCity = 'AlphaCity';
+        $betaCity = 'BetaCity';
+
+        $clientAlpha = CourtClient::factory()->create([
+            'is_active' => true,
+            'name' => 'A Club',
+            'city' => $alphaCity,
+        ]);
+        $clientBeta = CourtClient::factory()->create([
+            'is_active' => true,
+            'name' => 'B Club',
+            'city' => $betaCity,
+        ]);
+
+        foreach ([$clientAlpha, $clientBeta] as $client) {
+            Court::query()->create([
+                'court_client_id' => $client->id,
+                'name' => 'Court '.$client->name,
+                'sort_order' => 0,
+                'environment' => Court::ENV_OUTDOOR,
+                'is_available' => true,
+            ]);
+        }
+
+        $user = User::factory()->player()->create(['home_city' => $betaCity]);
+
+        $component = Livewire::actingAs($user)->test(BookNowPage::class);
+        $rows = $component->instance()->browseVenueRows();
+
+        $this->assertSame(2, $rows->count());
+        $this->assertSame($betaCity, $rows->first()['venue']->city);
+        $this->assertSame($betaCity, session('book_now_nearby_city'));
+    }
+
+    public function test_book_now_infers_preferred_city_from_recent_bookings(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $alphaCity = 'AlphaCity';
+        $betaCity = 'BetaCity';
+
+        $clientAlpha = CourtClient::factory()->create([
+            'is_active' => true,
+            'city' => $alphaCity,
+        ]);
+        $clientBeta = CourtClient::factory()->create([
+            'is_active' => true,
+            'city' => $betaCity,
+        ]);
+
+        $courtBeta = Court::query()->create([
+            'court_client_id' => $clientBeta->id,
+            'name' => 'Beta Court',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        Court::query()->create([
+            'court_client_id' => $clientAlpha->id,
+            'name' => 'Alpha Court',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $user = User::factory()->player()->create(['home_city' => null]);
+
+        $starts = Carbon::parse('2026-05-01 10:00:00', config('app.timezone'));
+        Booking::query()->create([
+            'court_client_id' => $clientBeta->id,
+            'court_id' => $courtBeta->id,
+            'user_id' => $user->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 10_000,
+            'currency' => 'PHP',
+        ]);
+
+        $component = Livewire::actingAs($user)->test(BookNowPage::class);
+
+        $this->assertSame($betaCity, $component->instance()->userPreferredCity());
+        $this->assertSame($betaCity, $component->instance()->browseVenueRows()->first()['venue']->city);
     }
 }

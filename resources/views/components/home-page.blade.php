@@ -602,7 +602,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                             wire:navigate
                             class="font-display inline-flex items-center rounded-xl bg-emerald-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
                         >
-                            My corner
+                            My Corner
                         </a>
                     @endif
                     <a

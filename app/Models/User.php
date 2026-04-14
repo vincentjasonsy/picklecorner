@@ -27,6 +27,7 @@ class User extends Authenticatable
         'desk_court_client_id',
         'name',
         'email',
+        'home_city',
         'password',
     ];
 
@@ -90,6 +91,43 @@ class User extends Authenticatable
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    /**
+     * Preferred venue city for book-now defaults and ranking: explicit profile, else most common
+     * city among recent confirmed/completed bookings.
+     */
+    public function preferredCourtBookingCity(): ?string
+    {
+        if (filled($this->home_city)) {
+            return $this->home_city;
+        }
+
+        $recent = $this->bookings()
+            ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED])
+            ->orderByDesc('starts_at')
+            ->limit(40)
+            ->get(['court_client_id']);
+
+        if ($recent->isEmpty()) {
+            return null;
+        }
+
+        $clientIds = $recent->pluck('court_client_id')->unique()->filter();
+        $citiesByClient = CourtClient::query()
+            ->whereIn('id', $clientIds)
+            ->whereNotNull('city')
+            ->pluck('city', 'id');
+
+        $cityCounts = $recent
+            ->map(fn (Booking $b) => $citiesByClient->get($b->court_client_id))
+            ->filter();
+
+        if ($cityCounts->isEmpty()) {
+            return null;
+        }
+
+        return $cityCounts->countBy()->sortDesc()->keys()->first();
     }
 
     public function activityLogs(): HasMany

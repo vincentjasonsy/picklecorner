@@ -187,7 +187,7 @@
                                             : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                     ])
                                 >
-                                    {{ $staffAppUrl !== null ? 'Go to app' : 'My corner' }}
+                                    {{ $staffAppUrl !== null ? 'Go to app' : 'My Corner' }}
                                 </a>
                                 <form method="POST" action="{{ route('logout') }}" class="inline">
                                     @csrf
@@ -394,7 +394,7 @@
                                         : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                                 ])
                             >
-                                {{ $staffAppUrl !== null ? 'Go to app' : 'My corner' }}
+                                {{ $staffAppUrl !== null ? 'Go to app' : 'My Corner' }}
                             </a>
                             <form method="POST" action="{{ route('logout') }}" class="contents">
                                 @csrf

@@ -3,6 +3,7 @@
 namespace App\Livewire\Member;
 
 use App\GameQ\ProfileOpponentAggregator;
+use App\Models\CourtClient;
 use App\Models\OpenPlaySession;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -20,6 +21,9 @@ class MemberProfileSettings extends Component
 
     public string $email = '';
 
+    /** Empty string = no preference; otherwise must match an active venue city. */
+    public string $home_city = '';
+
     public string $current_password = '';
 
     public string $new_password = '';
@@ -31,11 +35,20 @@ class MemberProfileSettings extends Component
         $user = auth()->user();
         $this->name = $user->name;
         $this->email = $user->email;
+        $this->home_city = $user->home_city ?? '';
     }
 
     public function saveProfile(): void
     {
         $user = auth()->user();
+
+        $cityOptions = CourtClient::query()
+            ->where('is_active', true)
+            ->whereNotNull('city')
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city')
+            ->all();
 
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -47,11 +60,13 @@ class MemberProfileSettings extends Component
                 'max:255',
                 Rule::unique(User::class)->ignore($user->id),
             ],
+            'home_city' => ['nullable', 'string', 'max:128', Rule::in(array_merge([''], $cityOptions))],
         ]);
 
         $user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
+            'home_city' => $validated['home_city'] !== '' ? $validated['home_city'] : null,
         ]);
 
         session()->flash('status', 'Profile updated — you’re all set!');
@@ -82,9 +97,17 @@ class MemberProfileSettings extends Component
             ->get();
         $gameqProfile = ProfileOpponentAggregator::forUser($user, $gameqSessions);
 
+        $homeCityOptions = CourtClient::query()
+            ->where('is_active', true)
+            ->whereNotNull('city')
+            ->distinct()
+            ->orderBy('city')
+            ->pluck('city');
+
         return view('livewire.member.member-profile-settings', [
             'gameqSessionsTotal' => $gameqSessions->count(),
             'gameqProfile' => $gameqProfile,
+            'homeCityOptions' => $homeCityOptions,
         ]);
     }
 }

@@ -18,7 +18,7 @@ You also had **{{ $coachName }}** on this booking — optional coach feedback (o
 @endif
 
 <x-mail::subcopy>
-You’ll need to sign in if prompted. Links expire after a few weeks. You can also leave or update a review from [My corner]({{ route('account.dashboard', [], true) }}) or from the venue and booking pages while your review window is open.
+You’ll need to sign in if prompted. Links expire after a few weeks. You can also leave or update a review from [My Corner]({{ route('account.dashboard', [], true) }}) or from the venue and booking pages while your review window is open.
 </x-mail::subcopy>
 
 Thanks,<br>

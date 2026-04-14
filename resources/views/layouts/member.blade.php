@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'My corner' }} — {{ config('app.name') }}</title>
+        <title>{{ $title ?? 'My Corner' }} — {{ config('app.name') }}</title>
 
         @include('partials.favicon')
 
@@ -169,7 +169,7 @@
                                         wire:navigate
                                         @class([
                                             'rounded-lg px-3 py-2 transition-colors',
-                                            request()->routeIs('account.bookings')
+                                            request()->routeIs('account.bookings', 'account.bookings.show')
                                                 ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
@@ -361,7 +361,7 @@
                                 class="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                             />
                             <h1 class="truncate font-display text-base font-bold text-zinc-900 dark:text-white lg:text-lg">
-                                {{ $title ?? 'My corner' }}
+                                {{ $title ?? 'My Corner' }}
                             </h1>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
@@ -384,6 +384,12 @@
                 </div>
             </div>
         </div>
+
+        @auth
+            @if (! auth()->user()->usesStaffAppNav())
+                @livewire(\App\Livewire\Member\MemberBookingNudge::class)
+            @endif
+        @endauth
 
         @livewireScripts
     </body>
