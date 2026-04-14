@@ -106,6 +106,7 @@ class VenueBookingApprovalsTest extends TestCase
         Livewire::actingAs($admin)
             ->test(VenueBookingApprovals::class)
             ->assertSee('One request · 2 courts')
+            ->assertSee('Reference: '.$requestId)
             ->assertSee('Court A')
             ->assertSee('Court B')
             ->call('approve', $b1->id);
