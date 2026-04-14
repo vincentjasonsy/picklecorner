@@ -14,8 +14,12 @@
             <p class="mx-auto mt-5 max-w-lg text-xs leading-relaxed text-emerald-200/85">
                 {{ config('app.name') }} covers public booking, member accounts, venue admin, front desk, coaches, and
                 GameQ —
+                <a href="{{ url('/#pricing') }}" wire:navigate class="font-semibold text-white underline-offset-2 hover:underline">
+                    fees &amp; value
+                </a>
+                and
                 <a href="{{ url('/#tools') }}" wire:navigate class="font-semibold text-white underline-offset-2 hover:underline">
-                    overview of tools
+                    everything in the app
                 </a>
                 .
             </p>

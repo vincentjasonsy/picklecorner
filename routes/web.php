@@ -9,6 +9,7 @@ use App\Http\Controllers\ReportExportController;
 use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
 use App\Livewire\Admin\BookingHistory;
+use App\Livewire\Admin\BookingRates;
 use App\Livewire\Admin\BookingShow;
 use App\Livewire\Admin\CoachBookingManagement;
 use App\Livewire\Admin\CourtClientCreate;
@@ -28,12 +29,16 @@ use App\Livewire\Auth\RegisterPage;
 use App\Livewire\BookNow\VenueBookingPage;
 use App\Livewire\BookNowPage;
 use App\Livewire\Coach\CoachAvailability;
+use App\Livewire\Coach\CoachBookingsCalendar;
+use App\Livewire\Coach\CoachBookingShow;
 use App\Livewire\Coach\CoachCourtsManage;
 use App\Livewire\Coach\CoachGiftCards;
 use App\Livewire\Coach\CoachGiftCardShow;
 use App\Livewire\Coach\CoachHome;
 use App\Livewire\Coach\CoachProfileEdit;
 use App\Livewire\ContactPage;
+use App\Livewire\Desk\DeskBookingsCalendar;
+use App\Livewire\Desk\DeskBookingShow;
 use App\Livewire\Desk\DeskCourtsLive;
 use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
@@ -52,6 +57,7 @@ use App\Livewire\OpenPlayWatchPlayerH2h;
 use App\Livewire\PublicCourtShow;
 use App\Livewire\Venue\VenueBookingApprovals;
 use App\Livewire\Venue\VenueBookingHistory;
+use App\Livewire\Venue\VenueBookingsCalendar;
 use App\Livewire\Venue\VenueBookingShow;
 use App\Livewire\Venue\VenueCourtClientManage;
 use App\Livewire\Venue\VenueCourts;
@@ -152,6 +158,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
 
     Route::middleware('coach')->prefix('account/coach')->name('account.coach.')->group(function (): void {
         Route::livewire('/', CoachHome::class)->name('dashboard');
+        Route::livewire('/bookings/calendar', CoachBookingsCalendar::class)->name('bookings.calendar');
+        Route::livewire('/bookings/{booking}', CoachBookingShow::class)->name('bookings.show');
         Route::livewire('/courts', CoachCourtsManage::class)->name('courts');
         Route::livewire('/availability', CoachAvailability::class)->name('availability');
         Route::livewire('/gift-cards', CoachGiftCards::class)->name('gift-cards.index');
@@ -166,6 +174,7 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/manual-booking', VenueManualBooking::class)->name('manual-booking');
         Route::livewire('/bookings/pending', VenueBookingApprovals::class)->name('bookings.pending');
         Route::livewire('/bookings/history', VenueBookingHistory::class)->name('bookings.history');
+        Route::livewire('/bookings/calendar', VenueBookingsCalendar::class)->name('bookings.calendar');
         Route::livewire('/bookings/{booking}', VenueBookingShow::class)->name('bookings.show');
         Route::livewire('/customers', VenueCrmIndex::class)->name('crm.index');
         Route::livewire('/customers/{user}/summary', UserSummary::class)->name('customers.summary');
@@ -186,6 +195,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/courts-live', DeskCourtsLive::class)->name('courts-live');
         Route::livewire('/booking-request', DeskManualBooking::class)->name('booking-request');
         Route::livewire('/my-requests', DeskMyRequests::class)->name('my-requests');
+        Route::livewire('/bookings/calendar', DeskBookingsCalendar::class)->name('bookings.calendar');
+        Route::livewire('/bookings/{booking}', DeskBookingShow::class)->name('bookings.show');
     });
 
     Route::post('/admin/stop-impersonating', [ImpersonationController::class, 'destroy'])
@@ -211,6 +222,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::livewire('/court-clients/{courtClient}/manual-booking', CourtClientManualBooking::class)
             ->name('court-clients.manual-booking');
         Route::livewire('/manual-booking', ManualBookingHub::class)->name('manual-booking.hub');
+        Route::livewire('/booking-rates', BookingRates::class)->name('booking-rates');
         Route::livewire('/gift-cards', 'admin-gift-cards-index')->name('gift-cards.index');
         Route::livewire('/gift-cards/{giftCard}', GiftCardShow::class)->name('gift-cards.show');
         Route::livewire('/invoices', InvoiceIndex::class)->name('invoices.index');

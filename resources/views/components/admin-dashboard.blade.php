@@ -84,7 +84,8 @@ new #[Layout('layouts::admin'), Title('Overview')] class extends Component
         Use the sidebar for user management, venue pricing, and detailed reports.
         Configure
         <a
-            href="{{ route('filament.filament.resources.booking-fee-settings.index') }}"
+            href="{{ route('admin.booking-rates') }}"
+            wire:navigate
             class="font-medium text-emerald-700 underline decoration-emerald-700/30 underline-offset-2 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
         >
             platform booking rates

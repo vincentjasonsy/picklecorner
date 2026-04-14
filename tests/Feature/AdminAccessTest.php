@@ -67,6 +67,18 @@ class AdminAccessTest extends TestCase
         $this->actingAs($super)->get(route('admin.manual-booking.hub'))->assertOk();
     }
 
+    public function test_super_admin_can_open_booking_rates(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $super = User::factory()->superAdmin()->create();
+
+        $this->actingAs($super)
+            ->get(route('admin.booking-rates'))
+            ->assertOk()
+            ->assertSee('Platform booking service fee', escape: false);
+    }
+
     public function test_super_admin_can_open_internal_play_reminders_dashboard(): void
     {
         $this->seed(UserTypeSeeder::class);

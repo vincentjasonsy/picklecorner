@@ -80,7 +80,9 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                 </h1>
                 <p class="mt-5 max-w-lg text-sm leading-relaxed text-emerald-100/85 sm:text-base">
                     {{ config('app.name') }} is your home base for finding venues, locking in hours, and keeping members
-                    on the same page—without the spreadsheet chaos.
+                    on the same page—without the spreadsheet chaos. We keep platform fees lean so
+                    <span class="font-semibold text-white/95">more of your budget stays on the court</span>, not buried
+                    in booking surcharges.
                 </p>
                 <div class="mt-8 flex flex-wrap items-center gap-3">
                     <a
@@ -152,8 +154,10 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
             <div class="flex max-w-xs items-start gap-3 text-white">
                 <span class="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-white/15 font-display text-sm font-bold">02</span>
                 <div>
-                    <p class="font-display text-sm font-bold uppercase tracking-wide">Fair pricing</p>
-                    <p class="mt-1 text-xs text-emerald-50/90">Peak and off-peak rates, shown before you confirm.</p>
+                    <p class="font-display text-sm font-bold uppercase tracking-wide">Fair, lower fees</p>
+                    <p class="mt-1 text-xs text-emerald-50/90">
+                        Competitive platform pricing plus venue peak/off-peak court rates—always visible before you pay.
+                    </p>
                 </div>
             </div>
             <div class="flex max-w-xs items-start gap-3 text-white">
@@ -163,6 +167,64 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                     <p class="mt-1 text-xs text-emerald-50/90">Desk, venue, and member flows stay in sync.</p>
                 </div>
             </div>
+        </div>
+    </section>
+
+    {{-- Pricing & value --}}
+    <section id="pricing" class="scroll-mt-16 border-b border-zinc-200 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-900 sm:py-20">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mx-auto max-w-2xl text-center">
+                <p class="font-display text-xs font-bold uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
+                    Straightforward rates
+                </p>
+                <h2 class="font-display mt-3 text-3xl font-bold uppercase tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+                    More court time, less platform overhead
+                </h2>
+                <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    Venues set their own court prices—you always see hourly rates up front. On top of that, we charge a
+                    small, capped <strong class="font-semibold text-zinc-800 dark:text-zinc-200">booking service fee</strong>
+                    (a modest base plus a low percentage on court subtotals) so checkout stays predictable. We
+                    deliberately keep that fee lower than many legacy sports and facility apps, so
+                    <strong class="font-semibold text-zinc-800 dark:text-zinc-200">your money goes to play time</strong>, not
+                    hidden platform markup.
+                </p>
+            </div>
+            <ul class="mx-auto mt-12 grid max-w-5xl gap-5 sm:grid-cols-3" role="list">
+                <li
+                    class="rounded-2xl border border-emerald-200/90 bg-gradient-to-b from-emerald-50/90 to-white px-5 py-6 text-center shadow-sm dark:border-emerald-800/60 dark:from-emerald-950/50 dark:to-zinc-900"
+                >
+                    <p class="font-display text-lg font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-200">
+                        Competitive fees
+                    </p>
+                    <p class="mt-2 text-xs leading-relaxed text-emerald-900/85 dark:text-emerald-100/85">
+                        A lean service fee structure designed to undercut bloated all-in-one platforms—see the line item
+                        at checkout.
+                    </p>
+                </li>
+                <li
+                    class="rounded-2xl border border-teal-200/90 bg-gradient-to-b from-teal-50/90 to-white px-5 py-6 text-center shadow-sm dark:border-teal-800/60 dark:from-teal-950/40 dark:to-zinc-900"
+                >
+                    <p class="font-display text-lg font-bold uppercase tracking-wide text-teal-800 dark:text-teal-200">
+                        No sticker shock
+                    </p>
+                    <p class="mt-2 text-xs leading-relaxed text-teal-900/85 dark:text-teal-100/85">
+                        Court subtotals, coach add-ons where offered, then service fee—totals are clear before you confirm.
+                    </p>
+                </li>
+                <li
+                    class="rounded-2xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-white px-5 py-6 text-center shadow-sm dark:border-amber-800/60 dark:from-amber-950/40 dark:to-zinc-900"
+                >
+                    <p class="font-display text-lg font-bold uppercase tracking-wide text-amber-900 dark:text-amber-100">
+                        Venues stay in control
+                    </p>
+                    <p class="mt-2 text-xs leading-relaxed text-amber-950/90 dark:text-amber-100/85">
+                        Peak and off-peak court pricing stays with each club—we’re not inflating their rack rates.
+                    </p>
+                </li>
+            </ul>
+            <p class="mx-auto mt-10 max-w-xl text-center text-xs text-zinc-500 dark:text-zinc-400">
+                Rates and fee rules can change; we’ll always show the current breakdown at checkout.
+            </p>
         </div>
     </section>
 

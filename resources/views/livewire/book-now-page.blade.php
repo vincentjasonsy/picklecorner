@@ -14,8 +14,12 @@
             <span class="text-emerald-900/90 dark:text-emerald-100/90">
                 Venues, desk staff, coaches, and GameQ use other workspaces —
             </span>
+            <a href="{{ url('/#pricing') }}" wire:navigate class="font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300">
+                how booking fees work
+            </a>
+            ·
             <a href="{{ url('/#tools') }}" wire:navigate class="font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300">
-                see everything {{ config('app.name') }} includes
+                full platform tour
             </a>
             .
         </div>

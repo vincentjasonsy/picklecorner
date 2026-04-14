@@ -35,6 +35,10 @@ class DeskPortalTest extends TestCase
             ->get(route('desk.my-requests'))
             ->assertOk();
 
+        $this->actingAs($desk)
+            ->get(route('desk.bookings.calendar'))
+            ->assertOk();
+
         Livewire::actingAs($desk)
             ->test(DeskHome::class)
             ->assertSee($client->name);

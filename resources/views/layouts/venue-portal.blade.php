@@ -139,6 +139,18 @@
                                 Booking history
                             </a>
                             <a
+                                href="{{ route('venue.bookings.calendar') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.bookings.calendar')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Booking calendar
+                            </a>
+                            <a
                                 href="{{ route('venue.crm.index') }}"
                                 wire:navigate
                                 @class([
@@ -293,6 +305,7 @@
                     </div>
                     @php
                         $headerBookingActive = request()->routeIs('venue.bookings.history', 'venue.bookings.show');
+                        $headerCalendarActive = request()->routeIs('venue.bookings.calendar');
                     @endphp
                     <nav
                         class="hidden min-w-0 shrink flex-wrap items-center justify-end gap-x-1 gap-y-1 text-xs font-semibold sm:flex md:gap-x-2 md:text-sm"
@@ -309,6 +322,18 @@
                             ])
                         >
                             Booking history
+                        </a>
+                        <a
+                            href="{{ route('venue.bookings.calendar') }}"
+                            wire:navigate
+                            @class([
+                                'whitespace-nowrap rounded-md px-2 py-1 transition-colors',
+                                $headerCalendarActive
+                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                    : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80',
+                            ])
+                        >
+                            Calendar
                         </a>
                         <a
                             href="{{ route('venue.crm.index') }}"

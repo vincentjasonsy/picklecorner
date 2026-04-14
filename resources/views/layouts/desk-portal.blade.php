@@ -203,6 +203,28 @@
                             Status &amp; history
                         </span>
                     </a>
+                    <a
+                        href="{{ route('desk.bookings.calendar') }}"
+                        wire:navigate
+                        @class([
+                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                            request()->routeIs('desk.bookings.calendar', 'desk.bookings.show')
+                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                        ])
+                    >
+                        <span class="block">Booking calendar</span>
+                        <span
+                            @class([
+                                'mt-0.5 block text-xs font-normal',
+                                request()->routeIs('desk.bookings.calendar', 'desk.bookings.show')
+                                    ? 'text-teal-100'
+                                    : 'text-stone-500 dark:text-stone-500',
+                            ])
+                        >
+                            Your submissions by day
+                        </span>
+                    </a>
                 </nav>
                 <div class="shrink-0 border-t border-stone-200 p-3 dark:border-stone-800 lg:p-4">
                     <form method="POST" action="{{ route('logout') }}" @submit="portalNavOpen = false">

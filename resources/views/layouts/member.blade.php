@@ -227,6 +227,18 @@
                                         Availability
                                     </a>
                                     <a
+                                        href="{{ route('account.coach.bookings.calendar') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-lg px-3 py-2 transition-colors',
+                                            request()->routeIs('account.coach.bookings.calendar', 'account.coach.bookings.show')
+                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Booking calendar
+                                    </a>
+                                    <a
                                         href="{{ route('account.coach.gift-cards.index') }}"
                                         wire:navigate
                                         @class([

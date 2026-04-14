@@ -51,8 +51,12 @@
 
             <p class="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400 xl:text-left">
                 GameQ is one workspace inside {{ config('app.name') }} —
+                <a href="{{ url('/#pricing') }}" wire:navigate class="font-semibold text-sky-700 hover:underline dark:text-sky-400">
+                    competitive booking fees
+                </a>
+                ·
                 <a href="{{ url('/#tools') }}" wire:navigate class="font-semibold text-sky-700 hover:underline dark:text-sky-400">
-                    see booking, venue, desk &amp; coach tools
+                    booking, venue, desk &amp; coach tools
                 </a>
                 .
             </p>

@@ -55,12 +55,12 @@
                     @endphp
                 @endauth
                 <div
-                    class="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8"
+                    class="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8"
                 >
                     <a
                         href="{{ route('home') }}"
                         wire:navigate
-                        class="min-w-0 shrink truncate text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-100"
+                        class="font-display min-w-0 shrink truncate text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100 sm:text-xl"
                     >
                         {{ config('app.name') }}
                     </a>
@@ -97,11 +97,10 @@
                                 Reviews
                             </a>
                             <a
-                                href="{{ url('/#tools') }}"
-                                wire:navigate
+                                href="{{ url('/#pricing') }}"
                                 class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
                             >
-                                Tools
+                                Pricing
                             </a>
                             <a
                                 href="{{ route('contact') }}"
@@ -247,7 +246,7 @@
                     x-cloak
                     class="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:hidden"
                 >
-                    <nav class="flex max-h-[min(70vh,calc(100dvh-3.5rem))] flex-col gap-0.5 overflow-y-auto px-4 py-3 text-base font-medium" aria-label="Primary mobile">
+                    <nav class="flex max-h-[min(70vh,calc(100dvh-4rem))] flex-col gap-0.5 overflow-y-auto px-4 py-3 text-base font-medium" aria-label="Primary mobile">
                         <a
                             href="{{ route('home') }}"
                             wire:navigate
@@ -276,12 +275,11 @@
                             Reviews
                         </a>
                         <a
-                            href="{{ url('/#tools') }}"
-                            wire:navigate
+                            href="{{ url('/#pricing') }}"
                             class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
                             @click="mobileNavOpen = false"
                         >
-                            Tools
+                            Pricing
                         </a>
                         <a
                             href="{{ route('contact') }}"
@@ -396,7 +394,7 @@
                         <a href="{{ route('home') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
                         <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
                         <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
-                        <a href="{{ url('/#tools') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Tools</a>
+                        <a href="{{ url('/#pricing') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Pricing</a>
                         <a href="{{ route('contact') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
                         <a
                             href="{{ route('open-play.about') }}"

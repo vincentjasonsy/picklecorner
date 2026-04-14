@@ -38,6 +38,7 @@ class CoachPortalTest extends TestCase
         $coach = User::factory()->coach()->create();
 
         $this->actingAs($coach)->get(route('account.coach.dashboard'))->assertOk();
+        $this->actingAs($coach)->get(route('account.coach.bookings.calendar'))->assertOk();
         $this->actingAs($coach)->get(route('account.coach.courts'))->assertOk();
         $this->actingAs($coach)->get(route('account.coach.availability'))->assertOk();
         $this->actingAs($coach)->get(route('account.coach.profile'))->assertOk();

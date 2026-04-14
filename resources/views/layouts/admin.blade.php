@@ -194,10 +194,11 @@
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
-                                href="{{ route('filament.filament.resources.booking-fee-settings.index') }}"
+                                href="{{ route('admin.booking-rates') }}"
+                                wire:navigate
                                 @class([
                                     'rounded-lg px-3 py-2 transition-colors',
-                                    request()->is('filament/booking-fee-settings', 'filament/booking-fee-settings/*')
+                                    request()->routeIs('admin.booking-rates')
                                         ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
                                         : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                 ])

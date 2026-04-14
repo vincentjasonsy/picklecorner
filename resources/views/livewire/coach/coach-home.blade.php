@@ -37,6 +37,13 @@
                 Set availability
             </a>
             <a
+                href="{{ route('account.coach.bookings.calendar') }}"
+                wire:navigate
+                class="inline-flex items-center rounded-xl border-2 border-white/40 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+            >
+                Calendar
+            </a>
+            <a
                 href="{{ route('account.coach.profile') }}"
                 wire:navigate
                 class="inline-flex items-center rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-md transition hover:bg-amber-200 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300"
