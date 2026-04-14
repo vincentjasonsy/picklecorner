@@ -29,7 +29,7 @@
                         wire:navigate
                         class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-300 px-8 py-3.5 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800/50 sm:w-auto"
                     >
-                        Back to my court
+                        Back to my corner
                     </a>
                 @else
                     <a

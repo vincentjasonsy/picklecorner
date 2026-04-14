@@ -28,6 +28,8 @@ class CourtClientFactory extends Factory
     {
         $name = fake()->company().' Pickleball';
 
+        $avg = round(fake()->randomFloat(1, 35, 50) / 10, 1);
+
         return [
             'name' => $name,
             'slug' => Str::slug($name).'-'.fake()->unique()->numerify('###'),
@@ -40,8 +42,11 @@ class CourtClientFactory extends Factory
             'peak_hourly_rate_cents' => null,
             'currency' => 'PHP',
             'cover_image_path' => null,
-            'public_rating_average' => round(fake()->randomFloat(1, 35, 50) / 10, 1),
+            'public_rating_average' => $avg,
             'public_rating_count' => fake()->numberBetween(8, 400),
+            'public_rating_location' => $avg,
+            'public_rating_amenities' => $avg,
+            'public_rating_price' => $avg,
         ];
     }
 

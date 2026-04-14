@@ -53,6 +53,9 @@ class CourtClient extends Model
         'cover_image_path',
         'public_rating_average',
         'public_rating_count',
+        'public_rating_location',
+        'public_rating_amenities',
+        'public_rating_price',
     ];
 
     protected function casts(): array
@@ -63,6 +66,9 @@ class CourtClient extends Model
             'peak_hourly_rate_cents' => 'integer',
             'public_rating_average' => 'decimal:1',
             'public_rating_count' => 'integer',
+            'public_rating_location' => 'decimal:1',
+            'public_rating_amenities' => 'decimal:1',
+            'public_rating_price' => 'decimal:1',
             'latitude' => 'decimal:7',
             'longitude' => 'decimal:7',
             'amenities' => 'array',

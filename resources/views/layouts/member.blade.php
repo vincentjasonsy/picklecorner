@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'My court' }} — {{ config('app.name') }}</title>
+        <title>{{ $title ?? 'My corner' }} — {{ config('app.name') }}</title>
 
         @include('partials.favicon')
 
@@ -361,7 +361,7 @@
                                 class="border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                             />
                             <h1 class="truncate font-display text-base font-bold text-zinc-900 dark:text-white lg:text-lg">
-                                {{ $title ?? 'My court' }}
+                                {{ $title ?? 'My corner' }}
                             </h1>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">

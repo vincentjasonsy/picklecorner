@@ -9,6 +9,7 @@ use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\User;
 use App\Models\UserReview;
+use App\Services\UserReviewAggregateService;
 use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -35,6 +36,9 @@ class UserReviewsFlowTest extends TestCase
         $venue = CourtClient::factory()->create([
             'public_rating_average' => null,
             'public_rating_count' => 0,
+            'public_rating_location' => null,
+            'public_rating_amenities' => null,
+            'public_rating_price' => null,
         ]);
         $court = Court::query()->create([
             'court_client_id' => $venue->id,
@@ -59,7 +63,9 @@ class UserReviewsFlowTest extends TestCase
                 'targetType' => UserReview::TARGET_VENUE,
                 'targetId' => $venue->id,
             ])
-            ->set('rating', 4)
+            ->set('ratingLocation', 4)
+            ->set('ratingAmenities', 4)
+            ->set('ratingPrice', 5)
             ->set('body', 'Nice courts.')
             ->call('submitReview')
             ->assertHasNoErrors();
@@ -69,6 +75,9 @@ class UserReviewsFlowTest extends TestCase
             'target_type' => UserReview::TARGET_VENUE,
             'target_id' => $venue->id,
             'rating' => 4,
+            'rating_location' => 4,
+            'rating_amenities' => 4,
+            'rating_price' => 5,
             'status' => UserReview::STATUS_PENDING,
             'profanity_flag' => false,
         ]);
@@ -105,7 +114,9 @@ class UserReviewsFlowTest extends TestCase
                 'targetType' => UserReview::TARGET_VENUE,
                 'targetId' => $venue->id,
             ])
-            ->set('rating', 3)
+            ->set('ratingLocation', 3)
+            ->set('ratingAmenities', 3)
+            ->set('ratingPrice', 3)
             ->set('body', 'This place is shit.')
             ->call('submitReview')
             ->assertHasNoErrors();
@@ -125,6 +136,9 @@ class UserReviewsFlowTest extends TestCase
         $venue = CourtClient::factory()->create([
             'public_rating_average' => null,
             'public_rating_count' => 0,
+            'public_rating_location' => null,
+            'public_rating_amenities' => null,
+            'public_rating_price' => null,
         ]);
         $player = User::factory()->player()->create();
         $review = UserReview::query()->create([
@@ -132,6 +146,9 @@ class UserReviewsFlowTest extends TestCase
             'target_type' => UserReview::TARGET_VENUE,
             'target_id' => $venue->id,
             'rating' => 5,
+            'rating_location' => 5,
+            'rating_amenities' => 5,
+            'rating_price' => 5,
             'body' => 'Superb',
             'status' => UserReview::STATUS_PENDING,
             'profanity_flag' => false,
@@ -146,6 +163,9 @@ class UserReviewsFlowTest extends TestCase
         $venue->refresh();
         $this->assertEquals(5.0, (float) $venue->public_rating_average);
         $this->assertSame(1, (int) $venue->public_rating_count);
+        $this->assertEquals(5.0, (float) $venue->public_rating_location);
+        $this->assertEquals(5.0, (float) $venue->public_rating_amenities);
+        $this->assertEquals(5.0, (float) $venue->public_rating_price);
 
         $review->refresh();
         $this->assertSame(UserReview::STATUS_APPROVED, $review->status);
@@ -192,7 +212,9 @@ class UserReviewsFlowTest extends TestCase
                 'targetType' => UserReview::TARGET_VENUE,
                 'targetId' => $venue->id,
             ])
-            ->set('rating', 4)
+            ->set('ratingLocation', 4)
+            ->set('ratingAmenities', 4)
+            ->set('ratingPrice', 4)
             ->set('body', 'Nice.')
             ->call('submitReview')
             ->assertHasErrors('review');
@@ -231,7 +253,9 @@ class UserReviewsFlowTest extends TestCase
                 'targetType' => UserReview::TARGET_VENUE,
                 'targetId' => $venue->id,
             ])
-            ->set('rating', 4)
+            ->set('ratingLocation', 4)
+            ->set('ratingAmenities', 4)
+            ->set('ratingPrice', 4)
             ->set('body', 'Soon.')
             ->call('submitReview')
             ->assertHasErrors('review');
@@ -314,7 +338,9 @@ class UserReviewsFlowTest extends TestCase
                 'targetType' => UserReview::TARGET_VENUE,
                 'targetId' => $venue->id,
             ])
-            ->set('rating', 4)
+            ->set('ratingLocation', 4)
+            ->set('ratingAmenities', 4)
+            ->set('ratingPrice', 4)
             ->set('body', 'Late.')
             ->call('submitReview')
             ->assertHasErrors('review');
@@ -331,11 +357,15 @@ class UserReviewsFlowTest extends TestCase
             'target_type' => UserReview::TARGET_VENUE,
             'target_id' => $venue->id,
             'rating' => 5,
+            'rating_location' => 5,
+            'rating_amenities' => 5,
+            'rating_price' => 5,
             'body' => 'Excellent lights and surface.',
             'status' => UserReview::STATUS_APPROVED,
             'profanity_flag' => false,
             'moderated_at' => now(),
         ]);
+        UserReviewAggregateService::syncVenue($venue->fresh());
 
         Livewire::test(UserReviewsPanel::class, [
             'targetType' => UserReview::TARGET_VENUE,

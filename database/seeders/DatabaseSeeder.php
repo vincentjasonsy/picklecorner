@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             UserTypeSeeder::class,
             DemoUsersSeeder::class,
             CourtClientSeeder::class,
+            VenueReviewSeeder::class,
             BookingSeeder::class,
             InternalTeamPlayDemoSeeder::class,
         ]);

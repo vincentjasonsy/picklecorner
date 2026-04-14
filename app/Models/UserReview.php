@@ -25,6 +25,9 @@ class UserReview extends Model
         'target_type',
         'target_id',
         'rating',
+        'rating_location',
+        'rating_amenities',
+        'rating_price',
         'body',
         'status',
         'profanity_flag',
@@ -36,6 +39,9 @@ class UserReview extends Model
     {
         return [
             'rating' => 'integer',
+            'rating_location' => 'integer',
+            'rating_amenities' => 'integer',
+            'rating_price' => 'integer',
             'profanity_flag' => 'boolean',
             'moderated_at' => 'datetime',
         ];

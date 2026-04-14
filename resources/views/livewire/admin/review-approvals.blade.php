@@ -34,7 +34,13 @@
                         </p>
                         <p class="mt-1 font-semibold text-zinc-900 dark:text-zinc-100">
                             {{ $rev->author?->name ?? 'Member' }}
-                            <span class="font-normal text-zinc-500">· {{ $rev->rating }}/5</span>
+                            <span class="font-normal text-zinc-500">· {{ $rev->rating }}/5 overall</span>
+                            @if ($rev->target_type === UserReview::TARGET_VENUE && $rev->rating_location !== null)
+                                <span class="block text-xs font-normal text-zinc-500">
+                                    Location {{ $rev->rating_location }}/5 · Amenities {{ $rev->rating_amenities }}/5 · Price
+                                    {{ $rev->rating_price }}/5
+                                </span>
+                            @endif
                         </p>
                         @if ($rev->profanity_flag)
                             <p

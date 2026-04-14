@@ -28,6 +28,13 @@ class UserReviewsPanel extends Component
 
     public int $rating = 5;
 
+    /** Venue-only: dimension scores; overall {@see $rating} is derived as the rounded mean of these. */
+    public int $ratingLocation = 5;
+
+    public int $ratingAmenities = 5;
+
+    public int $ratingPrice = 5;
+
     public string $body = '';
 
     public function mount(string $targetType, string $targetId, bool $showHeading = true): void
@@ -50,6 +57,11 @@ class UserReviewsPanel extends Component
         if ($pending !== null) {
             $this->rating = $pending->rating;
             $this->body = (string) ($pending->body ?? '');
+            if ($this->targetType === UserReview::TARGET_VENUE) {
+                $this->ratingLocation = (int) ($pending->rating_location ?? $pending->rating);
+                $this->ratingAmenities = (int) ($pending->rating_amenities ?? $pending->rating);
+                $this->ratingPrice = (int) ($pending->rating_price ?? $pending->rating);
+            }
         }
     }
 
@@ -77,10 +89,21 @@ class UserReviewsPanel extends Component
             ]);
         }
 
-        $this->validate([
-            'rating' => ['required', 'integer', 'min:1', 'max:5'],
+        $rules = [
             'body' => ['nullable', 'string', 'max:2000'],
-        ]);
+        ];
+        if ($this->targetType === UserReview::TARGET_VENUE) {
+            $rules['ratingLocation'] = ['required', 'integer', 'min:1', 'max:5'];
+            $rules['ratingAmenities'] = ['required', 'integer', 'min:1', 'max:5'];
+            $rules['ratingPrice'] = ['required', 'integer', 'min:1', 'max:5'];
+        } else {
+            $rules['rating'] = ['required', 'integer', 'min:1', 'max:5'];
+        }
+        $this->validate($rules);
+
+        $overallRating = $this->targetType === UserReview::TARGET_VENUE
+            ? (int) round(($this->ratingLocation + $this->ratingAmenities + $this->ratingPrice) / 3)
+            : $this->rating;
 
         $key = 'submit-review:'.$user->id;
         if (RateLimiter::tooManyAttempts($key, 10)) {
@@ -112,22 +135,26 @@ class UserReviewsPanel extends Component
             ->where('status', UserReview::STATUS_PENDING)
             ->first();
 
+        $reviewPayload = [
+            'rating' => $overallRating,
+            'body' => $this->body !== '' ? $this->body : null,
+            'profanity_flag' => $profanity,
+        ];
+        if ($this->targetType === UserReview::TARGET_VENUE) {
+            $reviewPayload['rating_location'] = $this->ratingLocation;
+            $reviewPayload['rating_amenities'] = $this->ratingAmenities;
+            $reviewPayload['rating_price'] = $this->ratingPrice;
+        }
+
         if ($pending !== null) {
-            $pending->forceFill([
-                'rating' => $this->rating,
-                'body' => $this->body !== '' ? $this->body : null,
-                'profanity_flag' => $profanity,
-            ])->save();
+            $pending->forceFill($reviewPayload)->save();
         } else {
-            UserReview::query()->create([
+            UserReview::query()->create(array_merge([
                 'user_id' => $user->id,
                 'target_type' => $this->targetType,
                 'target_id' => $this->targetId,
-                'rating' => $this->rating,
-                'body' => $this->body !== '' ? $this->body : null,
                 'status' => UserReview::STATUS_PENDING,
-                'profanity_flag' => $profanity,
-            ]);
+            ], $reviewPayload));
         }
 
         session()->flash('review_status', 'Thanks — your review was submitted and will appear after a quick check.');
@@ -182,7 +209,7 @@ class UserReviewsPanel extends Component
     }
 
     /**
-     * @return array{average: float, count: int}|null
+     * @return array{average: float, count: int, location: ?float, amenities: ?float, price: ?float}|null
      */
     protected function resolveRatingSummary(): ?array
     {
@@ -195,6 +222,9 @@ class UserReviewsPanel extends Component
             return [
                 'average' => (float) $v->public_rating_average,
                 'count' => (int) $v->public_rating_count,
+                'location' => $v->public_rating_location !== null ? (float) $v->public_rating_location : null,
+                'amenities' => $v->public_rating_amenities !== null ? (float) $v->public_rating_amenities : null,
+                'price' => $v->public_rating_price !== null ? (float) $v->public_rating_price : null,
             ];
         }
 

@@ -21,15 +21,34 @@ final class UserReviewAggregateService
             $client->forceFill([
                 'public_rating_average' => null,
                 'public_rating_count' => 0,
+                'public_rating_location' => null,
+                'public_rating_amenities' => null,
+                'public_rating_price' => null,
             ])->save();
 
             return;
         }
 
         $avg = round((float) $approvedVenue()->avg('rating'), 1);
+
+        $locQ = $approvedVenue()->whereNotNull('rating_location');
+        $locCount = (int) $locQ->count();
+        $avgLoc = $locCount > 0 ? round((float) $locQ->avg('rating_location'), 1) : null;
+
+        $amenQ = $approvedVenue()->whereNotNull('rating_amenities');
+        $amenCount = (int) $amenQ->count();
+        $avgAmen = $amenCount > 0 ? round((float) $amenQ->avg('rating_amenities'), 1) : null;
+
+        $priceQ = $approvedVenue()->whereNotNull('rating_price');
+        $priceCount = (int) $priceQ->count();
+        $avgPrice = $priceCount > 0 ? round((float) $priceQ->avg('rating_price'), 1) : null;
+
         $client->forceFill([
             'public_rating_average' => $avg,
             'public_rating_count' => $count,
+            'public_rating_location' => $avgLoc,
+            'public_rating_amenities' => $avgAmen,
+            'public_rating_price' => $avgPrice,
         ])->save();
     }
 

@@ -67,7 +67,7 @@
                                     href="{{ route('account.dashboard') }}"
                                     class="font-semibold text-emerald-700 hover:text-emerald-800 dark:text-emerald-400"
                                 >
-                                    Back to my court
+                                    Back to my corner
                                 </a>
                             @endif
                         </p>

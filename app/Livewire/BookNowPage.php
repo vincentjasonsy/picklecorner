@@ -84,16 +84,33 @@ class BookNowPage extends Component
         $courts = $this->filteredCourts();
         $counts = $courts->countBy('court_client_id');
 
-        return $courts
+        $uniqueVenues = $courts
             ->map(fn (Court $c) => $c->courtClient)
             ->filter()
             ->unique('id')
+            ->values();
+
+        if ($uniqueVenues->isEmpty()) {
+            return collect();
+        }
+
+        $venuesWithGallery = CourtClient::query()
+            ->whereIn('id', $uniqueVenues->pluck('id'))
+            ->with('approvedGalleryImages')
+            ->get()
+            ->keyBy('id');
+
+        return $uniqueVenues
             ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
             ->values()
-            ->map(fn (CourtClient $venue) => [
-                'venue' => $venue,
-                'court_count' => (int) ($counts->get($venue->id) ?? 0),
-            ]);
+            ->map(function (CourtClient $venue) use ($counts, $venuesWithGallery): array {
+                $model = $venuesWithGallery->get($venue->id) ?? $venue;
+
+                return [
+                    'venue' => $model,
+                    'court_count' => (int) ($counts->get($venue->id) ?? 0),
+                ];
+            });
     }
 
     /** @return Collection<int, string> */

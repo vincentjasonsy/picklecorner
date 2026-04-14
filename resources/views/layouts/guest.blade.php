@@ -72,36 +72,74 @@
                             class="hidden items-center gap-1 text-sm font-medium lg:flex"
                             aria-label="Primary"
                         >
-                            <a
-                                href="{{ route('home') }}"
-                                wire:navigate
-                                @class([
-                                    'rounded-lg px-2.5 py-2 transition-colors',
-                                    request()->routeIs('home')
-                                        ? 'font-semibold text-emerald-700 dark:text-emerald-400'
-                                        : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
-                                ])
+                            <div
+                                class="relative"
+                                x-data="{ homeNavOpen: false }"
+                                @keydown.escape.window="homeNavOpen = false"
                             >
-                                Home
-                            </a>
-                            <a
-                                href="{{ url('/#about') }}"
-                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
-                            >
-                                About
-                            </a>
-                            <a
-                                href="{{ url('/#reviews') }}"
-                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
-                            >
-                                Reviews
-                            </a>
-                            <a
-                                href="{{ url('/#pricing') }}"
-                                class="rounded-lg px-2.5 py-2 text-zinc-600 transition-colors hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400"
-                            >
-                                Pricing
-                            </a>
+                                <button
+                                    type="button"
+                                    id="guest-home-menu-button"
+                                    @class([
+                                        'inline-flex items-center gap-0.5 rounded-lg px-2.5 py-2 transition-colors',
+                                        request()->routeIs('home')
+                                            ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                            : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
+                                    ])
+                                    @click="homeNavOpen = ! homeNavOpen"
+                                    :aria-expanded="homeNavOpen.toString()"
+                                    aria-haspopup="menu"
+                                    aria-controls="guest-home-submenu"
+                                >
+                                    Home
+                                    <svg
+                                        class="size-4 opacity-70"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                                <div
+                                    id="guest-home-submenu"
+                                    role="menu"
+                                    x-show="homeNavOpen"
+                                    x-transition
+                                    x-cloak
+                                    @click.outside="homeNavOpen = false"
+                                    class="absolute left-0 top-full z-40 mt-1 min-w-[11rem] rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-zinc-700 dark:bg-zinc-900"
+                                >
+                                    <a
+                                        role="menuitem"
+                                        href="{{ url('/#about') }}"
+                                        class="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                        @click="homeNavOpen = false"
+                                    >
+                                        About
+                                    </a>
+                                    <a
+                                        role="menuitem"
+                                        href="{{ url('/#reviews') }}"
+                                        class="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                        @click="homeNavOpen = false"
+                                    >
+                                        Reviews
+                                    </a>
+                                    <a
+                                        role="menuitem"
+                                        href="{{ url('/#pricing') }}"
+                                        class="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                        @click="homeNavOpen = false"
+                                    >
+                                        Pricing
+                                    </a>
+                                </div>
+                            </div>
                             <a
                                 href="{{ route('contact') }}"
                                 wire:navigate
@@ -149,7 +187,7 @@
                                             : 'text-zinc-600 hover:text-emerald-700 dark:text-zinc-400 dark:hover:text-emerald-400',
                                     ])
                                 >
-                                    {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
+                                    {{ $staffAppUrl !== null ? 'Go to app' : 'My corner' }}
                                 </a>
                                 <form method="POST" action="{{ route('logout') }}" class="inline">
                                     @csrf
@@ -247,40 +285,64 @@
                     class="border-t border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 lg:hidden"
                 >
                     <nav class="flex max-h-[min(70vh,calc(100dvh-4rem))] flex-col gap-0.5 overflow-y-auto px-4 py-3 text-base font-medium" aria-label="Primary mobile">
-                        <a
-                            href="{{ route('home') }}"
-                            wire:navigate
-                            @click="mobileNavOpen = false"
-                            @class([
-                                'rounded-lg px-3 py-3 transition-colors',
-                                request()->routeIs('home')
-                                    ? 'font-semibold text-emerald-700 dark:text-emerald-400'
-                                    : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
-                            ])
-                        >
-                            Home
-                        </a>
-                        <a
-                            href="{{ url('/#about') }}"
-                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
-                            @click="mobileNavOpen = false"
-                        >
-                            About
-                        </a>
-                        <a
-                            href="{{ url('/#reviews') }}"
-                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
-                            @click="mobileNavOpen = false"
-                        >
-                            Reviews
-                        </a>
-                        <a
-                            href="{{ url('/#pricing') }}"
-                            class="rounded-lg px-3 py-3 text-zinc-800 transition-colors hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400"
-                            @click="mobileNavOpen = false"
-                        >
-                            Pricing
-                        </a>
+                        <div x-data="{ homeSubOpen: false }">
+                            <button
+                                type="button"
+                                @class([
+                                    'flex w-full items-center justify-between rounded-lg px-3 py-3 text-left transition-colors',
+                                    request()->routeIs('home')
+                                        ? 'font-semibold text-emerald-700 dark:text-emerald-400'
+                                        : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
+                                ])
+                                @click="homeSubOpen = ! homeSubOpen"
+                                :aria-expanded="homeSubOpen.toString()"
+                                aria-controls="guest-mobile-home-section"
+                            >
+                                <span>Home</span>
+                                <svg
+                                    class="size-5 shrink-0 opacity-70 transition-transform"
+                                    :class="homeSubOpen && 'rotate-180'"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        fill-rule="evenodd"
+                                        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 11.168l3.71-3.938a.75.75 0 1 1 1.08 1.04l-4.25 4.5a.75.75 0 0 1-1.08 0l-4.25-4.5a.75.75 0 0 1 .02-1.06Z"
+                                        clip-rule="evenodd"
+                                    />
+                                </svg>
+                            </button>
+                            <div
+                                id="guest-mobile-home-section"
+                                x-show="homeSubOpen"
+                                x-transition
+                                x-cloak
+                                class="mb-1 space-y-0.5 border-l-2 border-emerald-200 py-1 pl-3 dark:border-emerald-800"
+                            >
+                                <a
+                                    href="{{ url('/#about') }}"
+                                    class="block rounded-lg py-2 pl-2 text-sm text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+                                    @click="mobileNavOpen = false; homeSubOpen = false"
+                                >
+                                    About
+                                </a>
+                                <a
+                                    href="{{ url('/#reviews') }}"
+                                    class="block rounded-lg py-2 pl-2 text-sm text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+                                    @click="mobileNavOpen = false; homeSubOpen = false"
+                                >
+                                    Reviews
+                                </a>
+                                <a
+                                    href="{{ url('/#pricing') }}"
+                                    class="block rounded-lg py-2 pl-2 text-sm text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+                                    @click="mobileNavOpen = false; homeSubOpen = false"
+                                >
+                                    Pricing
+                                </a>
+                            </div>
+                        </div>
                         <a
                             href="{{ route('contact') }}"
                             wire:navigate
@@ -332,7 +394,7 @@
                                         : 'text-zinc-800 hover:text-emerald-700 dark:text-zinc-100 dark:hover:text-emerald-400',
                                 ])
                             >
-                                {{ $staffAppUrl !== null ? 'Go to app' : 'My court' }}
+                                {{ $staffAppUrl !== null ? 'Go to app' : 'My corner' }}
                             </a>
                             <form method="POST" action="{{ route('logout') }}" class="contents">
                                 @csrf
