@@ -7,7 +7,11 @@
             {{ $targetLabel }}
         </h1>
         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Share a rating and optional comment. Submissions are reviewed before they appear publicly.
+            @if ($targetType === \App\Models\UserReview::TARGET_VENUE)
+                Rate <strong>location</strong>, <strong>amenities</strong>, and <strong>price / value</strong> (each out of five). Your overall score is the average of those three. Add an optional comment — submissions are checked before they appear publicly.
+            @else
+                Share an overall rating and optional comment. Submissions are reviewed before they appear publicly.
+            @endif
         </p>
 
         <div class="mt-8">
