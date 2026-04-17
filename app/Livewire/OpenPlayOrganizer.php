@@ -548,6 +548,13 @@ class OpenPlayOrganizer extends Component
         $this->withEngine(fn (Engine $e) => $e->courtsCountChanged());
     }
 
+    public function updated(string $name, mixed $value = null): void
+    {
+        if ($name === 'state.courtLabels' || str_starts_with($name, 'state.courtLabels.')) {
+            $this->withEngine(fn (Engine $e) => $e->ensureCourtSlots());
+        }
+    }
+
     public function syncQueueFromIdle(): void
     {
         $this->withEngine(fn (Engine $e) => $e->syncQueueFromIdle());

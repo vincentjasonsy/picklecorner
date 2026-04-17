@@ -212,6 +212,14 @@ class User extends Authenticatable
             ->exists();
     }
 
+    public function isOpenPlayHost(): bool
+    {
+        return UserType::query()
+            ->where('id', $this->user_type_id)
+            ->where('slug', UserType::SLUG_OPEN_PLAY_HOST)
+            ->exists();
+    }
+
     public function isSuperAdmin(): bool
     {
         return UserType::query()

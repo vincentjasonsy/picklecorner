@@ -23,7 +23,7 @@ final class MemberBookingNudge
             return false;
         }
 
-        if (! $user->isPlayer() && ! $user->isCoach()) {
+        if (! $user->isPlayer() && ! $user->isCoach() && ! $user->isOpenPlayHost()) {
             return false;
         }
 

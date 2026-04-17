@@ -403,7 +403,7 @@
                                 wire:model="manualBookingPaymentMethod"
                                 class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
                             >
-                                @foreach (\App\Models\Booking::paymentMethodOptions() as $pm)
+                                @foreach (\App\Models\Booking::paymentMethodOptionsDesk() as $pm)
                                     <option value="{{ $pm }}">
                                         {{ \App\Models\Booking::paymentMethodLabel($pm) }}
                                     </option>
@@ -420,7 +420,7 @@
                             <label
                                 class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
                             >
-                                Reference number
+                                Transaction number
                                 @if ($this->manualBookingPortal() === 'desk')
                                     <span class="font-normal normal-case text-zinc-400">(optional)</span>
                                 @endif
@@ -429,7 +429,7 @@
                                 type="text"
                                 wire:model="manualBookingPaymentReference"
                                 class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                placeholder="e.g. GCash ref / transaction ID"
+                                placeholder="GCash / bank ref, receipt no., etc."
                                 autocomplete="off"
                             />
                             @error('manualBookingPaymentReference')

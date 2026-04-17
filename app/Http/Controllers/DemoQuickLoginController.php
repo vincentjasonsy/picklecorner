@@ -16,10 +16,12 @@ class DemoQuickLoginController extends Controller
     public static function roleEmails(): array
     {
         return [
-            'player' => 'player1@picklecorner.ph',
-            'court_admin' => 'courtadmin1@picklecorner.ph',
-            'desk' => 'desk1@picklecorner.ph',
-            'coach' => 'coach1@picklecorner.ph',
+            'super_admin' => 'superadmin@picklecorner.ph',
+            'player' => 'player@picklecorner.ph',
+            'open_play_host' => 'openplayhost@picklecorner.ph',
+            'court_admin' => 'courtadmin@picklecorner.ph',
+            'desk' => 'desk@picklecorner.ph',
+            'coach' => 'coach@picklecorner.ph',
         ];
     }
 

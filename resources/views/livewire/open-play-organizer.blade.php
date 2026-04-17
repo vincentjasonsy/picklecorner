@@ -230,6 +230,34 @@
                                 />
                             </label>
                         </div>
+                        @php
+                            $setupCourtN = max(1, min(8, (int) (($state['courtsCount'] ?? 1) ?: 1)));
+                        @endphp
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Court names (optional)</p>
+                                <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                                    Match your venue’s courts — e.g. <span class="font-medium text-zinc-600 dark:text-zinc-300">#3</span>,
+                                    <span class="font-medium text-zinc-600 dark:text-zinc-300">Court 5</span>. Leave blank to use Court 1, Court 2, …
+                                </p>
+                            </div>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                @for ($li = 0; $li < $setupCourtN; $li++)
+                                    <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400" for="gq-setup-court-label-{{ $li }}">
+                                        Slot {{ $li + 1 }}
+                                        <input
+                                            id="gq-setup-court-label-{{ $li }}"
+                                            type="text"
+                                            maxlength="48"
+                                            wire:model.live="state.courtLabels.{{ $li }}"
+                                            class="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                            placeholder="e.g. #3"
+                                            autocomplete="off"
+                                        />
+                                    </label>
+                                @endfor
+                            </div>
+                        </div>
                         @if (($state['mode'] ?? '') === 'doubles' && ($state['shuffleMethod'] ?? '') === 'teams')
                             <p class="text-sm text-zinc-500 dark:text-zinc-400">
                                 Use the same team name for partners in the next step.
@@ -411,6 +439,26 @@
                             <li><span class="text-zinc-500">Format:</span> <span class="font-medium capitalize">{{ $state['mode'] ?? 'singles' }}</span></li>
                             <li><span class="text-zinc-500">Pairing:</span> <span class="font-medium">{{ $eq->shuffleMethodLabel() }}</span></li>
                             <li><span class="text-zinc-500">Courts:</span> <span class="font-medium">{{ (int) ($state['courtsCount'] ?? 1) }}</span></li>
+                            @php
+                                $readyNc = max(1, min(8, (int) (($state['courtsCount'] ?? 1) ?: 1)));
+                                $readyHasCustomLabel = false;
+                                foreach (array_slice($state['courtLabels'] ?? [], 0, $readyNc) as $raw) {
+                                    if (trim((string) $raw) !== '') {
+                                        $readyHasCustomLabel = true;
+                                        break;
+                                    }
+                                }
+                            @endphp
+                            @if ($readyHasCustomLabel)
+                                <li>
+                                    <span class="text-zinc-500">Court names:</span>
+                                    <span class="font-medium">
+                                        @foreach (range(0, $readyNc - 1) as $rj)
+                                            {{ $eq->courtDisplayLabel($rj) }}@if ($rj < $readyNc - 1)<span class="text-zinc-400"> · </span>@endif
+                                        @endforeach
+                                    </span>
+                                </li>
+                            @endif
                             <li><span class="text-zinc-500">Players:</span> <span class="font-medium">{{ count($state['players'] ?? []) }}</span></li>
                             @if (count($state['players'] ?? []) >= 2)
                                 <li>
@@ -680,12 +728,12 @@
                                                 <div
                                                     class="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:gap-x-3"
                                                     role="group"
-                                                    aria-label="Court {{ $i + 1 }} timer"
+                                                    aria-label="{{ $eq->courtDisplayLabel($i) }} timer"
                                                 >
                                                     <span
                                                         class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider {{ $court ? 'bg-emerald-600/15 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-100' : 'bg-zinc-200/90 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300' }}"
                                                     >
-                                                        Court {{ $i + 1 }}
+                                                        {{ $eq->courtDisplayLabel($i) }}
                                                     </span>
                                                     @if ($tl > 0)
                                                         <span class="hidden h-5 w-px shrink-0 bg-emerald-200/80 sm:block dark:bg-emerald-800/50" aria-hidden="true"></span>
@@ -744,7 +792,7 @@
                                                     <span
                                                         class="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-zinc-200/90 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
                                                     >
-                                                        Court {{ $i + 1 }}
+                                                        {{ $eq->courtDisplayLabel($i) }}
                                                     </span>
                                                 </div>
                                             @endif

@@ -34,7 +34,7 @@ class BookingSeeder extends Seeder
         }
 
         foreach ($clients as $client) {
-            for ($i = 0; $i < 25; $i++) {
+            for ($i = 0; $i < 8; $i++) {
                 $starts = Carbon::parse(\fake()->dateTimeBetween('-120 days', '+14 days'));
                 $ends = $starts->copy()->addHours(\fake()->randomElement([1, 2]));
 

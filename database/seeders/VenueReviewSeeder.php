@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 /**
- * Approved member reviews for demo venues ({@see CourtClientSeeder} slug seed-venue-##).
+ * Approved member reviews for demo venues ({@see CourtClientSeeder} slug seed-venue-01).
  * Re-runnable: replaces existing seeded venue reviews, then syncs public_rating_* on each venue.
  */
 class VenueReviewSeeder extends Seeder
@@ -33,8 +33,8 @@ class VenueReviewSeeder extends Seeder
     public function run(): void
     {
         $playerTypeId = UserType::query()->where('slug', UserType::SLUG_USER)->value('id');
-        $superAdminTypeId = UserType::query()->where('slug', UserType::SLUG_SUPER_ADMIN)->value('id');
-        if ($playerTypeId === null || $superAdminTypeId === null) {
+        $courtAdminTypeId = UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id');
+        if ($playerTypeId === null || $courtAdminTypeId === null) {
             $this->command?->warn('User types missing; skip venue reviews.');
 
             return;
@@ -50,9 +50,9 @@ class VenueReviewSeeder extends Seeder
             return;
         }
 
-        $moderator = User::query()->where('user_type_id', $superAdminTypeId)->orderBy('id')->first();
+        $moderator = User::query()->where('user_type_id', $courtAdminTypeId)->orderBy('id')->first();
         if ($moderator === null) {
-            $this->command?->warn('No super admin; skip venue reviews.');
+            $this->command?->warn('No court admin; skip venue reviews.');
 
             return;
         }
@@ -107,6 +107,6 @@ class VenueReviewSeeder extends Seeder
             UserReviewAggregateService::syncVenue($venue->fresh());
         }
 
-        $this->command?->info('Seeded approved venue reviews for '.$venues->count().' demo venue(s).');
+        $this->command?->info('Seeded approved venue reviews for '.$venues->count().' venue(s).');
     }
 }

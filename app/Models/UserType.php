@@ -20,6 +20,9 @@ class UserType extends Model
 
     public const SLUG_USER = 'user';
 
+    /** Member who can list court bookings as open play (host) from public checkout. */
+    public const SLUG_OPEN_PLAY_HOST = 'open_play_host';
+
     protected $fillable = [
         'slug',
         'name',

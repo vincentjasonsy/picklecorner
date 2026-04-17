@@ -6,6 +6,8 @@ use App\Http\Controllers\DemoQuickLoginController;
 use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
+use App\Http\Controllers\PayMongoBookingReturnController;
+use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\ReviewFromEmailController;
 use App\Livewire\Admin\ActivityIndex;
@@ -91,6 +93,10 @@ Route::livewire('/contact', ContactPage::class)->name('contact');
 Route::livewire('/book-now', BookNowPage::class)->name('book-now');
 Route::livewire('/book-now/courts/{court}', PublicCourtShow::class)->name('book-now.court');
 Route::livewire('/book-now/venues/{courtClient:slug}/book', VenueBookingPage::class)->name('book-now.venue.book');
+Route::post('/paymongo/webhook', PayMongoWebhookController::class)
+    ->name('paymongo.webhook');
+Route::get('/paymongo/booking/return/{intent}', PayMongoBookingReturnController::class)
+    ->name('paymongo.booking.return');
 Route::get('/open-play/watch/{openPlayShare}/data', [OpenPlayShareController::class, 'data'])
     ->middleware('throttle:180,1')
     ->name('open-play.watch.data');

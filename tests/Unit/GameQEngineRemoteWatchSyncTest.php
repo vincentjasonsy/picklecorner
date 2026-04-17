@@ -42,4 +42,15 @@ class GameQEngineRemoteWatchSyncTest extends TestCase
 
         $this->assertFalse($e->applyRemoteWatchBreakSync($remote));
     }
+
+    public function test_court_display_label_uses_custom_or_default(): void
+    {
+        $state = Engine::defaultState();
+        $state['courtsCount'] = 3;
+        $state['courtLabels'] = ['#3', '', 'Court 7'];
+        $e = new Engine($state);
+        $this->assertSame('#3', $e->courtDisplayLabel(0));
+        $this->assertSame('Court 2', $e->courtDisplayLabel(1));
+        $this->assertSame('Court 7', $e->courtDisplayLabel(2));
+    }
 }

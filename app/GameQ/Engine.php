@@ -67,6 +67,8 @@ class Engine
             'h2hPlayerB' => '',
             'shareError' => '',
             'sessionTitle' => '',
+            /** @var list<string> Per-court labels (e.g. #3, Court 5); empty string = default "Court N". */
+            'courtLabels' => [],
         ];
     }
 
@@ -120,6 +122,9 @@ class Engine
         $nl = $merged['newLevel'] ?? 3;
         $merged['newLevel'] = is_numeric($nl) ? (int) $nl : 3;
 
+        $cc = max(1, min(8, (int) (($merged['courtsCount'] ?? 1) ?: 1)));
+        $merged['courtLabels'] = self::normalizeCourtLabelsArray($cc, $merged['courtLabels'] ?? []);
+
         return self::cloneState($merged);
     }
 
@@ -143,6 +148,9 @@ class Engine
         $this->state['h2h'] = is_array($merged['h2h'] ?? null) ? $merged['h2h'] : [];
         $st = $merged['sessionTitle'] ?? '';
         $this->state['sessionTitle'] = is_string($st) ? mb_substr(trim($st), 0, 120) : '';
+        $this->state['courtLabels'] = isset($merged['courtLabels']) && is_array($merged['courtLabels'])
+            ? array_values($merged['courtLabels'])
+            : [];
         if ($clearShare) {
             $this->state['shareUuid'] = '';
             $this->state['shareSecret'] = '';
@@ -169,6 +177,7 @@ class Engine
             'courtsCount' => $this->state['courtsCount'],
             'timeLimitMinutes' => $this->state['timeLimitMinutes'],
             'sessionTitle' => mb_substr(trim((string) ($this->state['sessionTitle'] ?? '')), 0, 120),
+            'courtLabels' => $this->cloneState($this->state['courtLabels'] ?? []),
             'players' => $this->cloneState($this->state['players']),
             'queue' => $this->cloneState($this->state['queue']),
             'courts' => $this->cloneState($this->state['courts']),
@@ -383,6 +392,34 @@ class Engine
     public function courtsCountChanged(): void
     {
         $this->ensureCourtSlots();
+    }
+
+    /**
+     * Display name for a court slot (0-based index). Uses custom label when set, else "Court {1-based index}".
+     */
+    public function courtDisplayLabel(int $index): string
+    {
+        $labels = $this->state['courtLabels'] ?? [];
+        $s = isset($labels[$index]) && is_string($labels[$index]) ? trim($labels[$index]) : '';
+
+        return $s !== '' ? $s : 'Court '.($index + 1);
+    }
+
+    /**
+     * @param  mixed  $labels
+     * @return list<string>
+     */
+    private static function normalizeCourtLabelsArray(int $courtsCount, $labels): array
+    {
+        $n = max(1, min(8, $courtsCount));
+        $arr = is_array($labels) ? array_values($labels) : [];
+        $out = [];
+        for ($i = 0; $i < $n; $i++) {
+            $raw = isset($arr[$i]) ? trim((string) $arr[$i]) : '';
+            $out[] = $raw === '' ? '' : mb_substr($raw, 0, 48);
+        }
+
+        return $out;
     }
 
     /**
@@ -2140,6 +2177,7 @@ class Engine
             $courts = array_slice($courts, 0, $n);
         }
         $this->state['courts'] = array_values($courts);
+        $this->state['courtLabels'] = self::normalizeCourtLabelsArray($n, $this->state['courtLabels'] ?? []);
     }
 
     public static function newId(): string

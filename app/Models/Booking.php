@@ -53,8 +53,31 @@ class Booking extends Model
 
     public const PAYMENT_OTHER = 'other';
 
+    public const PAYMENT_PAYMONGO = 'paymongo';
+
     /** @return list<string> */
     public static function paymentMethodOptions(): array
+    {
+        $base = [
+            self::PAYMENT_GCASH,
+            self::PAYMENT_BANK_TRANSFER,
+            self::PAYMENT_CASH,
+            self::PAYMENT_OTHER,
+        ];
+
+        if (config('paymongo.enabled') && config('paymongo.secret_key') !== '') {
+            array_unshift($base, self::PAYMENT_PAYMONGO);
+        }
+
+        return $base;
+    }
+
+    /**
+     * Desk, venue admin, and super-admin manual booking — record how the customer paid (no hosted PayMongo).
+     *
+     * @return list<string>
+     */
+    public static function paymentMethodOptionsDesk(): array
     {
         return [
             self::PAYMENT_GCASH,
@@ -71,6 +94,7 @@ class Booking extends Model
             self::PAYMENT_BANK_TRANSFER => 'Bank transfer',
             self::PAYMENT_CASH => 'Cash',
             self::PAYMENT_OTHER => 'Other',
+            self::PAYMENT_PAYMONGO => 'PayMongo (GCash / QRPh)',
             default => $method,
         };
     }
@@ -94,6 +118,8 @@ class Booking extends Model
         'payment_proof_path',
         'coach_user_id',
         'coach_fee_cents',
+        'platform_booking_fee_cents',
+        'checkout_snapshot',
         'is_open_play',
         'open_play_max_slots',
         'open_play_public_notes',
@@ -109,6 +135,8 @@ class Booking extends Model
             'ends_at' => 'datetime',
             'gift_card_redeemed_cents' => 'integer',
             'coach_fee_cents' => 'integer',
+            'platform_booking_fee_cents' => 'integer',
+            'checkout_snapshot' => 'array',
             'is_open_play' => 'boolean',
             'open_play_max_slots' => 'integer',
         ];

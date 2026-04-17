@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->validateCsrfTokens(except: [
+            'paymongo/webhook',
+        ]);
         $middleware->alias([
             'super_admin' => EnsureSuperAdmin::class,
             'court_admin' => EnsureCourtAdmin::class,

@@ -22,6 +22,7 @@ class PublicVenueBookingSubmission
     /**
      * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>, coach_fee_cents?: int}>  $specs
      * @param  array{max_slots: int, public_notes?: string|null, host_payment_details: string, external_contact?: string|null, refund_policy?: string|null}|null  $openPlay
+     * @param  string|null  $forcedBookingRequestId  When set (e.g. PayMongo), all rows share this id instead of a new UUID.
      */
     public static function submit(
         CourtClient $courtClient,
@@ -34,6 +35,7 @@ class PublicVenueBookingSubmission
         ?string $giftCardCodeRaw = null,
         ?string $coachUserId = null,
         ?array $openPlay = null,
+        ?string $forcedBookingRequestId = null,
     ): array {
         if ($specs === []) {
             throw new \InvalidArgumentException('No time slots to book.');
@@ -42,6 +44,8 @@ class PublicVenueBookingSubmission
         if ($openPlay !== null && count($specs) !== 1) {
             throw new \InvalidArgumentException('Open play is only available when booking a single court time block.');
         }
+
+        $pm = $paymentMethod !== null && $paymentMethod !== '' ? $paymentMethod : null;
 
         $deskPolicy = CourtClient::DESK_BOOKING_POLICY_MANUAL;
         $deskStatus = Booking::STATUS_PENDING_APPROVAL;
@@ -60,11 +64,15 @@ class PublicVenueBookingSubmission
             default => Booking::STATUS_PENDING_APPROVAL,
         };
 
-        if ($deskPolicy === CourtClient::DESK_BOOKING_POLICY_AUTO_DENY) {
+        if ($deskPolicy === CourtClient::DESK_BOOKING_POLICY_AUTO_DENY && $pm !== Booking::PAYMENT_PAYMONGO) {
             $suffix = 'Auto-denied by venue desk booking policy.';
             $bookingNotesForCreate = $bookingNotesForCreate !== null && $bookingNotesForCreate !== ''
                 ? $bookingNotesForCreate."\n\n".$suffix
                 : $suffix;
+        }
+
+        if ($pm === Booking::PAYMENT_PAYMONGO) {
+            $deskStatus = Booking::STATUS_CONFIRMED;
         }
 
         $proofPath = null;
@@ -75,7 +83,6 @@ class PublicVenueBookingSubmission
             );
         }
 
-        $pm = $paymentMethod !== null && $paymentMethod !== '' ? $paymentMethod : null;
         $pref = trim((string) $paymentReference);
         $giftCodeRaw = trim((string) $giftCardCodeRaw);
 
@@ -93,8 +100,11 @@ class PublicVenueBookingSubmission
             $giftCodeRaw,
             $coachId,
             $openPlay,
+            $forcedBookingRequestId,
         ) {
-            $bookingRequestId = (string) Str::uuid();
+            $bookingRequestId = ($forcedBookingRequestId !== null && $forcedBookingRequestId !== '')
+                ? (string) $forcedBookingRequestId
+                : (string) Str::uuid();
 
             $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
             $courtSubtotalCents = (int) array_sum(array_column($specs, 'court_gross_cents'));
@@ -118,9 +128,19 @@ class PublicVenueBookingSubmission
 
             $grosses = array_column($specs, 'gross_cents');
             $grossesForGift = GiftCardService::augmentGrossesWithBookingFee($grosses, $bookingFeeCents);
+            $platformFeePerLine = [];
+            foreach ($specs as $fi => $_spec) {
+                $platformFeePerLine[$fi] = max(
+                    0,
+                    ($grossesForGift[$fi] ?? 0) - ($grosses[$fi] ?? 0),
+                );
+            }
             $giftSlices = $giftAppliedTotal !== null
                 ? GiftCardService::allocateAppliedCentsAcrossLines($giftAppliedTotal, $grossesForGift)
                 : array_fill(0, count($specs), 0);
+
+            $coachFeeTotalCents = (int) array_sum(array_column($specs, 'coach_fee_cents'));
+            $feeRuleLabel = currentBookingFeeSetting()->breakdownLabel();
 
             if ($lockedGiftCard !== null && $giftCardId !== null) {
                 $nWithGift = count(array_filter($giftSlices, fn (int $s): bool => $s > 0));
@@ -132,6 +152,8 @@ class PublicVenueBookingSubmission
                     );
                 }
             }
+
+            CourtBookingConcurrency::lockCourtsAndAssertNoOverlap($specs);
 
             $created = [];
             foreach ($specs as $i => $spec) {
@@ -149,6 +171,9 @@ class PublicVenueBookingSubmission
                 $extContact = $useOpenPlay ? trim((string) ($openPlay['external_contact'] ?? '')) : '';
                 $refundPolicy = $useOpenPlay ? trim((string) ($openPlay['refund_policy'] ?? '')) : '';
 
+                $linePlatform = (int) ($platformFeePerLine[$i] ?? 0);
+                $courtGrossLine = (int) ($spec['court_gross_cents'] ?? 0);
+
                 $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
                     'booking_request_id' => $bookingRequestId,
@@ -161,6 +186,22 @@ class PublicVenueBookingSubmission
                     'status' => $deskStatus,
                     'amount_cents' => $netCents > 0 ? $netCents : null,
                     'coach_fee_cents' => $coachFee > 0 ? $coachFee : null,
+                    'platform_booking_fee_cents' => $linePlatform > 0 ? $linePlatform : null,
+                    'checkout_snapshot' => BookingCheckoutSnapshot::memberPublicCheckout(
+                        currency: $courtClient->currency ?? 'PHP',
+                        feeRuleLabel: $feeRuleLabel,
+                        requestCourtSubtotalCents: $courtSubtotalCents,
+                        requestCoachFeeTotalCents: $coachFeeTotalCents,
+                        requestBookingFeeTotalCents: $bookingFeeCents,
+                        requestCheckoutTotalBeforeGiftCents: $totalDueForGift,
+                        requestGiftAppliedTotalCents: $giftAppliedTotal,
+                        lineCourtSubtotalCents: $courtGrossLine,
+                        lineCoachFeeCents: $coachFee,
+                        lineCourtCoachGrossCents: $gross,
+                        lineGiftAppliedCents: $slice,
+                        lineCourtCoachAfterGiftCents: $netCents,
+                        linePlatformBookingFeeCents: $linePlatform,
+                    ),
                     'currency' => $courtClient->currency ?? 'PHP',
                     'notes' => $bookingNotesForCreate,
                     'gift_card_id' => $slice > 0 ? $giftCardId : null,

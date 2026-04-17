@@ -293,14 +293,13 @@
                                     href="{{ route('account.open-play') }}"
                                     wire:navigate
                                     @class([
-                                        'inline-flex items-center gap-2 rounded-xl px-3 py-2 transition-colors',
-                                        request()->routeIs('account.open-play', 'account.open-play.legacy')
+                                        'inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition-colors',
+                                        request()->routeIs('account.open-play', 'account.open-play.legacy', 'account.open-play.player')
                                             ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                             : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                     ])
                                 >
                                     <x-gameq-mark compact />
-                                    <span class="text-sm">GameQ</span>
                                 </a>
                             </div>
                         </div>

@@ -27,7 +27,7 @@ class DemoQuickLoginTest extends TestCase
         config(['demo.quick_login_enabled' => true]);
 
         $user = User::factory()->player()->create([
-            'email' => 'player1@picklecorner.ph',
+            'email' => 'player@picklecorner.ph',
             'password' => 'password',
         ]);
 

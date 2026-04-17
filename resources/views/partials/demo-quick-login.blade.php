@@ -1,7 +1,9 @@
 @if (config('demo.quick_login_enabled'))
     @php
         $slots = [
+            ['role' => 'super_admin', 'label' => 'Super admin', 'hint' => 'Admin panel'],
             ['role' => 'player', 'label' => 'Player', 'hint' => 'Member app'],
+            ['role' => 'open_play_host', 'label' => 'Open play host', 'hint' => 'Host listings'],
             ['role' => 'court_admin', 'label' => 'Court admin', 'hint' => 'Venue portal'],
             ['role' => 'desk', 'label' => 'Front desk', 'hint' => 'Counter'],
             ['role' => 'coach', 'label' => 'Coach', 'hint' => 'Coach tools'],
@@ -17,7 +19,7 @@
             Jump in with seeded demo accounts (<span class="font-mono text-[11px]">php artisan migrate --seed</span>).
             Password for all is <span class="font-semibold">password</span> if you sign in manually.
         </p>
-        <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
             @foreach ($slots as $slot)
                 <form method="POST" action="{{ route('demo.quick-login') }}" class="contents">
                     @csrf

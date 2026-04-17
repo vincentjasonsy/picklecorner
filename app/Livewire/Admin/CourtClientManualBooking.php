@@ -11,8 +11,11 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\ActivityLogger;
+use App\Services\BookingCheckoutSnapshot;
+use App\Services\CourtBookingConcurrency;
 use App\Services\CourtSlotPricing;
 use App\Services\GiftCardService;
+use App\Services\VenueBookingSpecsBuilder;
 use App\Support\Money;
 use App\Support\VenueScheduleHours;
 use Carbon\Carbon;
@@ -610,19 +613,19 @@ class CourtClientManualBooking extends Component
 
         if ($desk) {
             $rules['manualBookingGiftCardCode'] = ['prohibited'];
-            $rules['manualBookingPaymentMethod'] = ['nullable', 'string', Rule::in(Booking::paymentMethodOptions())];
+            $rules['manualBookingPaymentMethod'] = ['nullable', 'string', Rule::in(Booking::paymentMethodOptionsDesk())];
             $rules['manualBookingPaymentReference'] = ['nullable', 'string', 'max:128'];
             $rules['manualBookingPaymentProof'] = ['nullable', 'image', 'max:5120'];
         } else {
             $rules['manualBookingGiftCardCode'] = ['nullable', 'string', 'max:48'];
-            $rules['manualBookingPaymentMethod'] = ['required', 'string', Rule::in(Booking::paymentMethodOptions())];
+            $rules['manualBookingPaymentMethod'] = ['required', 'string', Rule::in(Booking::paymentMethodOptionsDesk())];
             $rules['manualBookingPaymentReference'] = ['required', 'string', 'max:128'];
             $rules['manualBookingPaymentProof'] = ['nullable', 'image', 'max:5120'];
         }
 
         $this->validate($rules, [], [
             'manualBookingUserId' => 'player or coach',
-            'manualBookingPaymentReference' => 'payment reference',
+            'manualBookingPaymentReference' => 'transaction number',
         ]);
 
         $byCourt = $this->selectedSlotsGroupedByCourt();
@@ -807,6 +810,8 @@ class CourtClientManualBooking extends Component
                     : null;
                 $pref = trim((string) $this->manualBookingPaymentReference);
 
+                CourtBookingConcurrency::lockCourtsAndAssertNoOverlap($specs);
+
                 $created = [];
                 foreach ($specs as $i => $spec) {
                     /** @var Court $court */
@@ -814,6 +819,18 @@ class CourtClientManualBooking extends Component
                     $gross = (int) $spec['gross_cents'];
                     $slice = $giftSlices[$i] ?? 0;
                     $netCents = max(0, $gross - $slice);
+
+                    $currency = $this->courtClient->currency ?? 'PHP';
+                    $checkoutSnapshot = BookingCheckoutSnapshot::manualCheckout(
+                        currency: $currency,
+                        requestCourtSubtotalCents: $totalGross,
+                        requestCheckoutTotalBeforeGiftCents: $totalGross,
+                        requestGiftAppliedTotalCents: $giftAppliedTotal,
+                        lineCourtSubtotalCents: $gross,
+                        lineCourtCoachGrossCents: $gross,
+                        lineGiftAppliedCents: $slice,
+                        lineCourtCoachAfterGiftCents: $netCents,
+                    );
 
                     $booking = Booking::query()->create([
                         'court_client_id' => $this->courtClient->id,
@@ -825,7 +842,8 @@ class CourtClientManualBooking extends Component
                         'ends_at' => $spec['ends'],
                         'status' => $desk ? $deskStatus : Booking::STATUS_CONFIRMED,
                         'amount_cents' => $netCents > 0 ? $netCents : null,
-                        'currency' => $this->courtClient->currency ?? 'PHP',
+                        'checkout_snapshot' => $checkoutSnapshot,
+                        'currency' => $currency,
                         'notes' => $bookingNotesForCreate,
                         'gift_card_id' => $slice > 0 ? $giftCardId : null,
                         'gift_card_redeemed_cents' => $slice > 0 ? $slice : null,
@@ -857,7 +875,11 @@ class CourtClientManualBooking extends Component
                 return $created;
             });
         } catch (\InvalidArgumentException $e) {
-            $this->addError('manualBookingGiftCardCode', $e->getMessage());
+            if ($e->getMessage() === 'Nothing to apply from this gift card.') {
+                $this->addError('manualBookingGiftCardCode', $e->getMessage());
+            } else {
+                $this->addError('selectedManualSlots', $e->getMessage());
+            }
 
             return;
         }
@@ -960,12 +982,7 @@ class CourtClientManualBooking extends Component
 
     protected function bookingOverlapsCourt(string $courtId, Carbon $starts, Carbon $ends): bool
     {
-        return Booking::query()
-            ->where('court_id', $courtId)
-            ->whereNotIn('status', [Booking::STATUS_CANCELLED, Booking::STATUS_DENIED])
-            ->where('starts_at', '<', $ends)
-            ->where('ends_at', '>', $starts)
-            ->exists();
+        return VenueBookingSpecsBuilder::bookingOverlapsCourt($courtId, $starts, $ends);
     }
 
     public function render(): View

@@ -107,7 +107,7 @@
                                 @if ($court)
                                     <div class="overflow-hidden rounded-2xl border border-white/60 bg-white shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/80 dark:border-slate-700/80 dark:bg-slate-900/90 dark:ring-slate-700/60">
                                         <div class="flex flex-col gap-4 bg-gradient-to-r from-emerald-600 to-teal-700 px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-5">
-                                            <span class="font-display text-base font-bold tracking-wide sm:text-lg">Court {{ $i + 1 }}</span>
+                                            <span class="font-display text-base font-bold tracking-wide sm:text-lg">{{ $eq->courtDisplayLabel((int) $i) }}</span>
                                             <div class="flex w-full flex-wrap items-stretch justify-end gap-4 sm:w-auto sm:gap-8">
                                                 @if ((int) ($game['timeLimitMinutes'] ?? 0) > 0)
                                                     @php
@@ -144,7 +144,7 @@
                                     </div>
                                 @else
                                     <div class="rounded-2xl border-2 border-dashed border-slate-300/80 bg-slate-50/50 px-5 py-8 text-center dark:border-slate-600 dark:bg-slate-900/30">
-                                        <p class="font-display text-sm font-semibold text-slate-500 dark:text-slate-400">Court {{ $i + 1 }} — open</p>
+                                        <p class="font-display text-sm font-semibold text-slate-500 dark:text-slate-400">{{ $eq->courtDisplayLabel((int) $i) }} — open</p>
                                         <p class="mt-1 text-xs text-slate-400">Waiting for the host</p>
                                     </div>
                                 @endif

@@ -17,7 +17,6 @@ class DatabaseSeeder extends Seeder
             CourtClientSeeder::class,
             VenueReviewSeeder::class,
             BookingSeeder::class,
-            InternalTeamPlayDemoSeeder::class,
         ]);
     }
 }

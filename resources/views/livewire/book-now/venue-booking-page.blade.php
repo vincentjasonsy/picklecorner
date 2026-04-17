@@ -1,7 +1,8 @@
 @php
     use App\Models\Court;
     use App\Support\Money;
-    use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+
+    $paymongoConfigured = config('paymongo.enabled') && (string) config('paymongo.secret_key') !== '';
 
     $courts = $this->courtsOrderedForGrid();
     $slotHours = $this->slotHoursForSelectedDate();
@@ -661,47 +662,25 @@
                         </p>
                     </div>
 
-                    @if ($this->canConfigureOpenPlay)
+                    @if ($this->canConfigureOpenPlay && auth()->check() && auth()->user()->isOpenPlayHost())
                         <div
                             class="overflow-hidden rounded-xl border border-violet-200 bg-violet-50/40 p-5 dark:border-violet-900/50 dark:bg-violet-950/20"
                         >
-                            <div class="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
-                                        Open play
-                                    </h3>
-                                    <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
-                                        Let other members request to join this reservation. You’ll approve who plays and
-                                        share how they pay you. Only available for <strong>one court</strong> in a
-                                        <strong>single continuous block</strong> (your current selection).
-                                    </p>
-                                </div>
-                                <label class="inline-flex cursor-pointer items-center gap-2">
-                                    <span class="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Enable</span>
-                                    <button
-                                        type="button"
-                                        role="switch"
-                                        wire:click="$toggle('isOpenPlay')"
-                                        aria-checked="{{ $isOpenPlay ? 'true' : 'false' }}"
-                                        @class([
-                                            'relative inline-flex h-7 w-12 shrink-0 rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2',
-                                            $isOpenPlay ? 'bg-violet-600' : 'bg-zinc-300 dark:bg-zinc-600',
-                                        ])
-                                    >
-                                        <span
-                                            @class([
-                                                'pointer-events-none inline-block size-6 translate-x-0 transform rounded-full bg-white shadow ring-0 transition',
-                                                $isOpenPlay ? 'translate-x-5' : 'translate-x-0.5',
-                                            ])
-                                        ></span>
-                                    </button>
-                                </label>
+                            <div>
+                                <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
+                                    Open play host
+                                </h3>
+                                <p class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
+                                    This reservation will be listed as <strong>open play</strong> so other members can request
+                                    to join. You approve who plays and share how they pay you. Requires
+                                    <strong>one court</strong> in a <strong>single continuous block</strong> (your current
+                                    selection).
+                                </p>
                             </div>
                             @error('isOpenPlay')
                                 <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
                             @enderror
-                            @if ($isOpenPlay)
-                                <div class="mt-4 space-y-4 border-t border-violet-200/80 pt-4 dark:border-violet-800/60">
+                            <div class="mt-4 space-y-4 border-t border-violet-200/80 pt-4 dark:border-violet-800/60">
                                     <div class="max-w-xs">
                                         <label
                                             class="text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400"
@@ -813,90 +792,20 @@
                                         @enderror
                                     </div>
                                 </div>
-                            @endif
                         </div>
                     @endif
 
-                    <div
-                        class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
-                    >
-                        <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">
-                            Payment (optional)
-                        </h3>
-                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Add a payment reference or proof if you have already paid—this helps the venue match your
-                            transfer.
-                        </p>
-                        <div class="mt-4 space-y-4">
-                            <div class="grid gap-3 sm:grid-cols-2">
-                                <div class="sm:col-span-2 sm:max-w-xs">
-                                    <label
-                                        class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                    >
-                                        Payment method
-                                    </label>
-                                    <select
-                                        wire:model="paymentMethod"
-                                        class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                    >
-                                        @foreach (\App\Models\Booking::paymentMethodOptions() as $pm)
-                                            <option value="{{ $pm }}">
-                                                {{ \App\Models\Booking::paymentMethodLabel($pm) }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <x-gcash-payment-hint :method="$paymentMethod" />
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <label
-                                        class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                    >
-                                        Reference <span class="font-normal normal-case text-zinc-400">(optional)</span>
-                                    </label>
-                                    <input
-                                        type="text"
-                                        wire:model="paymentReference"
-                                        class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                        placeholder="Transaction ID / ref"
-                                        autocomplete="off"
-                                    />
-                                </div>
-                                <div class="sm:col-span-2">
-                                    <label
-                                        class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                    >
-                                        Proof screenshot (optional)
-                                    </label>
-                                    <input
-                                        type="file"
-                                        wire:model="paymentProof"
-                                        accept="image/jpeg,image/png,image/webp,image/gif"
-                                        class="mt-1 block w-full text-sm text-zinc-600 file:mr-3 file:rounded-lg file:border-0 file:bg-zinc-200 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-800 dark:text-zinc-400 dark:file:bg-zinc-700 dark:file:text-zinc-100"
-                                    />
-                                    <div
-                                        wire:loading
-                                        wire:target="paymentProof"
-                                        class="mt-1 text-xs text-zinc-500"
-                                    >
-                                        Uploading…
-                                    </div>
-                                    @if ($paymentProof instanceof TemporaryUploadedFile && $paymentProof->isPreviewable())
-                                        <div
-                                            class="mt-3 max-h-48 max-w-xs overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700"
-                                        >
-                                            <img
-                                                src="{{ $paymentProof->temporaryUrl() }}"
-                                                alt="Payment proof preview"
-                                                class="max-h-48 w-full object-contain object-center"
-                                            />
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
+                    @if (! $paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0)
+                        <div
+                            class="rounded-xl border border-amber-200/90 bg-amber-50/90 p-4 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/35 dark:text-amber-100/95"
+                            role="status"
+                        >
+                            <p class="font-semibold">Online checkout isn’t available</p>
+                            <p class="mt-1 text-xs leading-relaxed text-amber-900/95 dark:text-amber-200/90">
+                                There’s an amount due, but online payment isn’t enabled here yet. Please contact the club.
+                            </p>
                         </div>
-                    </div>
+                    @endif
 
                     @error('submit')
                         <p class="text-sm text-red-600">{{ $message }}</p>
@@ -928,15 +837,21 @@
                         </div>
                     @else
                         @if ($this->canSubmitBookings())
-                            <div class="flex flex-wrap justify-end gap-3">
-                                <button
-                                    type="button"
-                                    wire:click="submitRequest"
-                                    class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500"
-                                >
-                                    Submit request
-                                </button>
-                            </div>
+                            @if ($paymongoConfigured || $this->reviewBalanceAfterGiftCents <= 0)
+                                <div class="flex flex-wrap justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        wire:click="submitRequest"
+                                        class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500"
+                                    >
+                                        @if ($paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0)
+                                            Continue to payment
+                                        @else
+                                            Submit request
+                                        @endif
+                                    </button>
+                                </div>
+                            @endif
                         @else
                             <p class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
                                 Player and coach accounts can submit requests from this page. Please use your venue or

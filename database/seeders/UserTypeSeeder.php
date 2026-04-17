@@ -19,6 +19,11 @@ class UserTypeSeeder extends Seeder
             ],
             ['slug' => UserType::SLUG_COACH, 'name' => 'Coach', 'sort_order' => 4],
             ['slug' => UserType::SLUG_USER, 'name' => 'User', 'sort_order' => 5],
+            [
+                'slug' => UserType::SLUG_OPEN_PLAY_HOST,
+                'name' => 'Open play host',
+                'sort_order' => 6,
+            ],
         ];
 
         foreach ($types as $type) {
