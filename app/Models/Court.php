@@ -33,6 +33,7 @@ class Court extends Model
         'hourly_rate_cents',
         'peak_hourly_rate_cents',
         'is_available',
+        'opens_at',
     ];
 
     protected function casts(): array
@@ -42,6 +43,8 @@ class Court extends Model
             'hourly_rate_cents' => 'integer',
             'peak_hourly_rate_cents' => 'integer',
             'is_available' => 'boolean',
+            'opens_at' => 'datetime',
+            'opening_notice_sent_at' => 'datetime',
         ];
     }
 

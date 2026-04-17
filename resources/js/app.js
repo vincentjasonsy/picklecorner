@@ -1,14 +1,14 @@
 import './bootstrap';
 import { initTheme } from './theme';
-import { initFeaturedVenueSliders, registerFeaturedVenueSlidersWithLivewire } from './featured-venues-slider';
+import { initAllSplideSliders, registerSplideSlidersWithLivewire } from './splide-sliders';
 
-registerFeaturedVenueSlidersWithLivewire();
+registerSplideSlidersWithLivewire();
 
 document.addEventListener('DOMContentLoaded', () => {
     initTheme();
-    initFeaturedVenueSliders();
+    initAllSplideSliders();
 });
 
 document.addEventListener('livewire:navigated', () => {
-    initFeaturedVenueSliders();
+    initAllSplideSliders();
 });

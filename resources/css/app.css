@@ -84,4 +84,36 @@
     .featured-venues-splide .splide__pagination__page.is-active {
         @apply scale-110 bg-emerald-600 dark:bg-emerald-500;
     }
+
+    /* Splide image carousels / hero */
+    .image-splide,
+    .image-splide .splide__track,
+    .image-splide .splide__list,
+    .image-splide .splide__slide {
+        height: 100%;
+    }
+
+    .image-splide .splide__arrow {
+        @apply z-[5] rounded-full border border-white/30 bg-zinc-950/40 text-white shadow-md backdrop-blur-sm;
+    }
+
+    .image-splide .splide__arrow:hover:not(:disabled) {
+        @apply bg-zinc-950/60;
+    }
+
+    .image-splide .splide__arrow:disabled {
+        @apply opacity-40;
+    }
+
+    .image-splide .splide__pagination {
+        @apply bottom-3 z-[5] gap-2;
+    }
+
+    .image-splide .splide__pagination__page {
+        @apply h-2.5 w-2.5 bg-white/35 opacity-100 sm:h-3 sm:w-3;
+    }
+
+    .image-splide .splide__pagination__page.is-active {
+        @apply scale-110 bg-emerald-500;
+    }
 }

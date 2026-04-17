@@ -12,13 +12,13 @@ return [
     |
     */
     'terms' => [
-        'version' => env('LEGAL_TERMS_VERSION', '1.0'),
-        'effective_date' => env('LEGAL_TERMS_EFFECTIVE_DATE', '2026-04-17'),
+        'version' => env('LEGAL_TERMS_VERSION', '1.1'),
+        'effective_date' => env('LEGAL_TERMS_EFFECTIVE_DATE', '2026-04-18'),
     ],
 
     'refund' => [
-        'version' => env('LEGAL_REFUND_VERSION', '1.0'),
-        'effective_date' => env('LEGAL_REFUND_EFFECTIVE_DATE', '2026-04-17'),
+        'version' => env('LEGAL_REFUND_VERSION', '1.1'),
+        'effective_date' => env('LEGAL_REFUND_EFFECTIVE_DATE', '2026-04-18'),
     ],
 
     'booking_cancellation' => [

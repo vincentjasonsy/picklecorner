@@ -181,7 +181,7 @@
                         @if ($rqBookingFee > 0)
                             <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
                                 <dt class="text-zinc-600 dark:text-zinc-400">
-                                    Booking fee
+                                    Convenience fee
                                     @if ($feeLabel)
                                         <span class="mt-0.5 block text-xs font-normal text-zinc-500 dark:text-zinc-400">
                                             {{ $feeLabel }}
@@ -264,7 +264,7 @@
                         @endif
                         @if ($lnPlatform > 0)
                             <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
-                                <dt class="text-zinc-600 dark:text-zinc-400">Platform service fee</dt>
+                                <dt class="text-zinc-600 dark:text-zinc-400">Convenience fee</dt>
                                 <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
                                     {{ Money::formatMinor($lnPlatform, $snapCurrency) }}
                                 </dd>
@@ -335,7 +335,7 @@
 
                     @if ($hasPlatformFee)
                         <div class="flex items-baseline justify-between gap-4 px-4 py-3 text-sm">
-                            <dt class="text-zinc-600 dark:text-zinc-400">Platform service fee</dt>
+                            <dt class="text-zinc-600 dark:text-zinc-400">Convenience fee</dt>
                             <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
                                 {{ Money::formatMinor($platformFeeCents, $currency) }}
                             </dd>

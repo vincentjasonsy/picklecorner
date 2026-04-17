@@ -238,6 +238,7 @@ class VenueBookingPageTest extends TestCase
             ->set('selectedSlots', [$court->id.'-9'])
             ->set('step', 'review')
             ->set('giftCardCode', 'MEMBER-GC')
+            ->set('ackConvenienceFeeNonRefundable', true)
             ->call('submitRequest')
             ->assertHasNoErrors()
             ->assertRedirect();

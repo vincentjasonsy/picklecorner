@@ -53,16 +53,55 @@ export function initFeaturedVenueSliders() {
     });
 }
 
+/**
+ * Photo / hero image carousels (fade, autoplay). Roots use [data-image-splide].
+ */
+export function initImageSplideCarousels() {
+    document.querySelectorAll('[data-image-splide]').forEach((root) => {
+        destroySplide(root);
+
+        const list = root.querySelector('.splide__list');
+        if (!list || list.children.length === 0) {
+            return;
+        }
+
+        const intervalRaw = parseInt(root.dataset.splideInterval ?? '6500', 10);
+        const autoplay = intervalRaw > 0;
+
+        const splide = new Splide(root, {
+            type: 'fade',
+            rewind: true,
+            autoplay,
+            interval: autoplay ? intervalRaw : 6500,
+            pauseOnHover: autoplay,
+            speed: 500,
+            pagination: true,
+            arrows: true,
+            keyboard: true,
+            drag: true,
+            easing: 'cubic-bezier(0.25, 1, 0.25, 1)',
+        });
+
+        splide.mount();
+        instances.set(root, splide);
+    });
+}
+
+export function initAllSplideSliders() {
+    initFeaturedVenueSliders();
+    initImageSplideCarousels();
+}
+
 let morphDebounce = null;
 
-function scheduleInitFeaturedVenueSliders() {
+function scheduleInitAllSplideSliders() {
     clearTimeout(morphDebounce);
     morphDebounce = setTimeout(() => {
-        initFeaturedVenueSliders();
+        initAllSplideSliders();
     }, 10);
 }
 
-export function registerFeaturedVenueSlidersWithLivewire() {
+export function registerSplideSlidersWithLivewire() {
     document.addEventListener('livewire:init', () => {
         const lw = window.Livewire;
         if (!lw?.hook) {
@@ -70,7 +109,7 @@ export function registerFeaturedVenueSlidersWithLivewire() {
         }
 
         lw.hook('morph.updated', () => {
-            scheduleInitFeaturedVenueSliders();
+            scheduleInitAllSplideSliders();
         });
     });
 }

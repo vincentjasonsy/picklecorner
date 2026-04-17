@@ -101,7 +101,13 @@
         <div
             @class([
                 'min-w-0 flex-1 space-y-6',
-                'max-lg:pb-28' => $step === 'times',
+                'max-lg:pb-28 lg:pb-40' => $step === 'times'
+                    || (
+                        $step === 'review'
+                        && auth()->check()
+                        && $this->canSubmitBookings()
+                        && ($paymongoConfigured || $this->reviewBalanceAfterGiftCents <= 0)
+                    ),
             ])
         >
             <div class="flex flex-wrap items-center gap-2 text-sm">
@@ -347,58 +353,7 @@
                         </div>
                     @endif
 
-                    <div class="hidden flex-wrap justify-end gap-3 lg:flex">
-                        <button
-                            type="button"
-                            wire:click="goToReview"
-                            class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md shadow-teal-900/20 hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500"
-                        >
-                            Continue to review
-                        </button>
-                    </div>
-                </div>
-
-                {{-- Sticky CTA: mobile & tablet --}}
-                <div
-                    class="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/90 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.12)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-950/95 dark:shadow-black/40 lg:hidden"
-                >
-                    <div class="mx-auto max-w-7xl">
-                        <button
-                            type="button"
-                            wire:click="goToReview"
-                            class="w-full rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700 active:scale-[0.99] dark:bg-teal-600 dark:hover:bg-teal-500"
-                        >
-                            Continue to review
-                        </button>
-                    </div>
-                </div>
-            @else
-                @php($reviewSpecs = $this->buildSpecsForSubmit())
-                {{-- Review step --}}
-                <div class="space-y-6">
-                    <div class="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                            <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">
-                                Review your request
-                            </h2>
-                            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                                {{ $this->bookingCalendarDateLabel() }}
-                                @if (count($reviewSpecs) > 0)
-                                    @php($nCourtsPicked = collect($reviewSpecs)->pluck('court.id')->unique()->count())
-                                    · {{ $nCourtsPicked }} {{ \Illuminate\Support\Str::plural('court', $nCourtsPicked) }}
-                                @endif
-                            </p>
-                        </div>
-                        <button
-                            type="button"
-                            wire:click="backToTimes"
-                            class="text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-400"
-                        >
-                            ← Edit times
-                        </button>
-                    </div>
-
-                    @if (config('booking.venue_checkout_show_coach'))
+                    @if (config('booking.venue_checkout_show_coach') && ! $courts->isEmpty() && count($slotHours) > 0)
                         <div
                             class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
                         >
@@ -410,7 +365,11 @@
                                 selected slot hours). If you pick multiple courts (e.g. indoor and outdoor), the coach must
                                 be linked to every court and available for each hour you selected.
                             </p>
-                            @if ($this->availableCoachesForReview->isEmpty())
+                            @if (count($selectedSlots) === 0)
+                                <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
+                                    Select at least one open slot on the grid above to see coaches available for these times.
+                                </p>
+                            @elseif ($this->availableCoachesForReview->isEmpty())
                                 <p class="mt-3 text-sm text-zinc-600 dark:text-zinc-400">
                                     No coaches are available for this venue and time yet. You can still submit a court-only
                                     request.
@@ -472,6 +431,122 @@
                             @endif
                         </div>
                     @endif
+
+                </div>
+
+                @php
+                    $timesCourtSub = $this->reviewCourtSubtotalCents;
+                    $timesCoachFee = $this->reviewCoachFeeCents;
+                    $timesBookingFee = $this->reviewBookingFeeCents;
+                    $timesCheckoutTotal = $this->reviewCheckoutTotalCents;
+                    $timesHasSlots = count($selectedSlots) > 0;
+                @endphp
+
+                {{-- Floating continue + estimate (all breakpoints; card on lg+) --}}
+                <div
+                    class="fixed inset-x-0 bottom-0 z-30 lg:inset-x-auto lg:bottom-6 lg:left-auto lg:right-6 lg:w-full lg:max-w-sm"
+                    role="region"
+                    aria-label="Booking estimate and continue"
+                >
+                    <div
+                        class="border-t border-zinc-200/90 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.12)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-950/95 dark:shadow-black/40 lg:rounded-2xl lg:border lg:px-4 lg:py-4 lg:shadow-2xl"
+                    >
+                        <div
+                            class="mb-3"
+                            aria-live="polite"
+                            aria-atomic="true"
+                        >
+                            @if (! $timesHasSlots)
+                                <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                    Select open slots for a price estimate.
+                                </p>
+                            @else
+                                <dl class="space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                                    <div class="flex justify-between gap-3">
+                                        <dt>Courts subtotal</dt>
+                                        <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-white">
+                                            {{ Money::formatMinor($timesCourtSub, $currency) }}
+                                        </dd>
+                                    </div>
+                                    @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '' && $this->coachPaidHours > 0)
+                                        <div class="flex justify-between gap-3">
+                                            <dt>
+                                                Coach
+                                                <span class="mt-0.5 block font-normal text-zinc-500 dark:text-zinc-400">
+                                                    {{ $this->coachPaidHours }}
+                                                    {{ \Illuminate\Support\Str::plural('hr', $this->coachPaidHours) }}
+                                                </span>
+                                            </dt>
+                                            <dd class="shrink-0 self-start tabular-nums text-zinc-800 dark:text-zinc-200">
+                                                {{ Money::formatMinor($timesCoachFee, $currency) }}
+                                            </dd>
+                                        </div>
+                                    @endif
+                                    <div class="flex justify-between gap-3">
+                                        <dt>
+                                            Convenience fee
+                                            <span class="mt-0.5 block font-normal text-zinc-500 dark:text-zinc-400">
+                                                {{ currentBookingFeeSetting()->breakdownLabel() }}
+                                            </span>
+                                        </dt>
+                                        <dd class="shrink-0 self-start tabular-nums text-zinc-800 dark:text-zinc-200">
+                                            {{ Money::formatMinor($timesBookingFee, $currency) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex justify-between gap-3 border-t border-zinc-200 pt-2 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:text-white">
+                                        <dt>Total</dt>
+                                        <dd class="shrink-0 tabular-nums">
+                                            {{ Money::formatMinor($timesCheckoutTotal, $currency) }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            @endif
+                        </div>
+                        <button
+                            type="button"
+                            wire:click="goToReview"
+                            @if (! $timesHasSlots) disabled @endif
+                            class="w-full rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:shadow-none disabled:hover:bg-zinc-400 dark:bg-teal-600 dark:hover:bg-teal-500 dark:disabled:bg-zinc-600"
+                        >
+                            Continue to review
+                        </button>
+                    </div>
+                </div>
+            @else
+                @php($reviewSpecs = $this->buildSpecsForSubmit())
+                {{-- Review step --}}
+                <div class="space-y-6">
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">
+                                Review your request
+                            </h2>
+                            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                                {{ $this->bookingCalendarDateLabel() }}
+                                @if (count($reviewSpecs) > 0)
+                                    @php($nCourtsPicked = collect($reviewSpecs)->pluck('court.id')->unique()->count())
+                                    · {{ $nCourtsPicked }} {{ \Illuminate\Support\Str::plural('court', $nCourtsPicked) }}
+                                @endif
+                            </p>
+                            @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '' && $this->coachPaidHours > 0)
+                                @php($reviewCoachSummary = $this->availableCoachesForReview->firstWhere('id', $coachUserId))
+                                <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                                    <span class="font-semibold text-zinc-800 dark:text-zinc-200">Coach:</span>
+                                    {{ $reviewCoachSummary?->name ?? 'Selected coach' }}
+                                    · {{ $this->coachPaidHours }}
+                                    paid {{ \Illuminate\Support\Str::plural('hour', $this->coachPaidHours) }}
+                                    <span class="text-zinc-500">(change with Edit times)</span>
+                                </p>
+                            @endif
+                        </div>
+                        <button
+                            type="button"
+                            wire:click="backToTimes"
+                            class="text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-400"
+                        >
+                            ← Edit times
+                        </button>
+                    </div>
 
                     <div
                         class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
@@ -559,7 +634,7 @@
                                     @endif
                                     <tr>
                                         <td colspan="2" class="pt-2 text-sm text-zinc-700 dark:text-zinc-300">
-                                            Booking Fee
+                                            Convenience fee
                                             <span class="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
                                                 {{ currentBookingFeeSetting()->breakdownLabel() }}
                                             </span>
@@ -606,14 +681,35 @@
                                 </tfoot>
                             </table>
                         </div>
-                        <p
-                            class="mt-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-400"
-                            role="note"
-                        >
-                            <span class="font-medium text-zinc-800 dark:text-zinc-300">Service fee</span>
-                            — pricing may change without prior notice. Totals above reflect the rates in effect when
-                            you review this booking.
-                        </p>
+                        @if ($this->reviewBookingFeeCents > 0)
+                            <div class="mt-4 rounded-lg border border-zinc-200 bg-zinc-50/80 px-3 py-3 dark:border-zinc-700 dark:bg-zinc-900/50">
+                                <label class="flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
+                                    <input
+                                        type="checkbox"
+                                        wire:model="ackConvenienceFeeNonRefundable"
+                                        class="mt-0.5 size-4 shrink-0 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-950"
+                                    />
+                                    <span>
+                                        I understand that the
+                                        <span class="font-semibold text-zinc-900 dark:text-white">convenience fee</span>
+                                        is
+                                        <span class="font-semibold text-zinc-900 dark:text-white">non-refundable</span>,
+                                        as described in the
+                                        <a
+                                            href="{{ route('terms') }}#convenience-fee"
+                                            wire:navigate
+                                            class="font-semibold text-teal-700 underline-offset-2 hover:underline dark:text-teal-400"
+                                        >
+                                            Terms &amp; conditions
+                                        </a>
+                                        (including where court or venue amounts may still be refundable under venue rules).
+                                    </span>
+                                </label>
+                                @error('ackConvenienceFeeNonRefundable')
+                                    <p class="mt-2 text-xs font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @endif
                         <div
                             class="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-700"
                             x-data="{}"
@@ -836,29 +932,122 @@
                             </div>
                         </div>
                     @else
-                        @if ($this->canSubmitBookings())
-                            @if ($paymongoConfigured || $this->reviewBalanceAfterGiftCents <= 0)
-                                <div class="flex flex-wrap justify-end gap-3">
-                                    <button
-                                        type="button"
-                                        wire:click="submitRequest"
-                                        class="rounded-xl bg-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md hover:bg-teal-700 dark:bg-teal-600 dark:hover:bg-teal-500"
-                                    >
-                                        @if ($paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0)
-                                            Continue to payment
-                                        @else
-                                            Submit request
-                                        @endif
-                                    </button>
-                                </div>
-                            @endif
-                        @else
+                        @if (! $this->canSubmitBookings())
                             <p class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
                                 Player and coach accounts can submit requests from this page. Please use your venue or
                                 desk tools if you work for the club.
                             </p>
                         @endif
                     @endguest
+
+                    @auth
+                        @if (
+                            $step === 'review'
+                            && $this->canSubmitBookings()
+                            && ($paymongoConfigured || $this->reviewBalanceAfterGiftCents <= 0)
+                        )
+                            @php
+                                $ctaCourtSub = $this->reviewCourtSubtotalCents;
+                                $ctaCoachFee = $this->reviewCoachFeeCents;
+                                $ctaBookingFee = $this->reviewBookingFeeCents;
+                                $ctaCheckoutTotal = $this->reviewCheckoutTotalCents;
+                                $ctaGiftEst = $this->reviewGiftEstimateCents;
+                                $ctaBalanceAfter = $this->reviewBalanceAfterGiftCents;
+                                $ctaSpecsOk = count($reviewSpecs) > 0;
+                                $ctaFeeAckOk = $this->reviewBookingFeeCents <= 0 || $ackConvenienceFeeNonRefundable;
+                                $ctaNeedsPayment = $paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0;
+                            @endphp
+
+                            {{-- Floating checkout + totals (matches times-step continue bar) --}}
+                            <div
+                                class="fixed inset-x-0 bottom-0 z-30 lg:inset-x-auto lg:bottom-6 lg:left-auto lg:right-6 lg:w-full lg:max-w-sm"
+                                role="region"
+                                aria-label="Checkout summary and submit"
+                            >
+                                <div
+                                    class="border-t border-zinc-200/90 bg-white/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom,0px))] shadow-[0_-8px_30px_-10px_rgba(0,0,0,0.12)] backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-950/95 dark:shadow-black/40 lg:rounded-2xl lg:border lg:px-4 lg:py-4 lg:shadow-2xl"
+                                >
+                                    <div
+                                        class="mb-3"
+                                        aria-live="polite"
+                                        aria-atomic="true"
+                                    >
+                                        @if (! $ctaSpecsOk)
+                                            <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                                Fix your slot selection above to continue.
+                                            </p>
+                                        @else
+                                            <dl class="space-y-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                                                <div class="flex justify-between gap-3">
+                                                    <dt>Courts subtotal</dt>
+                                                    <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-white">
+                                                        {{ Money::formatMinor($ctaCourtSub, $currency) }}
+                                                    </dd>
+                                                </div>
+                                                @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '' && $this->coachPaidHours > 0)
+                                                    <div class="flex justify-between gap-3">
+                                                        <dt>
+                                                            Coach
+                                                            <span class="mt-0.5 block font-normal text-zinc-500 dark:text-zinc-400">
+                                                                {{ $this->coachPaidHours }}
+                                                                {{ \Illuminate\Support\Str::plural('hr', $this->coachPaidHours) }}
+                                                            </span>
+                                                        </dt>
+                                                        <dd class="shrink-0 self-start tabular-nums text-zinc-800 dark:text-zinc-200">
+                                                            {{ Money::formatMinor($ctaCoachFee, $currency) }}
+                                                        </dd>
+                                                    </div>
+                                                @endif
+                                                <div class="flex justify-between gap-3">
+                                                    <dt>
+                                                        Convenience fee
+                                                        <span class="mt-0.5 block font-normal text-zinc-500 dark:text-zinc-400">
+                                                            {{ currentBookingFeeSetting()->breakdownLabel() }}
+                                                        </span>
+                                                    </dt>
+                                                    <dd class="shrink-0 self-start tabular-nums text-zinc-800 dark:text-zinc-200">
+                                                        {{ Money::formatMinor($ctaBookingFee, $currency) }}
+                                                    </dd>
+                                                </div>
+                                                <div class="flex justify-between gap-3 border-t border-zinc-200 pt-2 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:text-white">
+                                                    <dt>Total</dt>
+                                                    <dd class="shrink-0 tabular-nums">
+                                                        {{ Money::formatMinor($ctaCheckoutTotal, $currency) }}
+                                                    </dd>
+                                                </div>
+                                                @if ($ctaGiftEst > 0)
+                                                    <div class="flex justify-between gap-3 text-xs text-emerald-800 dark:text-emerald-200">
+                                                        <dt>Gift card (est.)</dt>
+                                                        <dd class="shrink-0 tabular-nums">
+                                                            −{{ Money::formatMinor($ctaGiftEst, $currency) }}
+                                                        </dd>
+                                                    </div>
+                                                    <div class="flex justify-between gap-3 border-t border-zinc-200 pt-2 text-sm font-bold text-zinc-900 dark:border-zinc-700 dark:text-white">
+                                                        <dt>Est. balance</dt>
+                                                        <dd class="shrink-0 tabular-nums">
+                                                            {{ Money::formatMinor($ctaBalanceAfter, $currency) }}
+                                                        </dd>
+                                                    </div>
+                                                @endif
+                                            </dl>
+                                        @endif
+                                    </div>
+                                    <button
+                                        type="button"
+                                        wire:click="submitRequest"
+                                        @disabled(! $ctaSpecsOk || ! $ctaFeeAckOk)
+                                        class="w-full rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:shadow-none disabled:hover:bg-zinc-400 dark:bg-teal-600 dark:hover:bg-teal-500 dark:disabled:bg-zinc-600"
+                                    >
+                                        @if ($ctaNeedsPayment)
+                                            Continue to payment
+                                        @else
+                                            Submit request
+                                        @endif
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+                    @endauth
                 </div>
             @endif
         </div>

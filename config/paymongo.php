@@ -22,6 +22,10 @@ return [
     |--------------------------------------------------------------------------
     | Checkout session defaults
     |--------------------------------------------------------------------------
+    |
+    | Hosted checkout shows PayMongo’s own “Fees” row for payment-method / pass‑on charges (often “Free”). That row is not
+    | our platform convenience fee — we describe the convenience fee in checkout line items instead.
+    |
     */
 
     'payment_method_types' => array_values(array_filter(array_map('trim', explode(',', (string) env(

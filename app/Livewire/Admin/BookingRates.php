@@ -11,10 +11,18 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::admin')]
-#[Title('Booking rates')]
+#[Title('Convenience fee')]
 class BookingRates extends Component
 {
     public ?int $recordId = null;
+
+    public string $fee_basis = BookingFeeSetting::FEE_BASIS_SUBTOTAL;
+
+    public string $per_court_hour_mode = BookingFeeSetting::PER_COURT_HOUR_FIXED;
+
+    public string $per_court_hour_fixed = '';
+
+    public string $per_court_hour_percent = '';
 
     public string $base_fee = '';
 
@@ -64,6 +72,14 @@ class BookingRates extends Component
         $this->percentage_fee = (string) $defaults->percentage_fee;
         $this->max_fee = $defaults->max_fee !== null ? (string) $defaults->max_fee : '';
         $this->is_active = true;
+        $this->fee_basis = $defaults->fee_basis ?? BookingFeeSetting::FEE_BASIS_SUBTOTAL;
+        $this->per_court_hour_mode = $defaults->per_court_hour_mode ?? BookingFeeSetting::PER_COURT_HOUR_FIXED;
+        $this->per_court_hour_fixed = $defaults->per_court_hour_fixed !== null
+            ? (string) $defaults->per_court_hour_fixed
+            : BookingFeeSetting::DEFAULT_PER_COURT_HOUR_FIXED;
+        $this->per_court_hour_percent = $defaults->per_court_hour_percent !== null
+            ? (string) $defaults->per_court_hour_percent
+            : BookingFeeSetting::DEFAULT_PER_COURT_HOUR_PERCENT;
     }
 
     protected function fillFromModel(BookingFeeSetting $record): void
@@ -72,6 +88,10 @@ class BookingRates extends Component
         $this->percentage_fee = (string) $record->percentage_fee;
         $this->max_fee = $record->max_fee !== null ? (string) $record->max_fee : '';
         $this->is_active = $record->is_active;
+        $this->fee_basis = $record->fee_basis ?? BookingFeeSetting::FEE_BASIS_SUBTOTAL;
+        $this->per_court_hour_mode = $record->per_court_hour_mode ?? BookingFeeSetting::PER_COURT_HOUR_FIXED;
+        $this->per_court_hour_fixed = $record->per_court_hour_fixed !== null ? (string) $record->per_court_hour_fixed : '';
+        $this->per_court_hour_percent = $record->per_court_hour_percent !== null ? (string) $record->per_court_hour_percent : '';
     }
 
     /**
@@ -110,7 +130,7 @@ class BookingRates extends Component
         $model = BookingFeeSetting::query()->findOrFail($id);
         $model->update(['is_active' => true]);
 
-        session()->flash('status', "Rate #{$id} is now the active booking fee.");
+        session()->flash('status', "Rate #{$id} is now the active convenience fee configuration.");
         if ($this->recordId === $id) {
             $this->hydrateForm();
         }
@@ -129,29 +149,81 @@ class BookingRates extends Component
 
     public function save(): void
     {
+        $basis = $this->fee_basis === BookingFeeSetting::FEE_BASIS_PER_COURT_HOUR
+            ? BookingFeeSetting::FEE_BASIS_PER_COURT_HOUR
+            : BookingFeeSetting::FEE_BASIS_SUBTOTAL;
+
         $rules = [
-            'base_fee' => ['required', 'numeric', 'min:0'],
-            'percentage_fee' => ['required', 'numeric', 'min:0', 'max:1'],
+            'fee_basis' => [
+                'required',
+                'in:'.BookingFeeSetting::FEE_BASIS_SUBTOTAL.','.BookingFeeSetting::FEE_BASIS_PER_COURT_HOUR,
+            ],
             'is_active' => ['boolean'],
         ];
-        if (trim((string) $this->max_fee) !== '') {
-            $rules['max_fee'] = ['numeric', 'min:0'];
+
+        if ($basis === BookingFeeSetting::FEE_BASIS_SUBTOTAL) {
+            $rules['base_fee'] = ['required', 'numeric', 'min:0'];
+            $rules['percentage_fee'] = ['required', 'numeric', 'min:0', 'max:1'];
+            if (trim((string) $this->max_fee) !== '') {
+                $rules['max_fee'] = ['numeric', 'min:0'];
+            }
+        } else {
+            $rules['per_court_hour_mode'] = [
+                'required',
+                'in:'.BookingFeeSetting::PER_COURT_HOUR_FIXED.','.BookingFeeSetting::PER_COURT_HOUR_PERCENT,
+            ];
+            if ($this->per_court_hour_mode === BookingFeeSetting::PER_COURT_HOUR_FIXED) {
+                $rules['per_court_hour_fixed'] = ['required', 'numeric', 'min:0'];
+            } else {
+                $rules['per_court_hour_percent'] = ['required', 'numeric', 'min:0', 'max:1'];
+            }
+            if (trim((string) $this->max_fee) !== '') {
+                $rules['max_fee'] = ['numeric', 'min:0'];
+            }
         }
 
         $validated = $this->validate($rules, [], [
             'base_fee' => 'base fee',
             'percentage_fee' => 'percentage fee',
             'max_fee' => 'maximum fee',
+            'fee_basis' => 'fee basis',
+            'per_court_hour_mode' => 'per-court-hour mode',
+            'per_court_hour_fixed' => 'fixed fee per court hour',
+            'per_court_hour_percent' => 'percentage per court hour',
         ]);
 
         $maxFee = trim((string) $this->max_fee) === '' ? null : (float) $this->max_fee;
+        if ($maxFee !== null && $maxFee <= 0) {
+            $maxFee = null;
+        }
 
-        $payload = [
-            'base_fee' => $validated['base_fee'],
-            'percentage_fee' => $validated['percentage_fee'],
-            'max_fee' => $maxFee,
-            'is_active' => $this->is_active,
-        ];
+        if ($basis === BookingFeeSetting::FEE_BASIS_SUBTOTAL) {
+            $payload = [
+                'base_fee' => $validated['base_fee'],
+                'percentage_fee' => $validated['percentage_fee'],
+                'max_fee' => $maxFee,
+                'is_active' => $this->is_active,
+                'fee_basis' => BookingFeeSetting::FEE_BASIS_SUBTOTAL,
+                'per_court_hour_mode' => null,
+                'per_court_hour_fixed' => null,
+                'per_court_hour_percent' => null,
+            ];
+        } else {
+            $payload = [
+                'base_fee' => $this->base_fee !== '' ? $this->base_fee : BookingFeeSetting::DEFAULT_BASE_FEE,
+                'percentage_fee' => $this->percentage_fee !== '' ? $this->percentage_fee : BookingFeeSetting::DEFAULT_PERCENTAGE_FEE,
+                'max_fee' => $maxFee,
+                'is_active' => $this->is_active,
+                'fee_basis' => BookingFeeSetting::FEE_BASIS_PER_COURT_HOUR,
+                'per_court_hour_mode' => $validated['per_court_hour_mode'],
+                'per_court_hour_fixed' => $validated['per_court_hour_mode'] === BookingFeeSetting::PER_COURT_HOUR_FIXED
+                    ? $validated['per_court_hour_fixed']
+                    : null,
+                'per_court_hour_percent' => $validated['per_court_hour_mode'] === BookingFeeSetting::PER_COURT_HOUR_PERCENT
+                    ? $validated['per_court_hour_percent']
+                    : null,
+            ];
+        }
 
         if ($this->recordId !== null) {
             $model = BookingFeeSetting::query()->findOrFail($this->recordId);
@@ -161,7 +233,7 @@ class BookingRates extends Component
             $this->recordId = (int) $created->getKey();
         }
 
-        session()->flash('status', 'Booking rate saved.');
+        session()->flash('status', 'Convenience fee settings saved.');
         $this->hydrateForm();
     }
 
@@ -172,6 +244,10 @@ class BookingRates extends Component
             'base_fee' => $this->base_fee !== '' ? $this->base_fee : BookingFeeSetting::DEFAULT_BASE_FEE,
             'percentage_fee' => $this->percentage_fee !== '' ? $this->percentage_fee : BookingFeeSetting::DEFAULT_PERCENTAGE_FEE,
             'max_fee' => $this->max_fee !== '' ? $this->max_fee : null,
+            'fee_basis' => $this->fee_basis !== '' ? $this->fee_basis : BookingFeeSetting::FEE_BASIS_SUBTOTAL,
+            'per_court_hour_mode' => $this->per_court_hour_mode !== '' ? $this->per_court_hour_mode : BookingFeeSetting::PER_COURT_HOUR_FIXED,
+            'per_court_hour_fixed' => $this->per_court_hour_fixed !== '' ? $this->per_court_hour_fixed : BookingFeeSetting::DEFAULT_PER_COURT_HOUR_FIXED,
+            'per_court_hour_percent' => $this->per_court_hour_percent !== '' ? $this->per_court_hour_percent : BookingFeeSetting::DEFAULT_PER_COURT_HOUR_PERCENT,
         ]);
 
         return $m->breakdownLabel();

@@ -222,7 +222,7 @@
                                         : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                 ])
                             >
-                                Booking rates
+                                Convenience fee
                             </a>
                             <a
                                 href="{{ route('admin.gift-cards.index') }}"

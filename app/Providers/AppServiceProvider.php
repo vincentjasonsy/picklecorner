@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Models\Booking;
+use App\Models\Court;
 use App\Observers\BookingObserver;
+use App\Observers\CourtObserver;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -29,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Booking::observe(BookingObserver::class);
+        Court::observe(CourtObserver::class);
 
         View::composer('layouts::venue-portal', function (\Illuminate\View\View $view): void {
             $client = auth()->user()?->administeredCourtClient;

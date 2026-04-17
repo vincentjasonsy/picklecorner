@@ -15,7 +15,7 @@
                 Venues, desk staff, coaches, and GameQ use other workspaces —
             </span>
             <a href="{{ url('/#pricing') }}" wire:navigate class="font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300">
-                how booking fees work
+                how convenience fees work
             </a>
             ·
             <a href="{{ url('/#tools') }}" wire:navigate class="font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300">

@@ -78,6 +78,9 @@ class VenueBookingPage extends Component
     /** @var mixed */
     public $paymentProof = null;
 
+    /** Acknowledgement that the convenience fee is non-refundable when a convenience fee applies. */
+    public bool $ackConvenienceFeeNonRefundable = false;
+
     public function mount(CourtClient $courtClient): void
     {
         abort_unless($courtClient->is_active, 404);
@@ -686,12 +689,14 @@ class VenueBookingPage extends Component
 
         $this->clampCoachPaidHours();
         $this->syncOpenPlayEligibility();
+        $this->ackConvenienceFeeNonRefundable = false;
         $this->step = 'review';
         $this->js('window.scrollTo(0, 0);');
     }
 
     public function backToTimes(): void
     {
+        $this->ackConvenienceFeeNonRefundable = false;
         $this->step = 'times';
     }
 
@@ -819,7 +824,12 @@ class VenueBookingPage extends Component
     #[Computed]
     public function reviewBookingFeeCents(): int
     {
-        return BookingFeeService::calculateCentsFromCourtSubtotalCents($this->reviewCourtSubtotalCents);
+        $specs = $this->buildSpecsForSubmit();
+        if ($specs === []) {
+            return 0;
+        }
+
+        return BookingFeeService::calculateCentsForSpecs($specs);
     }
 
     #[Computed]
@@ -909,6 +919,10 @@ class VenueBookingPage extends Component
             $rules['openPlayRefundPolicy'] = ['nullable', 'string', 'max:5000'];
         }
 
+        if ($this->reviewBookingFeeCents > 0) {
+            $rules['ackConvenienceFeeNonRefundable'] = ['accepted'];
+        }
+
         $this->validate($rules, [], [
             'paymentReference' => 'payment reference',
             'giftCardCode' => 'gift card code',
@@ -918,6 +932,7 @@ class VenueBookingPage extends Component
             'openPlayHostPaymentDetails' => 'payment details for players',
             'openPlayExternalContact' => 'refund / contact line',
             'openPlayRefundPolicy' => 'refund policy',
+            'ackConvenienceFeeNonRefundable' => 'convenience fee terms',
         ]);
 
         $specs = $this->buildSpecsForSubmit();

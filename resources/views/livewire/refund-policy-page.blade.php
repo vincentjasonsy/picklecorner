@@ -26,6 +26,21 @@
                 </a>.
             </p>
 
+            <h2>Convenience fee</h2>
+            <p>
+                Certain bookings include a separate <strong>convenience fee</strong> collected by
+                {{ config('app.name') }}. That fee is our compensation for providing the booking platform and related services
+                and is our fee-based revenue from those payments.
+            </p>
+            <p>
+                <strong>We do not refund the convenience fee.</strong> Where you receive a refund of amounts owed to a venue
+                (such as court rental after an eligible cancellation), any refund is limited to those venue-related amounts
+                and does not include repayment of the convenience fee, except where mandatory law requires otherwise. See also our
+                <a href="{{ route('terms') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
+                    Terms &amp; conditions
+                </a>.
+            </p>
+
             <h2>Venue-specific rules</h2>
             <p>
                 Many refunds are governed by the venue’s published cancellation window, pricing, and house rules shown
@@ -45,6 +60,7 @@
             <h2>Non-refundable or partial cases</h2>
             <p>Refunds may be unavailable or only partial when:</p>
             <ul>
+                <li>the <strong>convenience fee</strong> is non-refundable (as described above), even if other parts of a payment are adjusted;</li>
                 <li>you cancel outside the permitted window or do not attend (no-show);</li>
                 <li>the booking was sold as non-refundable or at a special rate where that was clearly disclosed;</li>
                 <li>third-party fees (for example certain payment or FX fees) cannot be reclaimed;</li>

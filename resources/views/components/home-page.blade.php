@@ -80,7 +80,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                 </h1>
                 <p class="mt-5 max-w-lg text-sm leading-relaxed text-emerald-100/85 sm:text-base">
                     {{ config('app.name') }} is your home base for finding venues, locking in hours, and keeping members
-                    on the same page—without the spreadsheet chaos. We keep platform fees lean so
+                    on the same page—without the spreadsheet chaos. We keep convenience fees lean so
                     <span class="font-semibold text-white/95">more of your budget stays on the court</span>, not buried
                     in booking surcharges.
                 </p>
@@ -182,7 +182,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                 </h2>
                 <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                     Venues set their own court prices—you always see hourly rates up front. On top of that, we charge a
-                    small, capped <strong class="font-semibold text-zinc-800 dark:text-zinc-200">booking service fee</strong>
+                    small, capped <strong class="font-semibold text-zinc-800 dark:text-zinc-200">convenience fee</strong>
                     (a modest base plus a low percentage on court subtotals) so checkout stays predictable. We
                     deliberately keep that fee lower than many legacy sports and facility apps, so
                     <strong class="font-semibold text-zinc-800 dark:text-zinc-200">your money goes to play time</strong>, not
@@ -197,7 +197,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         Competitive fees
                     </p>
                     <p class="mt-2 text-xs leading-relaxed text-emerald-900/85 dark:text-emerald-100/85">
-                        A lean service fee structure designed to undercut bloated all-in-one platforms—see the line item
+                        A lean convenience fee structure designed to undercut bloated all-in-one platforms—see the line item
                         at checkout.
                     </p>
                 </li>
@@ -208,7 +208,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         No sticker shock
                     </p>
                     <p class="mt-2 text-xs leading-relaxed text-teal-900/85 dark:text-teal-100/85">
-                        Court subtotals, coach add-ons where offered, then service fee—totals are clear before you confirm.
+                        Court subtotals, coach add-ons where offered, then convenience fee—totals are clear before you confirm.
                     </p>
                 </li>
                 <li

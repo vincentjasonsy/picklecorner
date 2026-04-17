@@ -108,7 +108,7 @@ class PublicVenueBookingSubmission
 
             $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
             $courtSubtotalCents = (int) array_sum(array_column($specs, 'court_gross_cents'));
-            $bookingFeeCents = BookingFeeService::calculateCentsFromCourtSubtotalCents($courtSubtotalCents);
+            $bookingFeeCents = BookingFeeService::calculateCentsForSpecs($specs);
             $totalDueForGift = $totalGross + $bookingFeeCents;
 
             $giftCardId = null;
@@ -286,6 +286,8 @@ class PublicVenueBookingSubmission
                     : 'Member booking request submitted ('.count($bookings).' courts)',
             ),
         };
+
+        VenueBookingConfirmationNotifier::notifyMemberPublicSubmission($courtClient, $booker, $bookings);
 
         return ['bookings' => $bookings, 'desk_policy' => $deskPolicy];
     }

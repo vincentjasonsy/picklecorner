@@ -88,8 +88,8 @@ new #[Layout('layouts::admin'), Title('Overview')] class extends Component
             wire:navigate
             class="font-medium text-emerald-700 underline decoration-emerald-700/30 underline-offset-2 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300"
         >
-            platform booking rates
+            convenience fee
         </a>
-        (service fee at member checkout: base + percentage, optional cap).
+        (member checkout: base + percentage or per court hour, optional cap).
     </p>
 </div>

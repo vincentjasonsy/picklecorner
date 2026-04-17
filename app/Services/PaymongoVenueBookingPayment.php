@@ -3,10 +3,12 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\GiftCard;
 use App\Models\PaymongoBookingIntent;
 use App\Models\User;
+use App\Support\Money;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -44,6 +46,26 @@ final class PaymongoVenueBookingPayment
             throw new \RuntimeException('Amount is below the minimum for online checkout.');
         }
 
+        $specs = VenueBookingSpecsBuilder::buildSpecsForSubmit(
+            $courtClient,
+            $scheduleRows,
+            $bookingCalendarDate,
+            $selectedSlots,
+            (string) ($coachUserId ?? ''),
+            $coachPaidHours,
+            $venueCheckoutShowCoach,
+        );
+
+        if ($specs === []) {
+            throw new \RuntimeException('No time slots to book for PayMongo checkout.');
+        }
+
+        $amounts = self::amountsForSpecsAndGift($courtClient, $specs, $giftCardCode);
+
+        if ($amounts['payable'] !== $amountCentavos) {
+            throw new \RuntimeException('Checkout amount mismatch; refresh this page and try again.');
+        }
+
         $bookingRequestId = (string) Str::uuid();
 
         $payload = [
@@ -78,22 +100,21 @@ final class PaymongoVenueBookingPayment
             $paymentMethodTypes = ['gcash', 'qrph'];
         }
 
+        $lineItems = self::paymongoLineItemsForAmounts($courtClient, $amounts, $specs);
+
+        $sessionDescription = 'Court booking — '.$courtClient->name;
+        if ($amounts['booking_fee'] > 0) {
+            $sessionDescription .= ' (includes non-refundable convenience fee)';
+        }
+
         $body = [
             'data' => [
                 'attributes' => [
-                    'line_items' => [
-                        [
-                            'currency' => $courtClient->currency ?? 'PHP',
-                            'amount' => $amountCentavos,
-                            'name' => 'Court booking',
-                            'quantity' => 1,
-                            'description' => $courtClient->name,
-                        ],
-                    ],
+                    'line_items' => $lineItems,
                     'payment_method_types' => $paymentMethodTypes,
                     'success_url' => $successUrl,
                     'cancel_url' => $cancelUrl,
-                    'description' => 'Court booking — '.$courtClient->name,
+                    'description' => $sessionDescription,
                     'send_email_receipt' => false,
                     'metadata' => [
                         'intent_id' => $intent->id,
@@ -314,30 +335,11 @@ final class PaymongoVenueBookingPayment
                 throw new \RuntimeException('PayMongo intent '.$locked->id.' could not rebuild booking specs.');
             }
 
-            $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
-            $courtSubtotalCents = (int) array_sum(array_column($specs, 'court_gross_cents'));
-            $bookingFeeCents = BookingFeeService::calculateCentsFromCourtSubtotalCents($courtSubtotalCents);
-            $checkoutTotal = $totalGross + $bookingFeeCents;
+            $amounts = self::amountsForSpecsAndGift($courtClient, $specs, $giftCardCode);
 
-            $balance = $checkoutTotal;
-            $normalizedGift = GiftCardService::normalizeCode(trim($giftCardCode));
-            if ($normalizedGift !== '') {
-                $card = GiftCard::query()
-                    ->where('code', $normalizedGift)
-                    ->where(function ($q) use ($courtClient): void {
-                        $q->where('court_client_id', $courtClient->id)
-                            ->orWhereNull('court_client_id');
-                    })
-                    ->first();
-                if ($card !== null && $card->redeemableNow()) {
-                    $applied = GiftCardService::computeAppliedCents($card, $checkoutTotal);
-                    $balance = max(0, $checkoutTotal - $applied);
-                }
-            }
-
-            if ($balance !== $locked->amount_centavos) {
+            if ($amounts['payable'] !== $locked->amount_centavos) {
                 throw new \RuntimeException(
-                    'PayMongo intent '.$locked->id.' amount mismatch (expected '.$locked->amount_centavos.', computed '.$balance.').',
+                    'PayMongo intent '.$locked->id.' amount mismatch (expected '.$locked->amount_centavos.', computed '.$amounts['payable'].').',
                 );
             }
 
@@ -370,5 +372,110 @@ final class PaymongoVenueBookingPayment
                 'booking_request_id' => $bookingRequestId,
             ]);
         });
+    }
+
+    /**
+     * @param  list<array{court: Court, starts: \Carbon\Carbon, ends: \Carbon\Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
+     * @return array{total_gross: int, booking_fee: int, checkout_total: int, payable: int}
+     */
+    private static function amountsForSpecsAndGift(CourtClient $courtClient, array $specs, string $giftCardCode): array
+    {
+        $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
+        $bookingFeeCents = BookingFeeService::calculateCentsForSpecs($specs);
+        $checkoutTotal = $totalGross + $bookingFeeCents;
+        $payable = $checkoutTotal;
+
+        $normalizedGift = GiftCardService::normalizeCode(trim($giftCardCode));
+        if ($normalizedGift !== '') {
+            $card = GiftCard::query()
+                ->where('code', $normalizedGift)
+                ->where(function ($q) use ($courtClient): void {
+                    $q->where('court_client_id', $courtClient->id)
+                        ->orWhereNull('court_client_id');
+                })
+                ->first();
+            if ($card !== null && $card->redeemableNow()) {
+                $applied = GiftCardService::computeAppliedCents($card, $checkoutTotal);
+                $payable = max(0, $checkoutTotal - $applied);
+            }
+        }
+
+        return [
+            'total_gross' => $totalGross,
+            'booking_fee' => $bookingFeeCents,
+            'checkout_total' => $checkoutTotal,
+            'payable' => $payable,
+        ];
+    }
+
+    /**
+     * Hosted checkout line items. When both court rental and a convenience fee apply, we send a single line item whose
+     * description breaks out each part — PayMongo’s hosted page also shows a separate “Fees” row for PayMongo’s own
+     * payment-method charges (often “Free”), which is unrelated to our convenience fee.
+     *
+     * @param  array{total_gross: int, booking_fee: int, checkout_total: int, payable: int}  $amounts
+     * @param  list<array{court: Court, starts: \Carbon\Carbon, ends: \Carbon\Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
+     * @return list<array{currency: string, amount: int, name: string, quantity: int, description: string}>
+     */
+    private static function paymongoLineItemsForAmounts(CourtClient $courtClient, array $amounts, array $specs): array
+    {
+        $currency = $courtClient->currency ?? 'PHP';
+        $payable = $amounts['payable'];
+        $totalGross = $amounts['total_gross'];
+        $bookingFee = $amounts['booking_fee'];
+        $checkoutTotal = $amounts['checkout_total'];
+
+        if ($checkoutTotal <= 0) {
+            throw new \RuntimeException('Invalid checkout total for PayMongo line items.');
+        }
+
+        if ($bookingFee <= 0) {
+            return [[
+                'currency' => $currency,
+                'amount' => $payable,
+                'name' => 'Venue booking',
+                'quantity' => 1,
+                'description' => $courtClient->name,
+            ]];
+        }
+
+        $venuePortion = (int) floor($payable * $totalGross / $checkoutTotal);
+        $feePortion = $payable - $venuePortion;
+
+        $coachCents = (int) array_sum(array_column($specs, 'coach_fee_cents'));
+        $venueLineName = $coachCents > 0 ? 'Courts & coach' : 'Court rental';
+
+        if ($venuePortion <= 0) {
+            return [[
+                'currency' => $currency,
+                'amount' => $payable,
+                'name' => 'Convenience fee',
+                'quantity' => 1,
+                'description' => 'Non-refundable convenience fee ('.config('app.name').')',
+            ]];
+        }
+
+        if ($feePortion <= 0) {
+            return [[
+                'currency' => $currency,
+                'amount' => $payable,
+                'name' => $venueLineName,
+                'quantity' => 1,
+                'description' => $courtClient->name,
+            ]];
+        }
+
+        $rentalPartLabel = $coachCents > 0 ? 'Courts & coach' : 'Court rental';
+        $breakdownDescription = Money::formatMinor($venuePortion, $currency).' '.$rentalPartLabel.' + '
+            .Money::formatMinor($feePortion, $currency).' convenience fee (non-refundable). '
+            .$courtClient->name.'. Any separate “Fees” row on this screen is the processor payment fee, not this convenience fee.';
+
+        return [[
+            'currency' => $currency,
+            'amount' => $payable,
+            'name' => 'Court booking (includes convenience fee)',
+            'quantity' => 1,
+            'description' => $breakdownDescription,
+        ]];
     }
 }

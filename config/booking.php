@@ -58,4 +58,17 @@ return [
 
     'member_booking_nudge_dismiss_hours' => (int) env('MEMBER_BOOKING_NUDGE_DISMISS_HOURS', 72),
 
+    /*
+    |--------------------------------------------------------------------------
+    | New / upcoming court emails (members)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, eligible members (same home city as the venue, marketing
+    | emails opted in, player-type accounts) receive one email when a partner
+    | court goes live or is scheduled to open (see opens_at on courts).
+    |
+    */
+
+    'court_opening_emails' => (bool) env('BOOKING_COURT_OPENING_EMAILS', true),
+
 ];

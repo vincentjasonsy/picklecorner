@@ -76,7 +76,7 @@ class AdminAccessTest extends TestCase
         $this->actingAs($super)
             ->get(route('admin.booking-rates'))
             ->assertOk()
-            ->assertSee('Platform booking service fee', escape: false)
+            ->assertSee('Convenience fee', escape: false)
             ->assertSee('Rate history', escape: false)
             ->assertSee('Add new rate', escape: false);
     }

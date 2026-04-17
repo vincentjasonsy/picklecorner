@@ -58,6 +58,20 @@
                 </a>.
             </p>
 
+            <h2 id="convenience-fee">Convenience fee</h2>
+            <p>
+                When you pay through the Service, a separate
+                <strong>convenience fee</strong> may be added to your booking. This fee is charged by {{ config('app.name') }}
+                as compensation for operating and maintaining the marketplace; it is our sole fee-based revenue from those
+                transactions and is shown before you confirm payment.
+            </p>
+            <p>
+                Unless applicable law requires otherwise, <strong>the convenience fee is non-refundable</strong>.
+                If you receive a refund of court rental or other venue charges (for example after a qualifying cancellation),
+                those amounts may be refunded according to venue rules and our policies; the convenience fee is not refundable
+                as a separate item and will not be credited back except where mandatory law applies.
+            </p>
+
             <h2>Acceptable use</h2>
             <p>You agree not to:</p>
             <ul>
