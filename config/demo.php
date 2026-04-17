@@ -24,7 +24,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | When enabled, the login and /try pages show one-click sign-in as the
-    | seeded demo accounts (superadmin@, player@, openplayhost@, courtadmin@, desk@, coach@picklecorner.ph).
+    | seeded demo accounts (player@, openplayhost@, courtadmin@, desk@, coach@picklecorner.ph).
+    | Super admin must sign in manually (demo password from seed).
     | Requires migrate --seed. Set DEMO_QUICK_LOGIN_ENABLED=false in production.
     |
     */

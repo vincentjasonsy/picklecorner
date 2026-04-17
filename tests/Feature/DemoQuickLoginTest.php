@@ -59,6 +59,17 @@ class DemoQuickLoginTest extends TestCase
         $this->get(route('login'))
             ->assertOk()
             ->assertSee('Quick login', false)
-            ->assertSee('Court admin', false);
+            ->assertSee('Court admin', false)
+            ->assertDontSee('Super admin', false);
+    }
+
+    public function test_quick_login_rejects_super_admin_role(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+        config(['demo.quick_login_enabled' => true]);
+
+        $this->withoutMiddleware(ValidateCsrfToken::class)
+            ->post(route('demo.quick-login'), ['role' => 'super_admin'])
+            ->assertSessionHasErrors('role');
     }
 }

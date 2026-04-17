@@ -311,6 +311,9 @@
                                                                     'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20';
                                                                 $cellTitle = 'Open';
                                                             }
+                                                            $slotPriceLabel = ($isBookedCell || $isBlockedCell)
+                                                                ? ''
+                                                                : $this->slotHourPriceLabel($court, $hour);
                                                         @endphp
                                                         <td class="p-1.5 align-middle">
                                                             @if ($isBookedCell)
@@ -334,9 +337,22 @@
                                                                 <button
                                                                     type="button"
                                                                     wire:click="toggleSlot('{{ $court->id }}', {{ $hour }})"
-                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-teal-500/60 hover:bg-teal-50/80 dark:hover:bg-teal-950/30 {{ $availStyle }}"
+                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-teal-500/60 hover:bg-teal-50/80 dark:hover:bg-teal-950/30 {{ $availStyle }}"
                                                                 >
-                                                                    {{ $cellTitle }}
+                                                                    <span class="text-[10px] font-bold uppercase leading-tight tracking-wide">
+                                                                        {{ $cellTitle }}
+                                                                    </span>
+                                                                    @if ($slotPriceLabel !== '')
+                                                                        <span
+                                                                            @class([
+                                                                                'text-[9px] font-semibold leading-tight tabular-nums',
+                                                                                'text-white/90' => $slotSelected,
+                                                                                'text-zinc-600 dark:text-zinc-300' => ! $slotSelected,
+                                                                            ])
+                                                                        >
+                                                                            {{ $slotPriceLabel }}
+                                                                        </span>
+                                                                    @endif
                                                                 </button>
                                                             @endif
                                                         </td>
@@ -505,7 +521,7 @@
                         <button
                             type="button"
                             wire:click="goToReview"
-                            @if (! $timesHasSlots) disabled @endif
+                            @disabled(! $timesHasSlots)
                             class="w-full rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:shadow-none disabled:hover:bg-zinc-400 dark:bg-teal-600 dark:hover:bg-teal-500 dark:disabled:bg-zinc-600"
                         >
                             Continue to review
@@ -513,7 +529,9 @@
                     </div>
                 </div>
             @else
-                @php($reviewSpecs = $this->buildSpecsForSubmit())
+                @php
+                    $reviewSpecs = $this->buildSpecsForSubmit();
+                @endphp
                 {{-- Review step --}}
                 <div class="space-y-6">
                     <div class="flex flex-wrap items-start justify-between gap-4">
@@ -524,12 +542,16 @@
                             <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                                 {{ $this->bookingCalendarDateLabel() }}
                                 @if (count($reviewSpecs) > 0)
-                                    @php($nCourtsPicked = collect($reviewSpecs)->pluck('court.id')->unique()->count())
+                                    @php
+                                        $nCourtsPicked = collect($reviewSpecs)->pluck('court.id')->unique()->count();
+                                    @endphp
                                     · {{ $nCourtsPicked }} {{ \Illuminate\Support\Str::plural('court', $nCourtsPicked) }}
                                 @endif
                             </p>
                             @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '' && $this->coachPaidHours > 0)
-                                @php($reviewCoachSummary = $this->availableCoachesForReview->firstWhere('id', $coachUserId))
+                                @php
+                                    $reviewCoachSummary = $this->availableCoachesForReview->firstWhere('id', $coachUserId);
+                                @endphp
                                 <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                                     <span class="font-semibold text-zinc-800 dark:text-zinc-200">Coach:</span>
                                     {{ $reviewCoachSummary?->name ?? 'Selected coach' }}
@@ -559,11 +581,13 @@
                                 These times are no longer all available. Go back and adjust your selection.
                             </p>
                         @endif
-                        @php($giftEst = $this->reviewGiftEstimateCents)
-                        @php($courtSub = $this->reviewCourtSubtotalCents)
-                        @php($coachFee = $this->reviewCoachFeeCents)
-                        @php($bookingFee = $this->reviewBookingFeeCents)
-                        @php($checkoutTotal = $this->reviewCheckoutTotalCents)
+                        @php
+                            $giftEst = $this->reviewGiftEstimateCents;
+                            $courtSub = $this->reviewCourtSubtotalCents;
+                            $coachFee = $this->reviewCoachFeeCents;
+                            $bookingFee = $this->reviewBookingFeeCents;
+                            $checkoutTotal = $this->reviewCheckoutTotalCents;
+                        @endphp
                         <div class="mt-3 overflow-x-auto">
                             <table class="w-full min-w-[18rem] border-collapse text-left text-sm text-zinc-800 dark:text-zinc-200">
                                 <thead>
@@ -686,7 +710,7 @@
                                 <label class="flex cursor-pointer items-start gap-3 text-xs leading-relaxed text-zinc-700 dark:text-zinc-300">
                                     <input
                                         type="checkbox"
-                                        wire:model="ackConvenienceFeeNonRefundable"
+                                        wire:model.live="ackConvenienceFeeNonRefundable"
                                         class="mt-0.5 size-4 shrink-0 rounded border-zinc-300 text-teal-600 focus:ring-teal-500 dark:border-zinc-600 dark:bg-zinc-950"
                                     />
                                     <span>
@@ -953,8 +977,6 @@
                                 $ctaCheckoutTotal = $this->reviewCheckoutTotalCents;
                                 $ctaGiftEst = $this->reviewGiftEstimateCents;
                                 $ctaBalanceAfter = $this->reviewBalanceAfterGiftCents;
-                                $ctaSpecsOk = count($reviewSpecs) > 0;
-                                $ctaFeeAckOk = $this->reviewBookingFeeCents <= 0 || $ackConvenienceFeeNonRefundable;
                                 $ctaNeedsPayment = $paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0;
                             @endphp
 
@@ -972,7 +994,7 @@
                                         aria-live="polite"
                                         aria-atomic="true"
                                     >
-                                        @if (! $ctaSpecsOk)
+                                        @if (! $this->reviewStepHasSpecs())
                                             <p class="text-xs text-zinc-500 dark:text-zinc-400">
                                                 Fix your slot selection above to continue.
                                             </p>
@@ -1034,8 +1056,9 @@
                                     </div>
                                     <button
                                         type="button"
+                                        wire:key="review-submit-{{ $this->ackConvenienceFeeNonRefundable ? '1' : '0' }}-{{ $this->reviewBookingFeeCents }}"
                                         wire:click="submitRequest"
-                                        @disabled(! $ctaSpecsOk || ! $ctaFeeAckOk)
+                                        @disabled($this->reviewSubmitActionDisabled())
                                         class="w-full rounded-xl bg-teal-600 px-6 py-3.5 text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-teal-900/25 transition hover:bg-teal-700 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-zinc-400 disabled:shadow-none disabled:hover:bg-zinc-400 dark:bg-teal-600 dark:hover:bg-teal-500 dark:disabled:bg-zinc-600"
                                     >
                                         @if ($ctaNeedsPayment)

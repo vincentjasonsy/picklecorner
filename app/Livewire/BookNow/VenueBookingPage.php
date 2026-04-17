@@ -11,6 +11,7 @@ use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\BookingFeeService;
 use App\Services\CoachAvailabilityService;
+use App\Services\CourtSlotPricing;
 use App\Services\GiftCardService;
 use App\Services\PaymongoVenueBookingPayment;
 use App\Services\PublicVenueBookingSubmission;
@@ -651,6 +652,37 @@ class VenueBookingPage extends Component
     public function slotHourLabel(int $hour): string
     {
         return Carbon::createFromTime($hour, 0, 0)->format('g:i A');
+    }
+
+    /**
+     * Per-hour court rate for this calendar cell (matches checkout line pricing).
+     */
+    public function slotHourPriceLabel(Court $court, int $hour): string
+    {
+        $resolved = CourtSlotPricing::resolveForSlot($court, $this->bookingDayOfWeek(), $hour);
+        $cents = $resolved['cents'];
+
+        if ($cents === null || $cents <= 0) {
+            return '';
+        }
+
+        return Money::formatMinor((int) $cents, $this->courtClient->currency ?? 'PHP');
+    }
+
+    /** Used by review-step floating CTA (must read Livewire state on $this, not Blade locals). */
+    public function reviewStepHasSpecs(): bool
+    {
+        return count($this->buildSpecsForSubmit()) > 0;
+    }
+
+    /** Disable Continue / Submit until slots are valid and any convenience fee is acknowledged. */
+    public function reviewSubmitActionDisabled(): bool
+    {
+        if (! $this->reviewStepHasSpecs()) {
+            return true;
+        }
+
+        return $this->reviewBookingFeeCents > 0 && ! $this->ackConvenienceFeeNonRefundable;
     }
 
     protected function bookingOverlapsCourt(string $courtId, Carbon $starts, Carbon $ends): bool

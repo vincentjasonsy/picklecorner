@@ -16,7 +16,6 @@ class DemoQuickLoginController extends Controller
     public static function roleEmails(): array
     {
         return [
-            'super_admin' => 'superadmin@picklecorner.ph',
             'player' => 'player@picklecorner.ph',
             'open_play_host' => 'openplayhost@picklecorner.ph',
             'court_admin' => 'courtadmin@picklecorner.ph',
