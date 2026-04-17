@@ -50,7 +50,8 @@ final class CourtClientBootstrap
     }
 
     /**
-     * All outdoor courts first (sort order), then all indoor — matches venue grid ordering elsewhere.
+     * All outdoor courts first (ordinal 1..n), then all indoor (ordinal 1..m). Display column order for grids uses
+     * {@see Court::orderedForGridColumns()} (outdoor ↑, indoor ↓ by number in the name).
      */
     private static function createCourts(CourtClient $client, int $outdoorCount, int $indoorCount): void
     {

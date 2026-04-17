@@ -106,125 +106,157 @@
                 :class="portalNavOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
             >
                 <div class="border-b border-stone-200 px-4 py-4 dark:border-stone-800 lg:px-5">
-                    <p class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
-                        Counter menu
+                    <p class="font-display text-xs font-bold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                        Desk
+                    </p>
+                    <p class="mt-1 text-[11px] font-medium text-stone-500 dark:text-stone-500">
+                        Front counter navigation
                     </p>
                 </div>
                 <nav
-                    class="flex flex-col gap-1.5 overflow-y-auto p-3 lg:p-4"
+                    class="flex flex-col gap-6 overflow-y-auto p-3 lg:p-4"
                     aria-label="Front desk"
                     @click="if ($event.target.closest('a')) portalNavOpen = false"
                 >
-                    <a
-                        href="{{ route('desk.home') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
-                            request()->routeIs('desk.home')
-                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
-                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
-                        ])
-                    >
-                        <span class="block">Home</span>
-                        <span
-                            @class([
-                                'mt-0.5 block text-xs font-normal',
-                                request()->routeIs('desk.home')
-                                    ? 'text-teal-100'
-                                    : 'text-stone-500 dark:text-stone-500',
-                            ])
+                    <div>
+                        <p
+                            class="mb-2 px-1 font-display text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500"
                         >
-                            Shift overview
-                        </span>
-                    </a>
-                    <a
-                        href="{{ route('desk.courts-live') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
-                            request()->routeIs('desk.courts-live')
-                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
-                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
-                        ])
-                    >
-                        <span class="block">Courts live</span>
-                        <span
-                            @class([
-                                'mt-0.5 block text-xs font-normal',
-                                request()->routeIs('desk.courts-live')
-                                    ? 'text-teal-100'
-                                    : 'text-stone-500 dark:text-stone-500',
-                            ])
-                        >
-                            Who is on each court
-                        </span>
-                    </a>
-                    <a
-                        href="{{ route('desk.booking-request') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
-                            request()->routeIs('desk.booking-request')
-                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
-                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
-                        ])
-                    >
-                        <span class="block">New booking request</span>
-                        <span
-                            @class([
-                                'mt-0.5 block text-xs font-normal',
-                                request()->routeIs('desk.booking-request')
-                                    ? 'text-teal-100'
-                                    : 'text-stone-500 dark:text-stone-500',
-                            ])
+                            Shift &amp; floor
+                        </p>
+                        <div class="flex flex-col gap-1.5">
+                            <a
+                                href="{{ route('desk.home') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                                    request()->routeIs('desk.home')
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                        : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                                ])
+                            >
+                                <span class="block">Home</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-xs font-normal',
+                                        request()->routeIs('desk.home')
+                                            ? 'text-teal-100'
+                                            : 'text-stone-500 dark:text-stone-500',
+                                    ])
+                                >
+                                    Shift overview
+                                </span>
+                            </a>
+                            <a
+                                href="{{ route('desk.courts-live') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                                    request()->routeIs('desk.courts-live')
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                        : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                                ])
+                            >
+                                <span class="block">Courts live</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-xs font-normal',
+                                        request()->routeIs('desk.courts-live')
+                                            ? 'text-teal-100'
+                                            : 'text-stone-500 dark:text-stone-500',
+                                    ])
+                                >
+                                    Who is on each court
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-1 font-display text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500"
                         >
                             Walk-ins &amp; calls
-                        </span>
-                    </a>
-                    <a
-                        href="{{ route('desk.my-requests') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
-                            request()->routeIs('desk.my-requests')
-                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
-                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
-                        ])
-                    >
-                        <span class="block">My requests</span>
-                        <span
-                            @class([
-                                'mt-0.5 block text-xs font-normal',
-                                request()->routeIs('desk.my-requests')
-                                    ? 'text-teal-100'
-                                    : 'text-stone-500 dark:text-stone-500',
-                            ])
+                        </p>
+                        <div class="flex flex-col gap-1.5">
+                            <a
+                                href="{{ route('desk.booking-request') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                                    request()->routeIs('desk.booking-request')
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                        : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                                ])
+                            >
+                                <span class="block">New booking request</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-xs font-normal',
+                                        request()->routeIs('desk.booking-request')
+                                            ? 'text-teal-100'
+                                            : 'text-stone-500 dark:text-stone-500',
+                                    ])
+                                >
+                                    Start a guest request
+                                </span>
+                            </a>
+                            <a
+                                href="{{ route('desk.my-requests') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                                    request()->routeIs('desk.my-requests')
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                        : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                                ])
+                            >
+                                <span class="block">My requests</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-xs font-normal',
+                                        request()->routeIs('desk.my-requests')
+                                            ? 'text-teal-100'
+                                            : 'text-stone-500 dark:text-stone-500',
+                                    ])
+                                >
+                                    Status &amp; history
+                                </span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-1 font-display text-[11px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500"
                         >
-                            Status &amp; history
-                        </span>
-                    </a>
-                    <a
-                        href="{{ route('desk.bookings.calendar') }}"
-                        wire:navigate
-                        @class([
-                            'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
-                            request()->routeIs('desk.bookings.calendar', 'desk.bookings.show')
-                                ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
-                                : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
-                        ])
-                    >
-                        <span class="block">Booking calendar</span>
-                        <span
-                            @class([
-                                'mt-0.5 block text-xs font-normal',
-                                request()->routeIs('desk.bookings.calendar', 'desk.bookings.show')
-                                    ? 'text-teal-100'
-                                    : 'text-stone-500 dark:text-stone-500',
-                            ])
-                        >
-                            Your submissions by day
-                        </span>
-                    </a>
+                            Submitted bookings
+                        </p>
+                        <div class="flex flex-col gap-1.5">
+                            <a
+                                href="{{ route('desk.bookings.calendar') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                                    request()->routeIs('desk.bookings.calendar', 'desk.bookings.show')
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                        : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                                ])
+                            >
+                                <span class="block">Booking calendar</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-xs font-normal',
+                                        request()->routeIs('desk.bookings.calendar', 'desk.bookings.show')
+                                            ? 'text-teal-100'
+                                            : 'text-stone-500 dark:text-stone-500',
+                                    ])
+                                >
+                                    Your submissions by day
+                                </span>
+                            </a>
+                        </div>
+                    </div>
                 </nav>
                 <div class="shrink-0 border-t border-stone-200 p-3 dark:border-stone-800 lg:p-4">
                     <form method="POST" action="{{ route('logout') }}" @submit="portalNavOpen = false">

@@ -27,28 +27,28 @@
             .member-court-bg {
                 background-color: #fafaf9;
                 background-image:
-                    radial-gradient(ellipse 120% 80% at 0% -20%, rgba(16, 185, 129, 0.18), transparent 55%),
-                    radial-gradient(ellipse 100% 60% at 100% 110%, rgba(20, 184, 166, 0.14), transparent 50%),
+                    radial-gradient(ellipse 100% 70% at 10% 0%, rgba(52, 211, 153, 0.12), transparent 50%),
+                    radial-gradient(ellipse 80% 50% at 90% 100%, rgba(45, 212, 191, 0.1), transparent 50%),
                     repeating-linear-gradient(
-                        105deg,
+                        118deg,
                         transparent,
-                        transparent 48px,
-                        rgba(16, 185, 129, 0.035) 48px,
-                        rgba(16, 185, 129, 0.035) 49px
+                        transparent 56px,
+                        rgba(16, 185, 129, 0.02) 56px,
+                        rgba(16, 185, 129, 0.02) 57px
                     );
             }
 
             .dark .member-court-bg {
                 background-color: #09090b;
                 background-image:
-                    radial-gradient(ellipse 120% 80% at 0% -20%, rgba(16, 185, 129, 0.12), transparent 55%),
-                    radial-gradient(ellipse 100% 60% at 100% 110%, rgba(20, 184, 166, 0.1), transparent 50%),
+                    radial-gradient(ellipse 100% 70% at 10% 0%, rgba(52, 211, 153, 0.08), transparent 50%),
+                    radial-gradient(ellipse 80% 50% at 90% 100%, rgba(45, 212, 191, 0.06), transparent 50%),
                     repeating-linear-gradient(
-                        105deg,
+                        118deg,
                         transparent,
-                        transparent 48px,
-                        rgba(16, 185, 129, 0.04) 48px,
-                        rgba(16, 185, 129, 0.04) 49px
+                        transparent 56px,
+                        rgba(16, 185, 129, 0.025) 56px,
+                        rgba(16, 185, 129, 0.025) 57px
                     );
             }
         </style>
@@ -114,79 +114,75 @@
                     >
                         @if (auth()->user()->isCoach())
                             <span
-                                class="inline-flex rounded-full bg-violet-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-violet-900 dark:bg-violet-950/80 dark:text-violet-200"
+                                class="inline-flex rounded-full bg-violet-100/90 px-3 py-1 text-xs font-semibold text-violet-900 dark:bg-violet-950/70 dark:text-violet-200"
                             >
-                                Coach account
+                                Coach mode
                             </span>
                         @else
                             <span
-                                class="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
+                                class="inline-flex rounded-full bg-emerald-100/90 px-3 py-1 text-xs font-semibold text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-200"
                             >
-                                Player zone
+                                Playing
                             </span>
                         @endif
                     </div>
 
                     <nav
-                        class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
-                        aria-label="Member"
+                        class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-3 text-sm font-medium"
+                        aria-label="{{ auth()->user()->isCoach() ? 'Coach' : 'Player' }} account"
                         @click="if ($event.target.closest('a')) portalNavOpen = false"
                     >
                         @unless (auth()->user()->isCoach())
                             <div>
-                                <p
-                                    class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                                >
-                                    Your court
-                                </p>
-                                <div class="flex flex-col gap-1">
+                                <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Play</p>
+                                <div class="flex flex-col gap-0.5">
                                     <a
                                         href="{{ route('account.dashboard') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.dashboard')
-                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Home court
+                                        Home
                                     </a>
                                     <a
                                         href="{{ route('account.book') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.book')
-                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Book now
+                                        Find a court
                                     </a>
                                     <a
                                         href="{{ route('account.bookings') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.bookings', 'account.bookings.show')
-                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        My games
+                                        My bookings
                                     </a>
                                     <a
                                         href="{{ route('account.court-open-plays.index') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.court-open-plays.*')
-                                                ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Court open play
+                                        Open play
                                     </a>
                                 </div>
                             </div>
@@ -194,147 +190,179 @@
 
                         @if (auth()->user()->isCoach())
                             <div>
-                                <p
-                                    class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                                >
-                                    Coaching
-                                </p>
-                                <div class="flex flex-col gap-1">
+                                <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Overview</p>
+                                <div class="flex flex-col gap-0.5">
                                     <a
                                         href="{{ route('account.coach.dashboard') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.coach.dashboard')
-                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                ? 'bg-violet-50 font-semibold text-violet-950 dark:bg-violet-950/50 dark:text-violet-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Coach home
+                                        Home
                                     </a>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Where you coach</p>
+                                <div class="flex flex-col gap-0.5">
                                     <a
                                         href="{{ route('account.coach.courts') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.coach.courts')
-                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                ? 'bg-violet-50 font-semibold text-violet-950 dark:bg-violet-950/50 dark:text-violet-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Venues you coach
+                                        Venues
                                     </a>
                                     <a
                                         href="{{ route('account.coach.availability') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.coach.availability')
-                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                ? 'bg-violet-50 font-semibold text-violet-950 dark:bg-violet-950/50 dark:text-violet-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Schedule &amp; rate
+                                        Hours &amp; rate
                                     </a>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Sessions</p>
+                                <div class="flex flex-col gap-0.5">
                                     <a
                                         href="{{ route('account.coach.bookings.calendar') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.coach.bookings.calendar', 'account.coach.bookings.show')
-                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                ? 'bg-violet-50 font-semibold text-violet-950 dark:bg-violet-950/50 dark:text-violet-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Booking calendar
+                                        Calendar
                                     </a>
                                     <a
                                         href="{{ route('account.coach.gift-cards.index') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.coach.gift-cards.*')
-                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                ? 'bg-violet-50 font-semibold text-violet-950 dark:bg-violet-950/50 dark:text-violet-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
                                         Gift cards
                                     </a>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Your page</p>
+                                <div class="flex flex-col gap-0.5">
                                     <a
                                         href="{{ route('account.coach.profile') }}"
                                         wire:navigate
                                         @class([
-                                            'rounded-lg px-3 py-2 transition-colors',
+                                            'rounded-xl px-3 py-2 transition-colors',
                                             request()->routeIs('account.coach.profile')
-                                                ? 'bg-violet-50 text-violet-900 dark:bg-violet-950/50 dark:text-violet-200'
+                                                ? 'bg-violet-50 font-semibold text-violet-950 dark:bg-violet-950/50 dark:text-violet-200'
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Coach profile
+                                        Public profile
                                     </a>
                                 </div>
                             </div>
                         @endif
 
                         <div>
-                            <p
-                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                            >
-                                Tools
-                            </p>
-                            <div class="flex flex-col gap-1">
+                            <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Fun extra</p>
+                            <div class="flex flex-col gap-0.5">
                                 <a
                                     href="{{ route('account.open-play') }}"
                                     wire:navigate
                                     @class([
-                                        'inline-flex items-center gap-1.5 rounded-lg px-3 py-2 transition-colors',
+                                        'inline-flex items-center gap-2 rounded-xl px-3 py-2 transition-colors',
                                         request()->routeIs('account.open-play', 'account.open-play.legacy')
-                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                             : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                     ])
                                 >
                                     <x-gameq-mark compact />
+                                    <span class="text-sm">GameQ</span>
                                 </a>
                             </div>
                         </div>
 
                         <div>
-                            <p
-                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                            >
-                                Account
-                            </p>
-                            <div class="flex flex-col gap-1">
+                            <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">You</p>
+                            <div class="flex flex-col gap-0.5">
                                 <a
                                     href="{{ route('account.settings') }}"
                                     wire:navigate
                                     @class([
-                                        'rounded-lg px-3 py-2 transition-colors',
+                                        'rounded-xl px-3 py-2 transition-colors',
                                         request()->routeIs('account.settings')
-                                            ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                            ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
                                             : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                     ])
                                 >
-                                    Profile
+                                    Profile &amp; settings
+                                </a>
+                                <a
+                                    href="{{ route('home') }}"
+                                    wire:navigate
+                                    class="rounded-xl px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
+                                >
+                                    Main website
                                 </a>
                             </div>
                         </div>
 
-                        <div>
-                            <p
-                                class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
-                            >
-                                Elsewhere
-                            </p>
-                            <div class="flex flex-col gap-1">
-                                <a
-                                    href="{{ route('home') }}"
-                                    wire:navigate
-                                    class="rounded-lg px-3 py-2 text-zinc-600 transition-colors hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50"
-                                >
-                                    Back to site
-                                </a>
-                            </div>
+                        <div class="rounded-xl border border-dashed border-zinc-200/90 bg-white/60 px-3 py-3 text-xs leading-relaxed text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-400">
+                            <p class="font-semibold text-zinc-600 dark:text-zinc-300">Quick map</p>
+                            @unless (auth()->user()->isCoach())
+                                <ul class="mt-2 list-inside list-disc space-y-1">
+                                    <li>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Find a court</strong>
+                                        — book a slot.
+                                    </li>
+                                    <li>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Home</strong>
+                                        — what’s next.
+                                    </li>
+                                    <li>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">My bookings</strong>
+                                        — history &amp; refs.
+                                    </li>
+                                </ul>
+                            @else
+                                <ul class="mt-2 list-inside list-disc space-y-1">
+                                    <li>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Calendar</strong>
+                                        — your sessions.
+                                    </li>
+                                    <li>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Venues</strong>
+                                        — where you’re listed.
+                                    </li>
+                                    <li>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Public profile</strong>
+                                        — what players see.
+                                    </li>
+                                </ul>
+                            @endunless
                         </div>
                     </nav>
 
@@ -353,7 +381,7 @@
 
                 <div class="flex min-w-0 flex-1 flex-col lg:min-h-screen">
                     <header
-                        class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-zinc-200 bg-white/90 px-4 backdrop-blur-sm dark:border-zinc-800 dark:bg-zinc-900/90 lg:px-6"
+                        class="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-zinc-200/80 bg-white/80 px-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/85 lg:px-6"
                     >
                         <div class="flex min-w-0 flex-1 items-center gap-2">
                             <x-layout.portal-menu-button
@@ -375,10 +403,10 @@
                         </div>
                     </main>
                     <footer
-                        class="shrink-0 border-t border-zinc-200 bg-white py-4 dark:border-zinc-800 dark:bg-zinc-900"
+                        class="shrink-0 border-t border-zinc-200/80 bg-white/90 py-3 dark:border-zinc-800 dark:bg-zinc-900/90"
                     >
-                        <p class="px-4 text-center text-xs font-medium text-zinc-500 dark:text-zinc-500 md:px-6 md:text-left">
-                            Stay loose, have fun — see you on the court.
+                        <p class="px-4 text-center text-xs text-zinc-500 dark:text-zinc-500 md:px-6 md:text-left">
+                            Made for good rallies and cold drinks afterward.
                         </p>
                     </footer>
                 </div>

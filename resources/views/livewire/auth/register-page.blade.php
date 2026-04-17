@@ -35,6 +35,10 @@
             </p>
         </div>
 
+        @if ($demo && config('demo.quick_login_enabled'))
+            @include('partials.demo-quick-login')
+        @endif
+
         <form wire:submit="register" class="mt-8 space-y-5">
             <div>
                 <label for="name" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
@@ -109,6 +113,79 @@
                     class="mt-1.5 block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/40 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400 dark:focus:bg-zinc-950"
                     placeholder="Repeat password"
                 />
+            </div>
+
+            <div class="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                <p class="font-display text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Data privacy (Philippines)
+                </p>
+                <p class="mt-2 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                    Under the Data Privacy Act of 2012 (Republic Act No. 10173), we need your informed consent to process
+                    your personal data for your account. Marketing emails are optional and separate.
+                </p>
+                <label class="mt-4 flex cursor-pointer gap-3">
+                    <input
+                        wire:model="accept_privacy"
+                        type="checkbox"
+                        class="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/40 dark:border-zinc-600 dark:bg-zinc-900"
+                    />
+                    <span class="text-sm leading-snug text-zinc-700 dark:text-zinc-300">
+                        I have read and agree to the
+                        <a
+                            href="{{ route('privacy-policy') }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-semibold text-emerald-700 underline underline-offset-2 hover:text-emerald-600 dark:text-emerald-400 dark:hover:text-emerald-300"
+                        >
+                            Privacy Policy
+                        </a>
+                        (version {{ config('data_privacy.policy_version') }}) and consent to the collection, use, storage,
+                        and processing of my personal data as described there, in accordance with Philippine law.
+                        <span class="text-red-600 dark:text-red-400">*</span>
+                    </span>
+                </label>
+                @error('accept_privacy')
+                    <p class="mt-2 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
+
+                <label class="mt-4 flex cursor-pointer gap-3 border-t border-zinc-200/80 pt-4 dark:border-zinc-700/80">
+                    <input
+                        wire:model="subscribe_marketing_emails"
+                        type="checkbox"
+                        class="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/40 dark:border-zinc-600 dark:bg-zinc-900"
+                    />
+                    <span class="text-sm leading-snug text-zinc-700 dark:text-zinc-300">
+                        I agree to receive occasional emails about product updates, tips, and promotional offers from
+                        {{ config('app.name') }}. I understand I can unsubscribe at any time. (Optional)
+                    </span>
+                </label>
+                <p class="mt-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-500">
+                    Other legal documents:
+                    <a
+                        href="{{ route('terms') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+                    >
+                        Terms &amp; conditions
+                    </a>,
+                    <a
+                        href="{{ route('refund-policy') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+                    >
+                        Refund policy
+                    </a>,
+                    <a
+                        href="{{ route('booking-cancellation-policy') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+                    >
+                        Booking &amp; cancellation
+                    </a>.
+                </p>
             </div>
 
             <button

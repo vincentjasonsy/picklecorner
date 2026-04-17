@@ -7,7 +7,6 @@ use App\Models\UserType;
 use App\Services\ActivityLogger;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -67,7 +66,6 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
             'userType',
             'deskCourtClient',
             'administeredCourtClient',
-            'coachedCourts.court.courtClient',
         ]);
 
         if ($this->search !== '') {
@@ -98,30 +96,6 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
         }
 
         return $query->paginate($this->perPage);
-    }
-
-    /**
-     * Distinct booking venue names per user id for the current results page.
-     *
-     * @return array<string, list<string>>
-     */
-    #[Computed]
-    public function bookingVenueNamesForPage(): array
-    {
-        $ids = $this->usersPaginator->getCollection()->pluck('id')->all();
-        if ($ids === []) {
-            return [];
-        }
-
-        return DB::table('bookings')
-            ->whereIn('user_id', $ids)
-            ->join('court_clients', 'court_clients.id', '=', 'bookings.court_client_id')
-            ->select('user_id', 'court_clients.name')
-            ->orderBy('court_clients.name')
-            ->get()
-            ->groupBy('user_id')
-            ->map(fn ($rows) => $rows->pluck('name')->unique()->values()->all())
-            ->all();
     }
 
     public function deleteUser(string $userId): void
@@ -220,14 +194,10 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
                 :direction="$headerSortDir"
             />
             <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Role</th>
-            <th class="px-4 py-3 text-left font-semibold text-zinc-700 dark:text-zinc-300">Venues</th>
             <th class="px-4 py-3 text-right font-semibold text-zinc-700 dark:text-zinc-300">Actions</th>
         </tr>
     </x-slot:head>
 
-    @php
-        $bookingVenuesByUser = $this->bookingVenueNamesForPage;
-    @endphp
     @forelse ($users as $user)
         <tr wire:key="user-{{ $user->id }}">
             <td class="px-4 py-3 font-medium text-zinc-900 dark:text-zinc-100">
@@ -238,16 +208,6 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
             </td>
             <td class="px-4 py-3 text-zinc-600 dark:text-zinc-400">
                 <span>{{ $user->userType?->name ?? '—' }}</span>
-            </td>
-            <td class="max-w-xs px-4 py-3 text-left text-xs leading-snug text-zinc-600 dark:text-zinc-400">
-                @php
-                    $venueList = $user->associatedVenueNames($bookingVenuesByUser[$user->id] ?? []);
-                @endphp
-                @if ($venueList === [])
-                    <span class="text-zinc-400 dark:text-zinc-500">—</span>
-                @else
-                    <span class="text-zinc-700 dark:text-zinc-300">{{ implode(', ', $venueList) }}</span>
-                @endif
             </td>
             <td class="px-4 py-3 text-right">
                 @php
@@ -305,7 +265,7 @@ new #[Layout('layouts::admin'), Title('Users')] class extends Component
         </tr>
     @empty
         <tr>
-            <td colspan="5" class="px-4 py-8 text-center text-zinc-500">No users match.</td>
+            <td colspan="4" class="px-4 py-8 text-center text-zinc-500">No users match.</td>
         </tr>
     @endforelse
 </x-dashboard.data-table>

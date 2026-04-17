@@ -18,4 +18,17 @@ return [
 
     'ttl_hours' => max(1, (int) env('DEMO_TTL_HOURS', 24)),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Quick login (seeded demo users)
+    |--------------------------------------------------------------------------
+    |
+    | When enabled, the login and /try pages show one-click sign-in as the
+    | seeded demo accounts (player1@, courtadmin1@, desk1@, coach1@picklecorner.ph).
+    | Requires migrate --seed. Set DEMO_QUICK_LOGIN_ENABLED=false in production.
+    |
+    */
+
+    'quick_login_enabled' => filter_var(env('DEMO_QUICK_LOGIN_ENABLED', env('DEMO_REGISTRATION_ENABLED', true)), FILTER_VALIDATE_BOOLEAN),
+
 ];

@@ -12,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::member')]
-#[Title('Home court')]
+#[Title('Home')]
 class MemberDashboard extends Component
 {
     #[Computed]

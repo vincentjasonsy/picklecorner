@@ -14,7 +14,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::member')]
-#[Title('Profile')]
+#[Title('Profile & settings')]
 class MemberProfileSettings extends Component
 {
     public string $name = '';

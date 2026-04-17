@@ -458,6 +458,10 @@
                         <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
                         <a href="{{ url('/#pricing') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Pricing</a>
                         <a href="{{ route('contact') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
+                        <a href="{{ route('terms') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Terms</a>
+                        <a href="{{ route('privacy-policy') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Privacy</a>
+                        <a href="{{ route('refund-policy') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Refunds</a>
+                        <a href="{{ route('booking-cancellation-policy') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Booking</a>
                         <a
                             href="{{ route('open-play.about') }}"
                             wire:navigate

@@ -7,11 +7,17 @@
 @endphp
 
 <div class="space-y-6">
+    <x-member.guide title="Reading this list">
+        <p>
+            Newest bookings first. Tap <strong class="font-semibold text-sky-950 dark:text-white">View</strong> for the
+            full receipt, time window, and anything the venue shared.
+        </p>
+    </x-member.guide>
+
     <div>
-        <h1 class="font-display text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">My games</h1>
+        <h1 class="font-display text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">My bookings</h1>
         <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Every court you’ve booked — newest first. Use <strong class="font-semibold text-zinc-700 dark:text-zinc-300">View</strong> for
-            full date, time, payment, and venue links.
+            Everything you’ve booked, in one place. No detective work.
         </p>
     </div>
 
@@ -20,7 +26,7 @@
             class="rounded-2xl border border-violet-200 bg-violet-50/40 p-5 dark:border-violet-900/40 dark:bg-violet-950/20"
         >
             <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="font-display text-base font-bold text-zinc-900 dark:text-white">Upcoming open plays (joined)</h2>
+                <h2 class="font-display text-base font-bold text-zinc-900 dark:text-white">Open plays you joined</h2>
                 <a
                     href="{{ route('account.court-open-plays.index') }}"
                     wire:navigate
@@ -59,14 +65,14 @@
         <div class="overflow-x-auto">
             <table class="min-w-full text-left text-sm">
                 <thead class="border-b border-zinc-200 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-950/80">
-                    <tr class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    <tr class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
                         <th class="px-4 py-3">When</th>
-                        <th class="px-4 py-3">Ref.</th>
+                        <th class="px-4 py-3">Ref</th>
                         <th class="px-4 py-3">Venue</th>
                         <th class="px-4 py-3">Court</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3 text-right">Amount</th>
-                        <th class="px-4 py-3 text-right">Details</th>
+                        <th class="px-4 py-3 text-right"></th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">

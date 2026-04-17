@@ -6,7 +6,7 @@
                 wire:navigate
                 class="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
             >
-                ← Venue portal
+                ← Court admin
             </a>
             <a
                 href="{{ route('venue.manual-booking') }}"
@@ -643,14 +643,15 @@
                 </div>
             </form>
 
-            @if ($courtClient->courts->isNotEmpty())
+            @php($photoCourts = $this->courtsOrderedForGrid())
+            @if ($photoCourts->isNotEmpty())
                 <div class="mt-8 space-y-4 lg:col-span-2">
                     <h3 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Court photos</h3>
                     <p class="text-sm text-zinc-600 dark:text-zinc-400">
                         Shown on Book now cards and the public court page. Without photos, a default illustration is used.
                     </p>
                     <div class="grid gap-4 sm:grid-cols-2">
-                        @foreach ($courtClient->courts as $court)
+                        @foreach ($photoCourts as $court)
                             <livewire:venue.court-gallery-editor :court-id="$court->id" :key="'settings-court-gal-'.$court->id" />
                         @endforeach
                     </div>

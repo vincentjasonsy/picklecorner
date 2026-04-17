@@ -26,7 +26,7 @@ class AdminUserManagementTest extends TestCase
             ->assertOk();
     }
 
-    public function test_super_admin_users_index_shows_venues_column_and_filter(): void
+    public function test_super_admin_users_index_has_venue_filter(): void
     {
         $this->seed(UserTypeSeeder::class);
 
@@ -35,7 +35,6 @@ class AdminUserManagementTest extends TestCase
         $this->actingAs($super)
             ->get(route('admin.users.index'))
             ->assertOk()
-            ->assertSee('Venues', false)
             ->assertSee('All venues', false);
     }
 

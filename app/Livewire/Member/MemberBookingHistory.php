@@ -11,7 +11,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 #[Layout('layouts::member')]
-#[Title('My games')]
+#[Title('My bookings')]
 class MemberBookingHistory extends Component
 {
     use WithPagination;

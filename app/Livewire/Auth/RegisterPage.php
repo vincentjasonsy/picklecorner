@@ -23,6 +23,10 @@ class RegisterPage extends Component
 
     public string $password_confirmation = '';
 
+    public bool $accept_privacy = false;
+
+    public bool $subscribe_marketing_emails = false;
+
     public function mount(): void
     {
         $this->demo = request()->routeIs('register.demo');
@@ -38,15 +42,23 @@ class RegisterPage extends Component
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
+            'accept_privacy' => ['accepted'],
+            'subscribe_marketing_emails' => ['boolean'],
+        ], [
+            'accept_privacy.accepted' => 'You must accept the Privacy Policy to create an account.',
         ]);
 
         $userTypeId = UserType::query()->where('slug', UserType::SLUG_USER)->value('id');
+
+        $now = now();
 
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => $validated['password'],
             'user_type_id' => $userTypeId,
+            'privacy_consent_at' => $now,
+            'marketing_emails_consent_at' => $validated['subscribe_marketing_emails'] ? $now : null,
         ]);
 
         if ($this->demo) {

@@ -7,8 +7,15 @@
 @endphp
 
 <div class="space-y-8">
+    <x-member.guide title="First time here?">
+        <p>
+            Pick <strong class="font-semibold text-sky-950 dark:text-white">Find a court</strong> in the sidebar to book.
+            Everything you’ve reserved shows up below — no spreadsheets required.
+        </p>
+    </x-member.guide>
+
     <section
-        class="relative overflow-hidden rounded-3xl border border-emerald-200/80 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-600 p-6 text-white shadow-xl shadow-emerald-900/20 dark:border-emerald-800/50 dark:from-emerald-800 dark:via-teal-800 dark:to-cyan-900 sm:p-8"
+        class="relative overflow-hidden rounded-3xl border border-emerald-200/70 bg-gradient-to-br from-emerald-400/95 via-teal-500 to-cyan-600 p-6 text-white shadow-lg shadow-emerald-900/15 dark:border-emerald-800/40 dark:from-emerald-700/90 dark:via-teal-800 dark:to-cyan-900 sm:p-8"
     >
         <div
             class="pointer-events-none absolute -right-8 -top-8 size-40 rounded-full bg-white/10 blur-2xl"
@@ -18,66 +25,66 @@
             class="pointer-events-none absolute -bottom-10 -left-10 size-48 rounded-full bg-black/10 blur-2xl"
             aria-hidden="true"
         ></div>
-        <p class="relative text-sm font-bold uppercase tracking-widest text-emerald-100/90">Game on</p>
-        <h1 class="relative mt-2 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Hey, {{ $this->firstName }}!
+        <p class="relative text-sm font-semibold text-emerald-50/95">Nice to see you</p>
+        <h1 class="relative mt-1 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Hi, {{ $this->firstName }}!
         </h1>
-        <p class="relative mt-3 max-w-xl text-base font-medium leading-relaxed text-emerald-50">
-            This is your home court — track what’s coming up, relive recent matches, and tweak your profile whenever
-            you want. Now go get that dink dialed in.
+        <p class="relative mt-3 max-w-xl text-base leading-relaxed text-white/95">
+            Here’s the simple version: what’s coming up, what you just played, and a shortcut to book again when the
+            paddle itch hits.
         </p>
-        <div class="relative mt-6 flex flex-wrap gap-3">
-            <a
-                href="{{ route('account.bookings') }}"
-                wire:navigate
-                class="inline-flex items-center rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-md transition hover:bg-emerald-50"
-            >
-                Full match log
-            </a>
-            <a
-                href="{{ route('account.settings') }}"
-                wire:navigate
-                class="inline-flex items-center rounded-xl border-2 border-white/40 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
-            >
-                Profile & gear
-            </a>
+        <div class="relative mt-6 flex flex-wrap gap-2.5">
             <a
                 href="{{ route('account.book') }}"
                 wire:navigate
                 class="inline-flex items-center rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-md transition hover:bg-amber-200 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300"
             >
-                Book now
+                Find a court
+            </a>
+            <a
+                href="{{ route('account.bookings') }}"
+                wire:navigate
+                class="inline-flex items-center rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-md transition hover:bg-emerald-50"
+            >
+                All bookings
+            </a>
+            <a
+                href="{{ route('account.settings') }}"
+                wire:navigate
+                class="inline-flex items-center rounded-xl border-2 border-white/45 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+            >
+                Your profile
             </a>
         </div>
     </section>
 
     <section class="grid gap-4 sm:grid-cols-3">
         <div
-            class="rounded-2xl border border-emerald-200/70 bg-white/90 p-5 shadow-sm dark:border-emerald-900/40 dark:bg-zinc-900/80"
+            class="rounded-2xl border border-emerald-200/60 bg-white/95 p-5 shadow-sm dark:border-emerald-900/40 dark:bg-zinc-900/80"
         >
-            <p class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Up next</p>
+            <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400">Coming up</p>
             <p class="mt-2 font-display text-3xl font-extrabold text-zinc-900 dark:text-white">
                 {{ $this->stats['upcoming'] }}
             </p>
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Courts on your calendar</p>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">On your calendar</p>
         </div>
         <div
-            class="rounded-2xl border border-teal-200/70 bg-white/90 p-5 shadow-sm dark:border-teal-900/40 dark:bg-zinc-900/80"
+            class="rounded-2xl border border-teal-200/60 bg-white/95 p-5 shadow-sm dark:border-teal-900/40 dark:bg-zinc-900/80"
         >
-            <p class="text-xs font-bold uppercase tracking-wider text-teal-600 dark:text-teal-400">In the books</p>
+            <p class="text-sm font-semibold text-teal-700 dark:text-teal-400">Played</p>
             <p class="mt-2 font-display text-3xl font-extrabold text-zinc-900 dark:text-white">
                 {{ $this->stats['played'] }}
             </p>
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Past sessions (incl. confirmed)</p>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Past sessions</p>
         </div>
         <div
-            class="rounded-2xl border border-cyan-200/70 bg-white/90 p-5 shadow-sm dark:border-cyan-900/40 dark:bg-zinc-900/80"
+            class="rounded-2xl border border-cyan-200/60 bg-white/95 p-5 shadow-sm dark:border-cyan-900/40 dark:bg-zinc-900/80"
         >
-            <p class="text-xs font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400">Finished strong</p>
+            <p class="text-sm font-semibold text-cyan-700 dark:text-cyan-400">Done &amp; dusted</p>
             <p class="mt-2 font-display text-3xl font-extrabold text-zinc-900 dark:text-white">
                 {{ $this->stats['wins_on_the_board'] }}
             </p>
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Completed games</p>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Completed</p>
         </div>
     </section>
 
@@ -87,8 +94,8 @@
         >
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                    <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Open plays you joined</h2>
-                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Someone else booked the court — you’re on the list</p>
+                    <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Open plays you’re in</h2>
+                    <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">They booked the court — you’re on the list.</p>
                 </div>
                 <a
                     href="{{ route('account.court-open-plays.index') }}"
@@ -150,10 +157,10 @@
             class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80"
         >
             <div class="flex items-center justify-between gap-2">
-                <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Coming up</h2>
+                <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Next on court</h2>
                 <x-app-icon name="calendar" class="size-7 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Your next blocks of court time</p>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Your upcoming reservations</p>
             <ul class="mt-5 space-y-3">
                 @forelse ($this->upcomingBookings as $b)
                     <li
@@ -189,7 +196,7 @@
                 @empty
                     <li class="rounded-xl border border-dashed border-zinc-200 py-10 text-center dark:border-zinc-700">
                         <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">No upcoming games yet.</p>
-                        <p class="mt-1 text-xs text-zinc-500">Book with your favorite venue and it’ll show up here!</p>
+                        <p class="mt-1 text-xs text-zinc-500">Grab a slot from Find a court — it’ll pop in here.</p>
                     </li>
                 @endforelse
             </ul>
@@ -199,10 +206,10 @@
             class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80"
         >
             <div class="flex items-center justify-between gap-2">
-                <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Recently played</h2>
+                <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Recently</h2>
                 <x-app-icon name="clock" class="size-7 text-emerald-600 dark:text-emerald-400" />
             </div>
-            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">A quick look back at the action</p>
+            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">A peek at where you’ve been</p>
             <ul class="mt-5 space-y-3">
                 @forelse ($this->recentBookings as $b)
                     <li
@@ -235,7 +242,7 @@
                 wire:navigate
                 class="mt-5 inline-flex text-sm font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
             >
-                See everything →
+                Open full list →
             </a>
         </section>
     </div>

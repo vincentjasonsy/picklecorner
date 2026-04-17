@@ -58,7 +58,7 @@
                     class="flex h-14 shrink-0 items-center border-b border-zinc-200 px-4 dark:border-zinc-800 lg:px-5"
                 >
                     <span class="font-display text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                        Venue portal
+                        Court admin
                     </span>
                 </div>
                 @php
@@ -67,29 +67,36 @@
                 @endphp
                 <nav
                     class="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-3 text-sm font-semibold"
-                    aria-label="Venue"
+                    aria-label="Court admin"
                     @click="if ($event.target.closest('a')) portalNavOpen = false"
                 >
-                    <div class="flex flex-col gap-1">
-                        <a
-                            href="{{ route('venue.home') }}"
-                            wire:navigate
-                            @class([
-                                'rounded-lg px-3 py-2 transition-colors',
-                                request()->routeIs('venue.home')
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                            ])
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Overview
-                        </a>
+                            Dashboard
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('venue.home') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.home')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Overview
+                            </a>
+                        </div>
                     </div>
 
                     <div>
                         <p
                             class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Operations
+                            Bookings &amp; calendar
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
@@ -150,6 +157,16 @@
                             >
                                 Booking calendar
                             </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Customers
+                        </p>
+                        <div class="flex flex-col gap-1">
                             <a
                                 href="{{ route('venue.crm.index') }}"
                                 wire:navigate
@@ -217,7 +234,7 @@
                         <p
                             class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Revenue &amp; reports
+                            Finance &amp; reports
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
@@ -309,7 +326,7 @@
                     @endphp
                     <nav
                         class="hidden min-w-0 shrink flex-wrap items-center justify-end gap-x-1 gap-y-1 text-xs font-semibold sm:flex md:gap-x-2 md:text-sm"
-                        aria-label="Venue shortcuts"
+                        aria-label="Court admin shortcuts"
                     >
                         <a
                             href="{{ route('venue.bookings.history') }}"

@@ -37,6 +37,26 @@ class CourtClientSeeder extends Seeder
     ];
 
     /**
+     * Rotates by venue slot within each city (12 per metro). Full venue name: "{name} — {city}".
+     *
+     * @var list<string>
+     */
+    private const QUIRKY_VENUE_NAMES = [
+        'The Dink Tank',
+        'Third Shot Social Club',
+        'Kitchen Is Closed Pickleball',
+        'Sidewinder Alley Sportsplex',
+        'No Man\'s Land Arena',
+        'Net Gains Athletic Club',
+        'Paddle Royale',
+        'Baseline & Banter Courts',
+        'CrossCourt Comedy Club',
+        'Spin City Pickle',
+        'Drop Shot Society',
+        'The Good Volley Tribe',
+    ];
+
+    /**
      * Base listing for each cluster city; per-site address and map pins are derived in {@see venuePublicDetails()}.
      *
      * @var list<array{address: string, phone: string, facebook_url: string, latitude: float, longitude: float, amenities: list<string>}>
@@ -45,7 +65,7 @@ class CourtClientSeeder extends Seeder
         [
             'address' => '7th Ave cor 26th St, Bonifacio Global City, Taguig, 1634 Metro Manila',
             'phone' => '+63 917 555 0101',
-            'facebook_url' => 'https://www.facebook.com/PickleHubTaguig',
+            'facebook_url' => 'https://www.facebook.com/QuirkyCourtsTaguig',
             'latitude' => 14.5547,
             'longitude' => 121.0484,
             'amenities' => ['Indoor & outdoor courts', 'Parking', 'Locker rooms', 'Pro shop', 'Drinking water', 'Restrooms'],
@@ -53,7 +73,7 @@ class CourtClientSeeder extends Seeder
         [
             'address' => 'West Ave, Diliman, Quezon City, 1104 Metro Manila',
             'phone' => '+63 917 555 0102',
-            'facebook_url' => 'https://www.facebook.com/PickleHubQuezonCity',
+            'facebook_url' => 'https://www.facebook.com/QuirkyCourtsQuezonCity',
             'latitude' => 14.6760,
             'longitude' => 121.0437,
             'amenities' => ['Air-conditioned indoor', 'Ball machine rental', 'Parking', 'Shower rooms', 'Café'],
@@ -61,7 +81,7 @@ class CourtClientSeeder extends Seeder
         [
             'address' => 'Salinas Dr, Lahug, Cebu City, 6000 Cebu',
             'phone' => '+63 917 555 0103',
-            'facebook_url' => 'https://www.facebook.com/PickleHubCebu',
+            'facebook_url' => 'https://www.facebook.com/QuirkyCourtsCebu',
             'latitude' => 10.3157,
             'longitude' => 123.8854,
             'amenities' => ['Outdoor courts', 'Covered viewing', 'Parking', 'Restrooms', 'Equipment rental'],
@@ -69,7 +89,7 @@ class CourtClientSeeder extends Seeder
         [
             'address' => 'J.P. Laurel Ave, Bajada, Davao City, 8000 Davao del Sur',
             'phone' => '+63 917 555 0104',
-            'facebook_url' => 'https://www.facebook.com/PickleHubDavao',
+            'facebook_url' => 'https://www.facebook.com/QuirkyCourtsDavao',
             'latitude' => 7.1907,
             'longitude' => 125.4553,
             'amenities' => ['Indoor courts', 'Parking', 'Locker rooms', 'First aid', 'Wi-Fi'],
@@ -77,7 +97,7 @@ class CourtClientSeeder extends Seeder
         [
             'address' => 'Ayala Ave, Makati, 1226 Metro Manila',
             'phone' => '+63 917 555 0105',
-            'facebook_url' => 'https://www.facebook.com/PickleHubMakati',
+            'facebook_url' => 'https://www.facebook.com/QuirkyCourtsMakati',
             'latitude' => 14.5547,
             'longitude' => 121.0244,
             'amenities' => ['Rooftop outdoor', 'Valet parking', 'Pro shop', 'Lounge', 'Restrooms'],
@@ -130,13 +150,17 @@ class CourtClientSeeder extends Seeder
             throw new \LogicException('VENUE_COUNT must equal cluster cities × venues per city.');
         }
 
+        if (count(self::QUIRKY_VENUE_NAMES) !== self::VENUES_PER_CITY) {
+            throw new \LogicException('QUIRKY_VENUE_NAMES must have exactly VENUES_PER_CITY entries.');
+        }
+
         $globalIndex = 0;
         foreach (self::CLUSTER_CITY_NAMES as $clusterIndex => $city) {
             for ($slot = 1; $slot <= self::VENUES_PER_CITY; $slot++) {
                 $globalIndex++;
                 $i = $globalIndex;
                 $slug = 'seed-venue-'.str_pad((string) $i, 2, '0', STR_PAD_LEFT);
-                $name = "Pickle Hub — {$city} #{$slot}";
+                $name = self::QUIRKY_VENUE_NAMES[$slot - 1].' — '.$city;
                 $public = self::venuePublicDetails($clusterIndex, $slot);
 
                 // Alternate 3 and 4 outdoor courts per venue.

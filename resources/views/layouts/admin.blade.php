@@ -63,29 +63,36 @@
                 </div>
                 <nav
                     class="flex flex-col gap-6 overflow-y-auto p-3 text-sm font-medium"
-                    aria-label="Admin"
+                    aria-label="Super admin"
                     @click="if ($event.target.closest('a')) portalNavOpen = false"
                 >
-                    <div class="flex flex-col gap-1">
-                        <a
-                            href="{{ route('admin.dashboard') }}"
-                            wire:navigate
-                            @class([
-                                'rounded-lg px-3 py-2 transition-colors',
-                                request()->routeIs('admin.dashboard')
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                    : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                            ])
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Overview
-                        </a>
+                            Dashboard
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('admin.dashboard') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.dashboard')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Overview
+                            </a>
+                        </div>
                     </div>
 
                     <div>
                         <p
                             class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Directory
+                            Accounts &amp; venues
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
@@ -143,7 +150,7 @@
                         <p
                             class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Bookings
+                            Booking operations
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
@@ -202,7 +209,7 @@
                         <p
                             class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            Revenue & reports
+                            Finance &amp; reports
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
@@ -260,7 +267,41 @@
                         <p
                             class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
                         >
-                            System
+                            Trust &amp; moderation
+                        </p>
+                        <div class="flex flex-col gap-1">
+                            <a
+                                href="{{ route('admin.gallery-approvals') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.gallery-approvals')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Gallery approvals
+                            </a>
+                            <a
+                                href="{{ route('admin.review-approvals') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('admin.review-approvals')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                Review approvals
+                            </a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p
+                            class="mb-2 px-3 font-display text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500"
+                        >
+                            Platform
                         </p>
                         <div class="flex flex-col gap-1">
                             <a
@@ -286,30 +327,6 @@
                                 ])
                             >
                                 Team play reminders
-                            </a>
-                            <a
-                                href="{{ route('admin.gallery-approvals') }}"
-                                wire:navigate
-                                @class([
-                                    'rounded-lg px-3 py-2 transition-colors',
-                                    request()->routeIs('admin.gallery-approvals')
-                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                ])
-                            >
-                                Gallery approvals
-                            </a>
-                            <a
-                                href="{{ route('admin.review-approvals') }}"
-                                wire:navigate
-                                @class([
-                                    'rounded-lg px-3 py-2 transition-colors',
-                                    request()->routeIs('admin.review-approvals')
-                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                ])
-                            >
-                                Review approvals
                             </a>
                         </div>
                     </div>

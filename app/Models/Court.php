@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Str;
 
 class Court extends Model
 {
@@ -157,17 +156,49 @@ class Court extends Model
     }
 
     /**
-     * Schedule / manual-booking grids: outdoor courts first, then indoor; within each type by name (A–Z), then sort_order.
+     * Schedule / manual-booking grids: outdoor courts first (ascending by trailing number in the name), then indoor
+     * (descending by that number). When no number is found in the name, {@see $sort_order} is used for that comparison;
+     * ties break on name, then sort_order.
      *
      * @param  Collection<int, self>|\Illuminate\Database\Eloquent\Collection<int, self>  $courts
      * @return Collection<int, self>
      */
     public static function orderedForGridColumns(Collection $courts): Collection
     {
-        return $courts->sortBy([
-            fn (self $c) => $c->environment === self::ENV_INDOOR ? 1 : 0,
-            fn (self $c) => Str::lower($c->name),
-            fn (self $c) => $c->sort_order,
-        ])->values();
+        return $courts->sort(function (self $a, self $b): int {
+            $aOutdoor = $a->environment !== self::ENV_INDOOR;
+            $bOutdoor = $b->environment !== self::ENV_INDOOR;
+            if ($aOutdoor !== $bOutdoor) {
+                return $aOutdoor ? -1 : 1;
+            }
+
+            $na = self::numericSuffixFromName($a->name);
+            $nb = self::numericSuffixFromName($b->name);
+            $ka = $na ?? $a->sort_order;
+            $kb = $nb ?? $b->sort_order;
+
+            if ($aOutdoor) {
+                $cmp = $ka <=> $kb;
+            } else {
+                $cmp = $kb <=> $ka;
+            }
+
+            if ($cmp !== 0) {
+                return $cmp;
+            }
+
+            $nameCmp = strcasecmp($a->name, $b->name);
+
+            return $nameCmp !== 0 ? $nameCmp : ($a->sort_order <=> $b->sort_order);
+        })->values();
+    }
+
+    private static function numericSuffixFromName(string $name): ?int
+    {
+        if (preg_match('/(\d+)\s*$/u', trim($name), $m)) {
+            return (int) $m[1];
+        }
+
+        return null;
     }
 }

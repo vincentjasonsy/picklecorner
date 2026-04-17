@@ -6,6 +6,7 @@ use App\Models\Court;
 use App\Models\CourtChangeRequest;
 use App\Services\ActivityLogger;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -38,6 +39,22 @@ class VenueCourts extends Component
             ->with(['court'])
             ->orderByDesc('created_at')
             ->get();
+    }
+
+    /**
+     * Same column order as booking / desk grids (outdoor ↑, indoor ↓ by court number in the name).
+     *
+     * @return Collection<int, Court>
+     */
+    #[Computed]
+    public function courtsOrderedForGrid(): Collection
+    {
+        $c = $this->courtClient;
+        if (! $c) {
+            return collect();
+        }
+
+        return Court::orderedForGridColumns($c->courts);
     }
 
     public function requestAddOutdoor(): void

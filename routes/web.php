@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvoicePdfController;
+use App\Http\Controllers\DemoQuickLoginController;
 use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
@@ -29,6 +30,7 @@ use App\Livewire\Admin\UserForm;
 use App\Livewire\Admin\UserSummary;
 use App\Livewire\Admin\VenueQuickSetup;
 use App\Livewire\Auth\RegisterPage;
+use App\Livewire\BookingCancellationPolicyPage;
 use App\Livewire\BookNow\VenueBookingPage;
 use App\Livewire\BookNowPage;
 use App\Livewire\Coach\CoachAvailability;
@@ -58,7 +60,10 @@ use App\Livewire\OpenPlayOrganizer;
 use App\Livewire\OpenPlayPlayerH2h;
 use App\Livewire\OpenPlayWatch;
 use App\Livewire\OpenPlayWatchPlayerH2h;
+use App\Livewire\PrivacyPolicyPage;
 use App\Livewire\PublicCourtShow;
+use App\Livewire\RefundPolicyPage;
+use App\Livewire\TermsConditionsPage;
 use App\Livewire\Venue\VenueBookingApprovals;
 use App\Livewire\Venue\VenueBookingHistory;
 use App\Livewire\Venue\VenueBookingsCalendar;
@@ -100,6 +105,10 @@ Route::livewire('/open-play/watch/{openPlayShare}', OpenPlayWatch::class)
     ->middleware('throttle:120,1')
     ->name('open-play.watch');
 Route::livewire('/open-play', OpenPlayAbout::class)->name('open-play.about');
+Route::livewire('/terms-and-conditions', TermsConditionsPage::class)->name('terms');
+Route::livewire('/privacy-policy', PrivacyPolicyPage::class)->name('privacy-policy');
+Route::livewire('/refund-policy', RefundPolicyPage::class)->name('refund-policy');
+Route::livewire('/booking-cancellation-policy', BookingCancellationPolicyPage::class)->name('booking-cancellation-policy');
 
 Route::get('/internal-team-play-reminders/unsubscribe/{user}', [InternalTeamPlayReminderPreferencesController::class, 'unsubscribe'])
     ->middleware(['signed', 'throttle:24,1'])
@@ -113,6 +122,9 @@ Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
     Route::livewire('/register', RegisterPage::class)->name('register');
     Route::livewire('/try', RegisterPage::class)->name('register.demo');
+    Route::post('/demo/quick-login', DemoQuickLoginController::class)
+        ->middleware('throttle:30,1')
+        ->name('demo.quick-login');
 });
 
 Route::middleware(['auth', 'demo.valid'])->post(
