@@ -105,6 +105,7 @@ class VenueBookingPage extends Component
 
         $this->applyBookAgainQueryParameters();
         $this->clearInvalidPrefilledSlotsIfNeeded();
+        $this->maybeAdvanceBookAgainToReviewFromQuery();
 
         $this->clearCoachWhenCheckoutHidden();
         $this->syncOpenPlayEligibility();
@@ -186,6 +187,20 @@ class VenueBookingPage extends Component
             $this->selectedSlots = [];
             session()->flash('status', 'Those exact times aren’t available anymore — tap open slots on the grid.');
         }
+    }
+
+    /** When “Book again” passes `book_step=review`, jump to checkout after valid prefill. */
+    protected function maybeAdvanceBookAgainToReviewFromQuery(): void
+    {
+        if (request()->query('book_step') !== 'review') {
+            return;
+        }
+
+        if ($this->selectedSlots === []) {
+            return;
+        }
+
+        $this->goToReview();
     }
 
     protected function venueCheckoutShowCoach(): bool

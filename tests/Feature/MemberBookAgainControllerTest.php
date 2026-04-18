@@ -69,6 +69,7 @@ class MemberBookAgainControllerTest extends TestCase
         $this->assertStringContainsString('/account/book/venues/'.$client->slug, $url);
         $this->assertStringContainsString('book_date='.$targetDate, $url);
         $this->assertStringContainsString('book_slots='.rawurlencode($slots), $url);
+        $this->assertStringContainsString('book_step=review', $url);
     }
 
     public function test_book_again_redirects_to_dashboard_when_no_repeatable_booking(): void

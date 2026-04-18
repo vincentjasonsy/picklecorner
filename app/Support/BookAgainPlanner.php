@@ -80,11 +80,12 @@ final class BookAgainPlanner
             $query = http_build_query([
                 'book_date' => $winner['date'],
                 'book_slots' => implode(',', $slots),
+                'book_step' => 'review',
             ]);
 
             return [
                 'url' => route('account.book.venue', $courtClient).'?'.$query,
-                'flash' => 'Opened '.$courtClient->name.' · '.$winner['label'].'. Tap a slot if you want to tweak it.',
+                'flash' => 'Opened '.$courtClient->name.' · '.$winner['label'].' — confirm and pay below (or tweak slots from the grid).',
             ];
         }
 

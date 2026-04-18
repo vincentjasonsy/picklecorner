@@ -910,7 +910,7 @@ class Engine
         return $out;
     }
 
-    public function fillCourts(?int $nowMs = null): void
+    public function fillCourts(): void
     {
         $this->ensureCourtSlots();
         $this->syncQueueFromIdle();
@@ -922,7 +922,6 @@ class Engine
                 $emptyIdx[] = $i;
             }
         }
-        $ts = $this->nowMs($nowMs);
         $si = 0;
         foreach ($emptyIdx as $idx) {
             if ($si + 1 >= count($sides)) {
@@ -934,8 +933,7 @@ class Engine
                 'courtIndex' => $idx,
                 'sideA' => $sideA,
                 'sideB' => $sideB,
-                'startedAt' => $ts,
-                'timerRunState' => 'running',
+                'timerRunState' => 'stopped',
                 'totalPausedMs' => 0,
                 'pausedAt' => null,
             ];

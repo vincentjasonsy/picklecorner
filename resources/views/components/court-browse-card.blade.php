@@ -9,18 +9,26 @@
     $client = $court->courtClient;
     $rate = $court->effectiveHourlyRateCents();
     $currency = $client?->currency;
+    $href = route('book-now.court', $court);
 @endphp
 
 <article
     {{ $attributes->class([
-        'group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:border-emerald-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-900/60',
+        'group relative flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:border-emerald-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-900/60',
     ]) }}
 >
-    <a href="{{ route('book-now.court', $court) }}" wire:navigate class="block shrink-0">
-        <div class="relative aspect-[4/3] overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+    <a
+        href="{{ $href }}"
+        wire:navigate
+        class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:ring-offset-zinc-900"
+        aria-label="View {{ $court->name }}{{ $client ? ' at '.$client->name : '' }}"
+    ></a>
+    <div class="relative z-[2] flex flex-1 flex-col pointer-events-none">
+        <div class="relative aspect-[4/3] shrink-0 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
             <img
                 src="{{ $court->primaryDisplayImageUrl() }}"
-                alt="{{ $court->name }}"
+                alt=""
+                role="presentation"
                 class="size-full object-cover object-center transition duration-300 group-hover:scale-105"
                 loading="lazy"
             />
@@ -32,50 +40,36 @@
                 </span>
             </div>
         </div>
-    </a>
-    <div class="flex flex-1 flex-col p-4">
-        <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-            {{ $client?->name ?? 'Venue' }}
-        </p>
-        <h3 class="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-white">
-            <a
-                href="{{ route('book-now.court', $court) }}"
-                wire:navigate
-                class="hover:text-emerald-600 dark:hover:text-emerald-400"
-            >
+        <div class="flex flex-1 flex-col p-4">
+            <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                {{ $client?->name ?? 'Venue' }}
+            </p>
+            <h3 class="mt-1 font-display text-lg font-bold text-zinc-900 dark:text-white">
                 {{ $court->name }}
-            </a>
-        </h3>
-        @if ($client?->city)
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $client->city }}</p>
-        @endif
-        @if ($client && $client->public_rating_average !== null)
-            <p class="mt-2 inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                <x-app-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
-                {{ number_format((float) $client->public_rating_average, 1) }}
-                @if ($client->public_rating_count > 0)
-                    <span class="font-normal text-zinc-500 dark:text-zinc-400">
-                        ({{ number_format($client->public_rating_count) }})
-                    </span>
-                @endif
+            </h3>
+            @if ($client?->city)
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $client->city }}</p>
+            @endif
+            @if ($client && $client->public_rating_average !== null)
+                <p class="mt-2 inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                    <x-app-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
+                    {{ number_format((float) $client->public_rating_average, 1) }}
+                    @if ($client->public_rating_count > 0)
+                        <span class="font-normal text-zinc-500 dark:text-zinc-400">
+                            ({{ number_format($client->public_rating_count) }})
+                        </span>
+                    @endif
+                </p>
+            @endif
+            @if ($rate !== null)
+                <p class="mt-auto pt-3 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                    {{ Money::formatMinor($rate, $currency) }}
+                    <span class="font-medium text-zinc-500 dark:text-zinc-400">/ hr</span>
+                </p>
+            @endif
+            <p class="mt-3 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                Tap card to view
             </p>
-        @endif
-        @if ($rate !== null)
-            <p class="mt-auto pt-3 text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                {{ Money::formatMinor($rate, $currency) }}
-                <span class="font-medium text-zinc-500 dark:text-zinc-400">/ hr</span>
-            </p>
-        @endif
-        @if ($client)
-            <p class="mt-3">
-                <a
-                    href="{{ route('book-now.court', $court) }}#venue-reviews"
-                    wire:navigate
-                    class="text-xs font-semibold text-emerald-700 hover:underline dark:text-emerald-400"
-                >
-                    Read reviews
-                </a>
-            </p>
-        @endif
+        </div>
     </div>
 </article>

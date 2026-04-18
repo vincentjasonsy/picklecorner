@@ -23,12 +23,14 @@ class GameQEngineQueueOrderTest extends TestCase
         $state['courts'] = [null];
 
         $e = new Engine($state);
-        $e->fillCourts(1_700_000_000_000);
+        $e->fillCourts();
 
         $court = $e->toArray()['courts'][0];
         $this->assertIsArray($court);
         $this->assertSame(['d', 'c'], array_map('strval', $court['sideA'] ?? []));
         $this->assertSame(['b', 'a'], array_map('strval', $court['sideB'] ?? []));
+        $this->assertArrayNotHasKey('startedAt', $court);
+        $this->assertSame('stopped', $court['timerRunState'] ?? null);
     }
 
     public function test_fill_courts_singles_keeps_queue_order_with_random_shuffle_method(): void
@@ -47,7 +49,7 @@ class GameQEngineQueueOrderTest extends TestCase
         $state['courts'] = [null, null];
 
         $e = new Engine($state);
-        $e->fillCourts(1_700_000_000_000);
+        $e->fillCourts();
 
         $courts = $e->toArray()['courts'];
         $this->assertIsArray($courts[0]);
@@ -93,7 +95,7 @@ class GameQEngineQueueOrderTest extends TestCase
         $state['courts'] = [null, null];
 
         $e = new Engine($state);
-        $e->fillCourts(1_700_000_000_000);
+        $e->fillCourts();
 
         $courts = $e->toArray()['courts'];
         $this->assertIsArray($courts[0]);

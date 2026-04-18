@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\CityFeaturedCourtClient;
 use App\Models\Court;
 use App\Models\CourtClient;
+use App\Support\BrowseCourtOpenSlots;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -20,6 +21,9 @@ class BookNowPage extends Component
 
     /** Search court name, venue name, or city */
     public string $search = '';
+
+    /** all = any matching court; open_soon = at least one bookable hour in the next 14 days */
+    public string $availability = 'all';
 
     public function mount(): void
     {
@@ -97,6 +101,14 @@ class BookNowPage extends Component
         }
     }
 
+    public function setAvailability(string $value): void
+    {
+        if (! in_array($value, ['all', 'open_soon'], true)) {
+            return;
+        }
+        $this->availability = $value;
+    }
+
     /** @return Collection<int, Court> */
     protected function baseCourtsQuery()
     {
@@ -124,9 +136,14 @@ class BookNowPage extends Component
 
         $this->applySearchFilter($q);
 
-        $courts = $q->get();
+        $courts = $this->sortCourtsForBrowse($q->get());
 
-        return $this->sortCourtsForBrowse($courts);
+        if ($this->availability === 'open_soon') {
+            $openIds = BrowseCourtOpenSlots::courtIdsWithAnyOpenSlot($courts, 14);
+            $courts = $courts->filter(fn (Court $c) => isset($openIds[(string) $c->id]))->values();
+        }
+
+        return $courts;
     }
 
     protected function applySearchFilter(Builder $q): void

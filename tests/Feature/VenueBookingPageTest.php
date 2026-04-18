@@ -9,7 +9,9 @@ use App\Models\CourtClient;
 use App\Models\CourtClientClosedDay;
 use App\Models\GiftCard;
 use App\Models\User;
+use App\Models\VenueWeeklyHour;
 use App\Services\GiftCardService;
+use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -18,6 +20,48 @@ use Tests\TestCase;
 class VenueBookingPageTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_book_again_query_advances_authenticated_member_to_review_step(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
+
+        $player = User::factory()->player()->create();
+        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'book-again-review']);
+        for ($d = 0; $d < 7; $d++) {
+            VenueWeeklyHour::query()->create([
+                'court_client_id' => $client->id,
+                'day_of_week' => $d,
+                'is_closed' => false,
+                'opens_at' => '07:00',
+                'closes_at' => '23:00',
+            ]);
+        }
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $targetDate = '2026-04-18';
+        $slots = $court->id.'-18,'.$court->id.'-19';
+        $url = route('account.book.venue', $client).'?'.http_build_query([
+            'book_date' => $targetDate,
+            'book_slots' => $slots,
+            'book_step' => 'review',
+        ]);
+
+        $this->actingAs($player)
+            ->get($url)
+            ->assertOk()
+            ->assertSee('Courts subtotal', false);
+
+        Carbon::setTestNow();
+    }
 
     public function test_guest_can_open_venue_booking_page(): void
     {
@@ -97,9 +141,9 @@ class VenueBookingPageTest extends TestCase
 
         $this->get(route('book-now'))
             ->assertOk()
-            ->assertSee('All venues', false)
+            ->assertSee('Venues &amp; courts', false)
             ->assertSee('Gamma Pickleball', false)
-            ->assertSee('Pick a time', false);
+            ->assertSee('Tap card to book', false);
     }
 
     public function test_venue_closed_day_shows_no_slots_on_public_booking_page(): void

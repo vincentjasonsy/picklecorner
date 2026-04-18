@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\User;
+use App\Models\VenueWeeklyHour;
 use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -60,7 +61,48 @@ class BookNowBrowseTest extends TestCase
 
         $user = User::factory()->player()->create();
 
-        $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('All venues', false);
+        $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('Venues &amp; courts', false);
+    }
+
+    public function test_book_now_open_soon_availability_requires_schedule_and_open_slot(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create([
+            'is_active' => true,
+            'city' => 'SlotCity',
+            'name' => 'Schedule Club',
+        ]);
+        Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court One',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        Livewire::test(BookNowPage::class)
+            ->set('availability', 'open_soon')
+            ->tap(function ($lw): void {
+                $this->assertSame(0, $lw->instance()->filteredCourts()->count());
+            });
+
+        for ($d = 0; $d < 7; $d++) {
+            VenueWeeklyHour::query()->create([
+                'court_client_id' => $client->id,
+                'day_of_week' => $d,
+                'is_closed' => false,
+                'opens_at' => '07:00',
+                'closes_at' => '22:00',
+            ]);
+        }
+
+        Livewire::test(BookNowPage::class)
+            ->set('availability', 'open_soon')
+            ->tap(function ($lw): void {
+                $this->assertSame(1, $lw->instance()->filteredCourts()->count());
+            })
+            ->assertSee('Schedule Club', false);
     }
 
     public function test_inactive_venue_court_not_listed_and_detail_404(): void

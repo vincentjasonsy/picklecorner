@@ -374,8 +374,7 @@ class OpenPlayOrganizer extends Component
 
     public function fillCourts(): void
     {
-        $now = (int) round(microtime(true) * 1000);
-        $this->withEngine(fn (Engine $e) => $e->fillCourts($now));
+        $this->withEngine(fn (Engine $e) => $e->fillCourts());
     }
 
     public function pauseCourtTimer(int $i): void
