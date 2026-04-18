@@ -9,6 +9,7 @@ use App\Models\GiftCard;
 use App\Models\PaymongoBookingIntent;
 use App\Models\User;
 use App\Support\Money;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -44,6 +45,12 @@ final class PaymongoVenueBookingPayment
 
         if ($amountCentavos < 100) {
             throw new \RuntimeException('Amount is below the minimum for online checkout.');
+        }
+
+        if (! VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours($selectedSlots)) {
+            throw new \RuntimeException(
+                'On each court, select one continuous block of hours with no gaps.',
+            );
         }
 
         $specs = VenueBookingSpecsBuilder::buildSpecsForSubmit(
@@ -93,7 +100,7 @@ final class PaymongoVenueBookingPayment
         ]);
 
         $successUrl = route('paymongo.booking.return', ['intent' => $intent->id]);
-        $cancelUrl = route('book-now.venue.book', $courtClient);
+        $cancelUrl = route('paymongo.booking.cancel', ['intent' => $intent->id]);
 
         $paymentMethodTypes = config('paymongo.payment_method_types', ['gcash', 'qrph']);
         if ($paymentMethodTypes === []) {
@@ -375,7 +382,7 @@ final class PaymongoVenueBookingPayment
     }
 
     /**
-     * @param  list<array{court: Court, starts: \Carbon\Carbon, ends: \Carbon\Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
+     * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
      * @return array{total_gross: int, booking_fee: int, checkout_total: int, payable: int}
      */
     private static function amountsForSpecsAndGift(CourtClient $courtClient, array $specs, string $giftCardCode): array
@@ -414,7 +421,7 @@ final class PaymongoVenueBookingPayment
      * payment-method charges (often “Free”), which is unrelated to our convenience fee.
      *
      * @param  array{total_gross: int, booking_fee: int, checkout_total: int, payable: int}  $amounts
-     * @param  list<array{court: Court, starts: \Carbon\Carbon, ends: \Carbon\Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
+     * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
      * @return list<array{currency: string, amount: int, name: string, quantity: int, description: string}>
      */
     private static function paymongoLineItemsForAmounts(CourtClient $courtClient, array $amounts, array $specs): array

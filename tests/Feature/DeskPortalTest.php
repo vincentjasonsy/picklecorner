@@ -41,7 +41,8 @@ class DeskPortalTest extends TestCase
 
         Livewire::actingAs($desk)
             ->test(DeskHome::class)
-            ->assertSee($client->name);
+            ->assertSee($client->name)
+            ->assertSee('Daily schedule');
 
         Livewire::actingAs($desk)
             ->test(DeskMyRequests::class)

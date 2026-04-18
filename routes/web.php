@@ -6,6 +6,7 @@ use App\Http\Controllers\DemoQuickLoginController;
 use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
+use App\Http\Controllers\PayMongoBookingCancelController;
 use App\Http\Controllers\PayMongoBookingReturnController;
 use App\Http\Controllers\PayMongoWebhookController;
 use App\Http\Controllers\ReportExportController;
@@ -96,7 +97,11 @@ Route::livewire('/book-now/venues/{courtClient:slug}/book', VenueBookingPage::cl
 Route::post('/paymongo/webhook', PayMongoWebhookController::class)
     ->name('paymongo.webhook');
 Route::get('/paymongo/booking/return/{intent}', PayMongoBookingReturnController::class)
+    ->middleware('auth')
     ->name('paymongo.booking.return');
+Route::get('/paymongo/booking/cancel/{intent}', PayMongoBookingCancelController::class)
+    ->middleware('auth')
+    ->name('paymongo.booking.cancel');
 Route::get('/open-play/watch/{openPlayShare}/data', [OpenPlayShareController::class, 'data'])
     ->middleware('throttle:180,1')
     ->name('open-play.watch.data');

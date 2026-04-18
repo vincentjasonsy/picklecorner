@@ -8,11 +8,11 @@
 
 <div class="mx-auto max-w-2xl space-y-6">
     <a
-        href="{{ $this->calendarUrl() }}"
+        href="{{ $this->deskBackUrl() }}"
         wire:navigate
         class="inline-flex text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-300 dark:hover:text-teal-200"
     >
-        ← Back to calendar
+        {{ $this->deskBackLabel() }}
     </a>
 
     <div>

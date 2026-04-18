@@ -10,6 +10,7 @@ use App\Models\CourtClientClosedDay;
 use App\Models\GiftCard;
 use App\Models\User;
 use App\Services\GiftCardService;
+use App\Services\VenueBookingSpecsBuilder;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
@@ -248,5 +249,60 @@ class VenueBookingPageTest extends TestCase
         $this->assertNotNull($booking->gift_card_id);
         $this->assertGreaterThan(0, (int) $booking->gift_card_redeemed_cents);
         $this->assertTrue($booking->amount_cents === null || (int) $booking->amount_cents === 0);
+    }
+
+    public function test_public_booking_rejects_gap_hours_on_same_court(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'contiguous-club']);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $player = User::factory()->player()->create();
+
+        $day = now()->addDays(7)->format('Y-m-d');
+
+        Livewire::actingAs($player)
+            ->test(VenueBookingPage::class, ['courtClient' => $client])
+            ->set('bookingCalendarDate', $day)
+            ->call('toggleSlot', $court->id, 9)
+            ->call('toggleSlot', $court->id, 11)
+            ->assertSet('selectedSlots', [$court->id.'-9'])
+            ->assertHasErrors(['selectedSlots']);
+
+        $this->assertFalse(VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours([
+            $court->id.'-9',
+            $court->id.'-11',
+        ]));
+    }
+
+    public function test_go_to_review_fails_when_slots_have_gap(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'gap-review']);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $player = User::factory()->player()->create();
+        $day = now()->addDays(14)->format('Y-m-d');
+
+        Livewire::actingAs($player)
+            ->test(VenueBookingPage::class, ['courtClient' => $client])
+            ->set('bookingCalendarDate', $day)
+            ->set('selectedSlots', [$court->id.'-10', $court->id.'-12'])
+            ->call('goToReview')
+            ->assertHasErrors(['selectedSlots']);
     }
 }

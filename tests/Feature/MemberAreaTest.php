@@ -12,6 +12,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -130,5 +131,61 @@ class MemberAreaTest extends TestCase
             ->assertSee('Court B', escape: false);
 
         $this->actingAs($player)->get(route('account.bookings.show', $theirs))->assertForbidden();
+    }
+
+    public function test_booking_details_list_all_courts_when_same_booking_request(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $player = User::factory()->player()->create();
+        $client = CourtClient::factory()->create();
+        $courtA = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'North Court',
+            'sort_order' => 1,
+            'environment' => Court::ENV_INDOOR,
+            'is_available' => true,
+        ]);
+        $courtB = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'South Court',
+            'sort_order' => 2,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $requestId = (string) Str::uuid();
+        $starts = Carbon::parse('2026-07-01 09:00:00', config('app.timezone'));
+
+        $first = Booking::query()->create([
+            'court_client_id' => $client->id,
+            'booking_request_id' => $requestId,
+            'court_id' => $courtA->id,
+            'user_id' => $player->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 3000,
+            'currency' => 'PHP',
+        ]);
+
+        Booking::query()->create([
+            'court_client_id' => $client->id,
+            'booking_request_id' => $requestId,
+            'court_id' => $courtB->id,
+            'user_id' => $player->id,
+            'starts_at' => $starts->copy()->addHour(),
+            'ends_at' => $starts->copy()->addHours(2),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 3000,
+            'currency' => 'PHP',
+        ]);
+
+        Livewire::actingAs($player)
+            ->test(MemberBookingShow::class, ['booking' => $first])
+            ->assertOk()
+            ->assertSee('Courts', escape: false)
+            ->assertSee('North Court', escape: false)
+            ->assertSee('South Court', escape: false);
     }
 }

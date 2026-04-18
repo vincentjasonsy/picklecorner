@@ -108,6 +108,36 @@
             </dd>
         </div>
 
+        @php
+            $courtRows = $this->requestBookings->filter(fn ($row) => $row->court !== null)->values();
+        @endphp
+        @if ($courtRows->isNotEmpty())
+            <div class="sm:col-span-2">
+                <dt class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    {{ $courtRows->count() > 1 ? 'Courts' : 'Court' }}
+                </dt>
+                <dd class="mt-2 space-y-3">
+                    @foreach ($courtRows as $row)
+                        <div class="text-zinc-900 dark:text-zinc-100">
+                            <p class="font-medium">
+                                {{ $row->court->name }}
+                                <span class="font-normal text-zinc-500 dark:text-zinc-400">
+                                    · {{ $row->court->environment === Court::ENV_INDOOR ? 'Indoor' : 'Outdoor' }}
+                                </span>
+                            </p>
+                            @if ($courtRows->count() > 1 && ($row->starts_at || $row->ends_at))
+                                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                                    {{ $row->starts_at?->timezone($tz)->format('g:i A') ?? '—' }}
+                                    <span class="text-zinc-400">–</span>
+                                    {{ $row->ends_at?->timezone($tz)->format('g:i A') ?? '—' }}
+                                </p>
+                            @endif
+                        </div>
+                    @endforeach
+                </dd>
+            </div>
+        @endif
+
         @if ($client?->city)
             <div>
                 <dt class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">City</dt>
@@ -125,7 +155,6 @@
         @if ($hasCheckoutSnapshot)
             @php
                 $req = $snap['request'];
-                $line = $snap['line'];
                 $snapCurrency = $snap['currency'] ?? $currency;
                 $feeLabel = $snap['fee_rule_label'] ?? null;
                 $snapSource = $snap['source'] ?? '';
@@ -136,13 +165,6 @@
                 $rqGift = $req['gift_applied_total_cents'] ?? null;
                 $rqGiftInt = $rqGift !== null ? (int) $rqGift : null;
                 $rqBalance = (int) ($req['balance_after_gift_cents'] ?? 0);
-                $lnCourt = (int) ($line['court_subtotal_cents'] ?? 0);
-                $lnCoach = (int) ($line['coach_fee_cents'] ?? 0);
-                $lnGross = (int) ($line['court_coach_gross_cents'] ?? 0);
-                $lnGift = (int) ($line['gift_applied_cents'] ?? 0);
-                $lnAfterGift = (int) ($line['court_coach_after_gift_cents'] ?? 0);
-                $lnPlatform = (int) ($line['platform_booking_fee_cents'] ?? 0);
-                $lnPayable = (int) ($line['line_total_payable_cents'] ?? 0);
             @endphp
             <div class="sm:col-span-2 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50/90 dark:border-zinc-700 dark:bg-zinc-950/50">
                 <div class="border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
@@ -159,7 +181,7 @@
                     @endif
                 </div>
 
-                <div class="border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+                <div class="px-4 py-3">
                     <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                         Whole request
                     </p>
@@ -213,69 +235,6 @@
                                 </dd>
                             </div>
                         @endif
-                    </dl>
-                </div>
-
-                <div class="px-4 py-3">
-                    <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                        This reservation line
-                    </p>
-                    <dl class="mt-2 divide-y divide-zinc-200 dark:divide-zinc-700">
-                        @if ($lnCoach > 0)
-                            <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
-                                <dt class="text-zinc-600 dark:text-zinc-400">Court rental</dt>
-                                <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                                    {{ Money::formatMinor($lnCourt, $snapCurrency) }}
-                                </dd>
-                            </div>
-                            <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
-                                <dt class="text-zinc-600 dark:text-zinc-400">Coach</dt>
-                                <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                                    {{ Money::formatMinor($lnCoach, $snapCurrency) }}
-                                </dd>
-                            </div>
-                            <div class="flex items-baseline justify-between gap-4 bg-white/60 py-2 text-sm dark:bg-zinc-900/40">
-                                <dt class="font-medium text-zinc-700 dark:text-zinc-300">Court &amp; coach (before gift)</dt>
-                                <dd class="shrink-0 tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ Money::formatMinor($lnGross, $snapCurrency) }}
-                                </dd>
-                            </div>
-                        @else
-                            <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
-                                <dt class="text-zinc-600 dark:text-zinc-400">Court &amp; coach</dt>
-                                <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                                    {{ Money::formatMinor($lnGross, $snapCurrency) }}
-                                </dd>
-                            </div>
-                        @endif
-                        @if ($lnGift > 0)
-                            <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
-                                <dt class="text-zinc-600 dark:text-zinc-400">Gift card (this line)</dt>
-                                <dd class="shrink-0 tabular-nums font-medium text-emerald-700 dark:text-emerald-400">
-                                    −{{ Money::formatMinor($lnGift, $snapCurrency) }}
-                                </dd>
-                            </div>
-                            <div class="flex items-baseline justify-between gap-4 bg-white/60 py-2 text-sm dark:bg-zinc-900/40">
-                                <dt class="font-medium text-zinc-700 dark:text-zinc-300">Court &amp; coach after gift</dt>
-                                <dd class="shrink-0 tabular-nums font-semibold text-zinc-900 dark:text-zinc-100">
-                                    {{ Money::formatMinor($lnAfterGift, $snapCurrency) }}
-                                </dd>
-                            </div>
-                        @endif
-                        @if ($lnPlatform > 0)
-                            <div class="flex items-baseline justify-between gap-4 py-2 text-sm">
-                                <dt class="text-zinc-600 dark:text-zinc-400">Convenience fee</dt>
-                                <dd class="shrink-0 tabular-nums font-medium text-zinc-900 dark:text-zinc-100">
-                                    {{ Money::formatMinor($lnPlatform, $snapCurrency) }}
-                                </dd>
-                            </div>
-                        @endif
-                        <div class="flex items-baseline justify-between gap-4 bg-white py-3 dark:bg-zinc-900/70">
-                            <dt class="text-sm font-bold text-zinc-900 dark:text-white">Line total</dt>
-                            <dd class="shrink-0 text-lg font-bold tabular-nums text-zinc-900 dark:text-white">
-                                {{ Money::formatMinor($lnPayable, $snapCurrency) }}
-                            </dd>
-                        </div>
                     </dl>
                 </div>
             </div>

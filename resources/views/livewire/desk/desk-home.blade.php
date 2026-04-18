@@ -1,4 +1,6 @@
 @php
+    use App\Models\Booking;
+
     $cc = $this->courtClient;
 @endphp
 
@@ -31,6 +33,103 @@
                 {{ $cc->deskBookingPolicyHelpText() }}
             </p>
         </div>
+
+        <section
+            class="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-900/80"
+            aria-labelledby="desk-daily-heading"
+        >
+            <div
+                class="flex flex-col gap-4 border-b border-stone-200 px-5 py-4 dark:border-stone-700 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
+            >
+                <div>
+                    <h2
+                        id="desk-daily-heading"
+                        class="font-display text-lg font-bold text-stone-900 dark:text-white"
+                    >
+                        Daily schedule
+                    </h2>
+                    <p class="mt-0.5 text-sm text-stone-600 dark:text-stone-400">
+                        {{ $this->dailyViewLabel() }}
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        wire:click="shiftDaily(-1)"
+                        class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+                    >
+                        Previous day
+                    </button>
+                    <button
+                        type="button"
+                        wire:click="goToToday"
+                        class="rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-xs font-semibold text-teal-900 hover:bg-teal-100 dark:border-teal-800 dark:bg-teal-950/50 dark:text-teal-100 dark:hover:bg-teal-900/40"
+                    >
+                        Today
+                    </button>
+                    <button
+                        type="button"
+                        wire:click="shiftDaily(1)"
+                        class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+                    >
+                        Next day
+                    </button>
+                    <label class="flex items-center gap-2 text-xs font-medium text-stone-600 dark:text-stone-400">
+                        <span class="sr-only">Pick date</span>
+                        <input
+                            type="date"
+                            wire:model.live="dailyViewDate"
+                            class="rounded-lg border border-stone-200 bg-white px-2 py-2 text-sm text-stone-900 dark:border-stone-600 dark:bg-stone-950 dark:text-stone-100"
+                        />
+                    </label>
+                </div>
+            </div>
+
+            <div class="px-5 py-4">
+                @if ($this->dailyBookings->isEmpty())
+                    <p class="text-sm text-stone-500 dark:text-stone-400">
+                        No bookings starting on this day.
+                    </p>
+                @else
+                    <ul class="divide-y divide-stone-100 dark:divide-stone-800" role="list">
+                        @foreach ($this->dailyBookings as $row)
+                            <li wire:key="desk-daily-{{ $row->id }}">
+                                <a
+                                    href="{{ route('desk.bookings.show', $row) }}?{{ http_build_query(['from' => 'daily', 'day' => $this->dailyViewDate]) }}"
+                                    wire:navigate
+                                    class="flex flex-col gap-2 py-4 transition hover:bg-stone-50/80 sm:flex-row sm:items-center sm:justify-between sm:gap-4 dark:hover:bg-stone-800/40"
+                                >
+                                    <div class="min-w-0">
+                                        <p class="font-mono text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+                                            {{ $row->starts_at?->timezone(config('app.timezone'))->format('g:i A') }}
+                                            <span class="font-sans font-normal text-stone-400">→</span>
+                                            {{ $row->ends_at?->timezone(config('app.timezone'))->format('g:i A') }}
+                                        </p>
+                                        <p class="mt-0.5 text-sm font-medium text-stone-800 dark:text-stone-200">
+                                            {{ $row->court?->name ?? 'Court' }}
+                                            <span class="text-stone-400">·</span>
+                                            {{ $row->user?->name ?? 'Guest' }}
+                                        </p>
+                                    </div>
+                                    <span
+                                        class="inline-flex w-fit shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold {{ match ($row->status) {
+                                            Booking::STATUS_CONFIRMED => 'bg-teal-100 text-teal-950 dark:bg-teal-950/40 dark:text-teal-100',
+                                            Booking::STATUS_PENDING_APPROVAL => 'bg-amber-100 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100',
+                                            Booking::STATUS_DENIED => 'bg-rose-100 text-rose-950 dark:bg-rose-950/40 dark:text-rose-100',
+                                            Booking::STATUS_CANCELLED => 'bg-stone-200 text-stone-800 dark:bg-stone-700 dark:text-stone-200',
+                                            Booking::STATUS_COMPLETED => 'bg-stone-200 text-stone-800 dark:bg-stone-600 dark:text-stone-100',
+                                            default => 'bg-stone-200 text-stone-700 dark:bg-stone-700 dark:text-stone-200',
+                                        } }}"
+                                    >
+                                        {{ Booking::statusDisplayLabel($row->status) }}
+                                    </span>
+                                </a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </section>
 
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <a

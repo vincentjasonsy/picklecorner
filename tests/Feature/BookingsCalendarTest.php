@@ -161,7 +161,7 @@ class BookingsCalendarTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_desk_booking_show_requires_submitter(): void
+    public function test_desk_booking_show_allows_same_venue_even_if_submitted_by_another_desk_user(): void
     {
         $this->seed(UserTypeSeeder::class);
 
@@ -184,6 +184,41 @@ class BookingsCalendarTest extends TestCase
             'court_id' => $court->id,
             'user_id' => $guest->id,
             'desk_submitted_by' => $otherDesk->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_CONFIRMED,
+            'amount_cents' => 100,
+            'currency' => 'PHP',
+        ]);
+
+        $this->actingAs($desk)
+            ->get(route('desk.bookings.show', $booking))
+            ->assertOk();
+    }
+
+    public function test_desk_booking_show_forbids_other_venue(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $myVenue = CourtClient::factory()->create();
+        $otherVenue = CourtClient::factory()->create();
+
+        $desk = User::factory()->courtClientDesk($myVenue)->create();
+        $guest = User::factory()->player()->create();
+
+        $courtOther = Court::query()->create([
+            'court_client_id' => $otherVenue->id,
+            'name' => 'Away',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $starts = Carbon::now(config('app.timezone'))->addDays(3);
+        $booking = Booking::query()->create([
+            'court_client_id' => $otherVenue->id,
+            'court_id' => $courtOther->id,
+            'user_id' => $guest->id,
             'starts_at' => $starts,
             'ends_at' => $starts->copy()->addHour(),
             'status' => Booking::STATUS_CONFIRMED,

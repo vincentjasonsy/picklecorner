@@ -18,6 +18,32 @@
 @endphp
 
 <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    @if (session('paymongo_checkout'))
+        @php
+            $pm = session('paymongo_checkout');
+        @endphp
+        <div
+            class="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100"
+            role="alert"
+        >
+            <p class="font-display font-semibold text-amber-950 dark:text-amber-50">{{ $pm['title'] ?? 'Checkout update' }}</p>
+            <p class="mt-1 leading-relaxed text-amber-900/95 dark:text-amber-100/90">{{ $pm['body'] ?? '' }}</p>
+            @if (! empty($pm['amount_label']))
+                <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs text-amber-900/90 dark:text-amber-200/90">
+                    <div>
+                        <dt class="font-semibold uppercase tracking-wide text-amber-800/90 dark:text-amber-300/80">Checkout amount</dt>
+                        <dd class="mt-0.5 font-medium tabular-nums">{{ $pm['amount_label'] }}</dd>
+                    </div>
+                    @if (! empty($pm['date_label']))
+                        <div>
+                            <dt class="font-semibold uppercase tracking-wide text-amber-800/90 dark:text-amber-300/80">Booking date</dt>
+                            <dd class="mt-0.5 font-medium">{{ $pm['date_label'] }}</dd>
+                        </div>
+                    @endif
+                </dl>
+            @endif
+        </div>
+    @endif
     @if (session('status'))
         <div
             class="mb-6 rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm font-medium text-teal-950 dark:border-teal-900/50 dark:bg-teal-950/40 dark:text-teal-100"
