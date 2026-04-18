@@ -24,19 +24,13 @@ final class BookingCalendar
         $end = $booking->ends_at->clone()->utc();
         $dates = $start->format('Ymd\THis\Z').'/'.$end->format('Ymd\THis\Z');
 
-        $title = self::escapeGoogleCalendarText(self::eventTitle($booking));
-        $details = self::escapeGoogleCalendarText(self::eventDescription($booking));
-        $location = self::escapeGoogleCalendarText(self::locationLine($booking->courtClient));
-
-        $q = http_build_query([
+        return 'https://calendar.google.com/calendar/render?'.http_build_query([
             'action' => 'TEMPLATE',
-            'text' => $title,
+            'text' => self::eventTitle($booking),
             'dates' => $dates,
-            'details' => $details,
-            'location' => $location,
+            'details' => self::eventDescription($booking),
+            'location' => self::locationLine($booking->courtClient),
         ], '', '&', PHP_QUERY_RFC3986);
-
-        return 'https://calendar.google.com/calendar/render?'.$q;
     }
 
     public static function icsFromBooking(Booking $booking): string
@@ -130,14 +124,9 @@ final class BookingCalendar
         ], fn (string $s): bool => $s !== '')));
     }
 
-    private static function escapeGoogleCalendarText(string $text): string
-    {
-        return rawurlencode($text);
-    }
-
     private static function escapeIcsText(string $text): string
     {
-        return str_replace(["\\", ";", ",", "\r", "\n"], ["\\\\", "\\;", "\\,", '', '\\n'], $text);
+        return str_replace(['\\', ';', ',', "\r", "\n"], ['\\\\', '\\;', '\\,', '', '\\n'], $text);
     }
 
     /** @param  list<string>  $veventBodies  Lines inside each VEVENT (BEGIN...END without outer CALENDAR). */

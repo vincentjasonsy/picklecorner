@@ -46,7 +46,46 @@
                 @forelse ($notifications as $n)
                     @php($d = $n->data)
                     <li wire:key="{{ $n->id }}">
-                        @if (($d['kind'] ?? '') === 'internal_team_play_reminder')
+                        @if (($d['kind'] ?? '') === 'member_venue_booking')
+                            <div
+                                class="flex gap-3 px-4 py-3 {{ $n->read_at ? 'bg-white dark:bg-zinc-900' : 'bg-emerald-50/80 dark:bg-emerald-950/25' }}"
+                            >
+                                <div class="min-w-0 flex-1">
+                                    <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                                        {{ $d['status_label'] ?? 'Booking' }}
+                                    </p>
+                                    <p class="mt-1 text-sm font-semibold text-zinc-900 dark:text-white">
+                                        {{ $d['title'] ?? 'Booking update' }}
+                                    </p>
+                                    <p class="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                                        {{ $d['body'] ?? '' }}
+                                    </p>
+                                    @if (! empty($d['lines']))
+                                        <ul class="mt-2 space-y-1 border-t border-zinc-200 pt-2 dark:border-zinc-700">
+                                            @foreach ($d['lines'] as $line)
+                                                <li class="text-xs text-zinc-700 dark:text-zinc-300">
+                                                    <span class="font-medium">{{ $line['court'] ?? 'Court' }}</span>
+                                                    @if (! empty($line['when']))
+                                                        <span class="text-zinc-500"> · {{ $line['when'] }}</span>
+                                                    @endif
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    @endif
+                                    @if (! empty($d['booking_url']))
+                                        <div class="mt-3">
+                                            <button
+                                                type="button"
+                                                wire:click="markReadAndGoUrl('{{ $n->id }}', {{ json_encode($d['booking_url']) }})"
+                                                class="inline-flex items-center rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+                                            >
+                                                View booking
+                                            </button>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @elseif (($d['kind'] ?? '') === 'internal_team_play_reminder')
                             <div
                                 class="flex gap-3 px-4 py-3 {{ $n->read_at ? 'bg-white dark:bg-zinc-900' : 'bg-emerald-50/80 dark:bg-emerald-950/25' }}"
                             >

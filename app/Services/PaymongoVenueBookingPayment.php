@@ -47,12 +47,6 @@ final class PaymongoVenueBookingPayment
             throw new \RuntimeException('Amount is below the minimum for online checkout.');
         }
 
-        if (! VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours($selectedSlots)) {
-            throw new \RuntimeException(
-                'On each court, select one continuous block of hours with no gaps.',
-            );
-        }
-
         $specs = VenueBookingSpecsBuilder::buildSpecsForSubmit(
             $courtClient,
             $scheduleRows,

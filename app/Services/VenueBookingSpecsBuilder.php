@@ -37,10 +37,6 @@ final class VenueBookingSpecsBuilder
             return [];
         }
 
-        if (! self::eachCourtHasOnlyContiguousHours($selectedSlots)) {
-            return [];
-        }
-
         $effectiveCoachId = $venueCheckoutShowCoach ? $coachUserId : '';
 
         $coachUser = null;
@@ -188,25 +184,6 @@ final class VenueBookingSpecsBuilder
         }
 
         return $by;
-    }
-
-    /**
-     * True when every court’s selected hours form a single consecutive run (no gaps).
-     *
-     * @param  list<string>  $selectedSlots
-     */
-    public static function eachCourtHasOnlyContiguousHours(array $selectedSlots): bool
-    {
-        foreach (self::selectedSlotsGroupedByCourt($selectedSlots) as $hours) {
-            if ($hours === []) {
-                continue;
-            }
-            if (count(self::contiguousHourRuns($hours)) !== 1) {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     /**

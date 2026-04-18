@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvoicePdfController;
 use App\Http\Controllers\DemoQuickLoginController;
 use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
+use App\Http\Controllers\MemberBookingCalendarController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
 use App\Http\Controllers\PayMongoBookingCancelController;
@@ -159,6 +160,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/book', BookNowPage::class)->name('book');
         Route::livewire('/book/venues/{courtClient:slug}', VenueBookingPage::class)->name('book.venue');
         Route::livewire('/bookings', MemberBookingHistory::class)->name('bookings');
+        Route::get('/bookings/{booking}/calendar.ics', MemberBookingCalendarController::class)
+            ->name('bookings.calendar');
         Route::livewire('/bookings/{booking}', MemberBookingShow::class)->name('bookings.show');
         Route::livewire('/court-open-plays', MemberCourtOpenPlayHub::class)->name('court-open-plays.index');
         Route::livewire('/court-open-plays/{booking}/host', MemberCourtOpenPlayHost::class)->name('court-open-plays.host');

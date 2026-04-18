@@ -38,6 +38,15 @@ class NotificationBell extends Component
         $this->redirect(route($routeName), navigate: true);
     }
 
+    public function markReadAndGoUrl(string $notificationId, string $url): void
+    {
+        if ($url === '') {
+            return;
+        }
+        $this->markRead($notificationId);
+        $this->redirect($url, navigate: true);
+    }
+
     public function render(): View
     {
         $user = Auth::user();

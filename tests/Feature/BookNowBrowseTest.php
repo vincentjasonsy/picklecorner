@@ -213,4 +213,48 @@ class BookNowBrowseTest extends TestCase
         $this->assertSame($higherRated->id, $rows->first()['venue']->id);
         $this->assertSame($lowerRated->id, $rows->last()['venue']->id);
     }
+
+    public function test_book_now_search_filters_by_venue_city_or_court_name(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $oak = CourtClient::factory()->create([
+            'is_active' => true,
+            'name' => 'Oakbrook Pickle Hub',
+            'city' => 'Metro North',
+        ]);
+        $pine = CourtClient::factory()->create([
+            'is_active' => true,
+            'name' => 'Pine Courts',
+            'city' => 'Metro South',
+        ]);
+        Court::query()->create([
+            'court_client_id' => $oak->id,
+            'name' => 'Court A',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+        Court::query()->create([
+            'court_client_id' => $pine->id,
+            'name' => 'Diamond Court',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $component = Livewire::test(BookNowPage::class);
+
+        $component->set('search', 'Oakbrook');
+        $this->assertSame(1, $component->instance()->browseVenueRows()->count());
+        $this->assertSame($oak->id, $component->instance()->browseVenueRows()->first()['venue']->id);
+
+        $component->set('search', 'Metro South');
+        $this->assertSame(1, $component->instance()->browseVenueRows()->count());
+        $this->assertSame($pine->id, $component->instance()->browseVenueRows()->first()['venue']->id);
+
+        $component->set('search', 'Diamond');
+        $this->assertSame(1, $component->instance()->browseVenueRows()->count());
+        $this->assertSame($pine->id, $component->instance()->browseVenueRows()->first()['venue']->id);
+    }
 }

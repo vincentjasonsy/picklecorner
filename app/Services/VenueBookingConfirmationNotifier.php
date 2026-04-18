@@ -77,15 +77,14 @@ final class VenueBookingConfirmationNotifier
             'currency' => $currency,
             'requestTotals' => is_array($requestTotals) ? $requestTotals : [],
             'bookingRequestId' => (string) ($first->booking_request_id ?? ''),
+            'firstBookingId' => (string) $first->id,
             'paymentLabel' => $paymentLabel,
             'paymentReference' => $paymentReference,
             'feeRuleLabel' => $feeRuleLabel,
             'isOnlinePayment' => (string) ($first->payment_method ?? '') === Booking::PAYMENT_PAYMONGO,
         ];
 
-        if (self::hasNonEmptyEmail($booker)) {
-            $booker->notify(new MemberVenueBookingSubmittedNotification($memberData));
-        }
+        $booker->notify(new MemberVenueBookingSubmittedNotification($memberData));
 
         $admin = $courtClient->admin;
         if ($admin !== null && self::hasNonEmptyEmail($admin) && $admin->id !== $booker->id) {

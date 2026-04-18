@@ -22,6 +22,7 @@ class MemberVenueBookingSubmittedNotification extends Notification implements Sh
      *     currency: string,
      *     requestTotals: array<string, mixed>,
      *     bookingRequestId: string,
+     *     firstBookingId: string,
      *     paymentLabel: ?string,
      *     paymentReference: ?string,
      *     feeRuleLabel: ?string,
@@ -36,7 +37,60 @@ class MemberVenueBookingSubmittedNotification extends Notification implements Sh
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        $channels = ['database'];
+        if ($notifiable instanceof User && self::notifiableHasEmail($notifiable)) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    /**
+     * @return array{
+     *     kind: string,
+     *     title: string,
+     *     body: string,
+     *     venue_name: string,
+     *     status: string,
+     *     status_label: string,
+     *     lines: list<array{court: string, when: string}>,
+     *     booking_url: string,
+     * }
+     */
+    public function toDatabase(object $notifiable): array
+    {
+        $venue = $this->payload['venueName'];
+        $status = $this->payload['status'];
+        $label = $this->payload['statusLabel'];
+
+        $title = match ($status) {
+            Booking::STATUS_CONFIRMED => 'Booking confirmed',
+            Booking::STATUS_DENIED => 'Booking request not accepted',
+            Booking::STATUS_PENDING_APPROVAL => 'Booking request received',
+            default => 'Booking update',
+        };
+
+        $firstLine = $this->payload['lines'][0] ?? null;
+        $detail = '';
+        if (is_array($firstLine)) {
+            $detail = trim(($firstLine['court'] ?? '').((isset($firstLine['when']) && $firstLine['when'] !== '') ? ' · '.$firstLine['when'] : ''));
+        }
+        $body = $detail !== '' ? $detail : ($label.' · '.$venue);
+
+        $bid = $this->payload['firstBookingId'] ?? '';
+
+        return [
+            'kind' => 'member_venue_booking',
+            'title' => $title.' · '.$venue,
+            'body' => $body,
+            'venue_name' => $venue,
+            'status' => $status,
+            'status_label' => $label,
+            'lines' => array_slice($this->payload['lines'], 0, 5),
+            'booking_url' => $bid !== ''
+                ? route('account.bookings.show', ['booking' => $bid], true)
+                : route('account.bookings', [], true),
+        ];
     }
 
     public function toMail(object $notifiable): MailMessage
@@ -76,5 +130,12 @@ class MemberVenueBookingSubmittedNotification extends Notification implements Sh
         $parts = preg_split('/\s+/', trim($user->name)) ?: [];
 
         return (string) ($parts[0] ?? 'there');
+    }
+
+    private static function notifiableHasEmail(User $user): bool
+    {
+        $email = $user->email;
+
+        return is_string($email) && trim($email) !== '';
     }
 }

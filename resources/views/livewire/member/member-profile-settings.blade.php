@@ -2,7 +2,7 @@
     <x-member.guide title="Why this screen exists">
         <p>
             Your name shows up on bookings and emails. Home city (if you pick one) nudges
-            <strong class="font-semibold text-sky-950 dark:text-white">Find a court</strong>
+            <strong class="font-semibold text-sky-950 dark:text-white">Book Now</strong>
             toward places you actually play.
         </p>
     </x-member.guide>

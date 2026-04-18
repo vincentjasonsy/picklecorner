@@ -130,7 +130,14 @@ class MemberAreaTest extends TestCase
             ->assertSee($client->name, escape: false)
             ->assertSee('Court B', escape: false);
 
+        $this->actingAs($player)
+            ->get(route('account.bookings.calendar', $mine))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/calendar; charset=utf-8')
+            ->assertSee('BEGIN:VCALENDAR', escape: false);
+
         $this->actingAs($player)->get(route('account.bookings.show', $theirs))->assertForbidden();
+        $this->actingAs($other)->get(route('account.bookings.calendar', $mine))->assertForbidden();
     }
 
     public function test_booking_details_list_all_courts_when_same_booking_request(): void

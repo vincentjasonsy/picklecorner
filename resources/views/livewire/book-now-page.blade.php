@@ -25,8 +25,30 @@
         </div>
     </header>
 
-    {{-- Filter pills --}}
+    {{-- Search & filters --}}
     <div class="mt-8 flex flex-col gap-3">
+        <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+            <div class="max-w-xl flex-1">
+                <label for="book-now-search" class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                    Search
+                </label>
+                <div class="relative mt-1.5">
+                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400" aria-hidden="true">
+                        <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </span>
+                    <input
+                        id="book-now-search"
+                        type="search"
+                        wire:model.live.debounce.300ms="search"
+                        autocomplete="off"
+                        placeholder="Venue, court, or city…"
+                        class="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-10 pr-3 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-600 dark:focus:ring-emerald-600/30"
+                    />
+                </div>
+            </div>
+        </div>
         <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Filters</p>
         <div class="flex flex-wrap gap-2">
             <button
@@ -252,7 +274,11 @@
         </p>
         @if ($allVenueRows->isEmpty())
             <p class="mt-8 rounded-2xl border border-dashed border-zinc-300 py-16 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                No venues match these filters. Try clearing the city or switching indoor / outdoor.
+                @if (trim($search) !== '')
+                    No venues match your search or filters. Try another keyword or clear the search box.
+                @else
+                    No venues match these filters. Try clearing the city or switching indoor / outdoor.
+                @endif
             </p>
         @else
             <ul

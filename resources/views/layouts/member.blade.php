@@ -137,6 +137,18 @@
                                 <p class="mb-1.5 px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400">Play</p>
                                 <div class="flex flex-col gap-0.5">
                                     <a
+                                        href="{{ route('account.book') }}"
+                                        wire:navigate
+                                        @class([
+                                            'rounded-xl px-3 py-2 transition-colors',
+                                            request()->routeIs('account.book')
+                                                ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                        ])
+                                    >
+                                        Book Now
+                                    </a>
+                                    <a
                                         href="{{ route('account.dashboard') }}"
                                         wire:navigate
                                         @class([
@@ -147,18 +159,6 @@
                                         ])
                                     >
                                         Home
-                                    </a>
-                                    <a
-                                        href="{{ route('account.book') }}"
-                                        wire:navigate
-                                        @class([
-                                            'rounded-xl px-3 py-2 transition-colors',
-                                            request()->routeIs('account.book')
-                                                ? 'bg-emerald-50 font-semibold text-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200'
-                                                : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
-                                        ])
-                                    >
-                                        Find a court
                                     </a>
                                     <a
                                         href="{{ route('account.bookings') }}"
@@ -334,7 +334,7 @@
                             @unless (auth()->user()->isCoach())
                                 <ul class="mt-2 list-inside list-disc space-y-1">
                                     <li>
-                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Find a court</strong>
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Book Now</strong>
                                         — book a slot.
                                     </li>
                                     <li>
@@ -392,6 +392,20 @@
                             </h1>
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
+                            @unless (auth()->user()->isCoach())
+                                <a
+                                    href="{{ route('account.book') }}"
+                                    wire:navigate
+                                    @class([
+                                        'inline-flex shrink-0 items-center rounded-lg border px-3 py-1.5 text-xs font-semibold transition-colors',
+                                        request()->routeIs('account.book')
+                                            ? 'border-emerald-600 bg-emerald-100 text-emerald-900 dark:border-emerald-400/70 dark:bg-emerald-950/55 dark:text-emerald-100'
+                                            : 'border-emerald-500/55 bg-emerald-50 text-emerald-900 hover:border-emerald-600 hover:bg-emerald-100 dark:border-emerald-500/35 dark:bg-emerald-950/30 dark:text-emerald-200 dark:hover:bg-emerald-950/50',
+                                    ])
+                                >
+                                    Book Now
+                                </a>
+                            @endunless
                             <livewire:notification-bell />
                             <x-theme-toggle />
                         </div>

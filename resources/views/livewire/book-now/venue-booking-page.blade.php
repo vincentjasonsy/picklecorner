@@ -363,16 +363,26 @@
                                                                 <button
                                                                     type="button"
                                                                     wire:click="toggleSlot('{{ $court->id }}', {{ $hour }})"
-                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-teal-500/60 hover:bg-teal-50/80 dark:hover:bg-teal-950/30 {{ $availStyle }}"
+                                                                    @class([
+                                                                        'group flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors',
+                                                                        $availStyle,
+                                                                        'hover:border-teal-500/60 hover:bg-teal-50/80 dark:hover:bg-teal-950/30' => ! $slotSelected,
+                                                                        'hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:border-teal-500/50 dark:hover:bg-teal-950/40 dark:hover:text-white' => $slotSelected,
+                                                                    ])
                                                                 >
-                                                                    <span class="text-[10px] font-bold uppercase leading-tight tracking-wide">
+                                                                    <span
+                                                                        @class([
+                                                                            'text-[10px] font-bold uppercase leading-tight tracking-wide',
+                                                                            'group-hover:text-emerald-700 dark:group-hover:text-white' => $slotSelected,
+                                                                        ])
+                                                                    >
                                                                         {{ $cellTitle }}
                                                                     </span>
                                                                     @if ($slotPriceLabel !== '')
                                                                         <span
                                                                             @class([
                                                                                 'text-[9px] font-semibold leading-tight tabular-nums',
-                                                                                'text-white/90' => $slotSelected,
+                                                                                'text-white/90 group-hover:text-emerald-700 dark:text-white/90 dark:group-hover:text-white/90' => $slotSelected,
                                                                                 'text-zinc-600 dark:text-zinc-300' => ! $slotSelected,
                                                                             ])
                                                                         >
@@ -587,13 +597,24 @@
                                 </p>
                             @endif
                         </div>
-                        <button
-                            type="button"
-                            wire:click="backToTimes"
-                            class="text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-400"
-                        >
-                            ← Edit times
-                        </button>
+                        <div class="flex flex-wrap items-center gap-3">
+                            @if (count($reviewSpecs) > 0)
+                                <button
+                                    type="button"
+                                    wire:click="downloadReviewCalendar"
+                                    class="inline-flex items-center rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-xs font-semibold text-zinc-800 shadow-sm transition hover:border-sky-300 hover:text-sky-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-sky-700"
+                                >
+                                    Add to calendar (.ics)
+                                </button>
+                            @endif
+                            <button
+                                type="button"
+                                wire:click="backToTimes"
+                                class="text-sm font-semibold text-teal-700 hover:text-teal-800 dark:text-teal-400"
+                            >
+                                ← Edit times
+                            </button>
+                        </div>
                     </div>
 
                     <div

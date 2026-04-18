@@ -16,6 +16,7 @@ use App\Services\GiftCardService;
 use App\Services\PaymongoVenueBookingPayment;
 use App\Services\PublicVenueBookingSubmission;
 use App\Services\VenueBookingSpecsBuilder;
+use App\Support\BookingCalendar;
 use App\Support\Money;
 use App\Support\VenueScheduleHours;
 use Carbon\Carbon;
@@ -522,20 +523,6 @@ class VenueBookingPage extends Component
                 $hoursThisCourt[] = $h;
             }
         }
-        if ($hoursThisCourt !== []) {
-            sort($hoursThisCourt);
-            $min = $hoursThisCourt[0];
-            $max = $hoursThisCourt[count($hoursThisCourt) - 1];
-            if ($hour !== $min - 1 && $hour !== $max + 1) {
-                $this->resetErrorBag('selectedSlots');
-                $this->addError(
-                    'selectedSlots',
-                    'On each court, add hours next to your selection so they form one continuous block.',
-                );
-
-                return;
-            }
-        }
         if (count($hoursThisCourt) >= 16) {
             return;
         }
@@ -733,15 +720,6 @@ class VenueBookingPage extends Component
             return;
         }
 
-        if (! VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours($this->selectedSlots)) {
-            $this->addError(
-                'selectedSlots',
-                'On each court, choose one continuous block of hours with no gaps.',
-            );
-
-            return;
-        }
-
         $this->clampCoachPaidHours();
         $this->syncOpenPlayEligibility();
         $this->ackConvenienceFeeNonRefundable = false;
@@ -755,6 +733,30 @@ class VenueBookingPage extends Component
         $this->step = 'times';
     }
 
+    /**
+     * Download provisional times as .ics on the review step (Apple Calendar, Outlook, etc.).
+     */
+    public function downloadReviewCalendar()
+    {
+        abort_unless($this->step === 'review', 404);
+
+        $specs = $this->buildSpecsForSubmit();
+        if ($specs === []) {
+            abort(404);
+        }
+
+        $ics = BookingCalendar::icsFromVenueSpecs($this->courtClient, $specs);
+        $filename = 'court-booking-preview-'.$this->bookingCalendarDate.'.ics';
+
+        return response()->streamDownload(
+            static function () use ($ics): void {
+                echo $ics;
+            },
+            $filename,
+            ['Content-Type' => 'text/calendar; charset=utf-8'],
+        );
+    }
+
     public function continueToSignIn(): void
     {
         if ($this->step === 'times') {
@@ -764,13 +766,6 @@ class VenueBookingPage extends Component
             }
         } elseif ($this->selectedSlots === []) {
             $this->addError('selectedSlots', 'Select at least one open time slot on the grid.');
-
-            return;
-        } elseif (! VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours($this->selectedSlots)) {
-            $this->addError(
-                'selectedSlots',
-                'On each court, choose one continuous block of hours with no gaps.',
-            );
 
             return;
         }
@@ -789,13 +784,6 @@ class VenueBookingPage extends Component
             }
         } elseif ($this->selectedSlots === []) {
             $this->addError('selectedSlots', 'Select at least one open time slot on the grid.');
-
-            return;
-        } elseif (! VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours($this->selectedSlots)) {
-            $this->addError(
-                'selectedSlots',
-                'On each court, choose one continuous block of hours with no gaps.',
-            );
 
             return;
         }
@@ -1003,15 +991,6 @@ class VenueBookingPage extends Component
             'openPlayRefundPolicy' => 'refund policy',
             'ackConvenienceFeeNonRefundable' => 'convenience fee terms',
         ]);
-
-        if (! VenueBookingSpecsBuilder::eachCourtHasOnlyContiguousHours($this->selectedSlots)) {
-            $this->addError(
-                'selectedSlots',
-                'On each court, choose one continuous block of hours with no gaps.',
-            );
-
-            return;
-        }
 
         $specs = $this->buildSpecsForSubmit();
         if ($specs === []) {

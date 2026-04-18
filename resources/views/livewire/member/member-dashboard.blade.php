@@ -9,7 +9,7 @@
 <div class="space-y-8">
     <x-member.guide title="First time here?">
         <p>
-            Pick <strong class="font-semibold text-sky-950 dark:text-white">Find a court</strong> in the sidebar to book.
+            Pick <strong class="font-semibold text-sky-950 dark:text-white">Book Now</strong> in the sidebar to book.
             Everything you’ve reserved shows up below — no spreadsheets required.
         </p>
     </x-member.guide>
@@ -39,7 +39,7 @@
                 wire:navigate
                 class="inline-flex items-center rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-md transition hover:bg-amber-200 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300"
             >
-                Find a court
+                Book Now
             </a>
             <a
                 href="{{ route('account.bookings') }}"
@@ -196,7 +196,7 @@
                 @empty
                     <li class="rounded-xl border border-dashed border-zinc-200 py-10 text-center dark:border-zinc-700">
                         <p class="text-sm font-medium text-zinc-600 dark:text-zinc-400">No upcoming games yet.</p>
-                        <p class="mt-1 text-xs text-zinc-500">Grab a slot from Find a court — it’ll pop in here.</p>
+                        <p class="mt-1 text-xs text-zinc-500">Grab a slot from Book Now — it’ll pop in here.</p>
                     </li>
                 @endforelse
             </ul>

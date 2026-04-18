@@ -2,6 +2,7 @@
     use App\Models\Booking;
     use App\Models\Court;
     use App\Services\BookingCheckoutSnapshot;
+    use App\Support\BookingCalendar;
     use App\Support\Money;
 
     $tz = config('app.timezone', 'UTC');
@@ -83,6 +84,27 @@
                 class="inline-flex items-center rounded-xl border border-violet-200 bg-violet-50 px-4 py-2 text-sm font-semibold text-violet-900 transition hover:bg-violet-100 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-100 dark:hover:bg-violet-950/70"
             >
                 Open play host tools
+            </a>
+        @endif
+        @if ($b->starts_at && $b->ends_at)
+            @php
+                $gcalUrl = BookingCalendar::googleCalendarUrl($b);
+            @endphp
+            @if ($gcalUrl)
+                <a
+                    href="{{ $gcalUrl }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 transition hover:border-sky-300 hover:text-sky-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-sky-700"
+                >
+                    Google Calendar
+                </a>
+            @endif
+            <a
+                href="{{ route('account.bookings.calendar', $b) }}"
+                class="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-800 transition hover:border-sky-300 hover:text-sky-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-sky-700"
+            >
+                Apple / Outlook (.ics)
             </a>
         @endif
     </div>

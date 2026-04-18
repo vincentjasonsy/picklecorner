@@ -6,6 +6,7 @@ use App\Models\CityFeaturedCourtClient;
 use App\Models\Court;
 use App\Models\CourtClient;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Livewire\Component;
 
@@ -16,6 +17,9 @@ class BookNowPage extends Component
 
     /** null = all cities */
     public ?string $city = null;
+
+    /** Search court name, venue name, or city */
+    public string $search = '';
 
     public function mount(): void
     {
@@ -118,9 +122,31 @@ class BookNowPage extends Component
             $q->whereHas('courtClient', fn ($q) => $q->where('city', $this->city));
         }
 
+        $this->applySearchFilter($q);
+
         $courts = $q->get();
 
         return $this->sortCourtsForBrowse($courts);
+    }
+
+    protected function applySearchFilter(Builder $q): void
+    {
+        $term = trim($this->search);
+        if ($term === '') {
+            return;
+        }
+
+        $escaped = addcslashes($term, '%_\\');
+        $pattern = '%'.$escaped.'%';
+
+        $q->where(function (Builder $query) use ($pattern): void {
+            $query->where('courts.name', 'like', $pattern)
+                ->orWhereHas('courtClient', function (Builder $venue) use ($pattern): void {
+                    $venue->where(function (Builder $v) use ($pattern): void {
+                        $v->where('name', 'like', $pattern)->orWhere('city', 'like', $pattern);
+                    });
+                });
+        });
     }
 
     /**
