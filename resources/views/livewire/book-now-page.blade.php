@@ -7,61 +7,21 @@
 
     {{-- Search & filters --}}
     <div class="mt-6 space-y-4" aria-label="Search and filters">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div class="relative min-w-0 flex-1 sm:max-w-md">
-                <label for="book-now-search" class="sr-only">Search venues</label>
-                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400 dark:text-zinc-500" aria-hidden="true">
-                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                </span>
-                <input
-                    id="book-now-search"
-                    type="search"
-                    wire:model.live.debounce.300ms="search"
-                    autocomplete="off"
-                    placeholder="Search venue, court, city…"
-                    class="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-400"
-                />
-            </div>
-            <div class="flex flex-wrap items-center gap-1.5">
-                <button
-                    type="button"
-                    wire:click="setEnvironment('all')"
-                    @class([
-                        'rounded-md px-3 py-1.5 text-xs font-semibold transition',
-                        $environment === 'all'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
-                    ])
-                >
-                    All
-                </button>
-                <button
-                    type="button"
-                    wire:click="setEnvironment('outdoor')"
-                    @class([
-                        'rounded-md px-3 py-1.5 text-xs font-semibold transition',
-                        $environment === 'outdoor'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
-                    ])
-                >
-                    Outdoor
-                </button>
-                <button
-                    type="button"
-                    wire:click="setEnvironment('indoor')"
-                    @class([
-                        'rounded-md px-3 py-1.5 text-xs font-semibold transition',
-                        $environment === 'indoor'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
-                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
-                    ])
-                >
-                    Indoor
-                </button>
-            </div>
+        <div class="relative max-w-lg">
+            <label for="book-now-search" class="sr-only">Search venues</label>
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400 dark:text-zinc-500" aria-hidden="true">
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </span>
+            <input
+                id="book-now-search"
+                type="search"
+                wire:model.live.debounce.300ms="search"
+                autocomplete="off"
+                placeholder="Search venue, court, city…"
+                class="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-400"
+            />
         </div>
 
         @if ($this->cityPills()->isNotEmpty())
@@ -291,8 +251,50 @@
         @endif
     </div>
 
+    {{-- Indoor / outdoor — above venue list --}}
+    <div class="mt-10 flex justify-center px-2" aria-label="Court surface">
+        <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+            <button
+                type="button"
+                wire:click="setEnvironment('all')"
+                @class([
+                    'rounded-full px-6 py-3 text-base font-bold tracking-tight transition sm:text-lg sm:py-3.5',
+                    $environment === 'all'
+                        ? 'bg-zinc-900 text-white shadow-md shadow-zinc-900/20 ring-2 ring-emerald-500/40 dark:bg-white dark:text-zinc-900 dark:shadow-none dark:ring-emerald-400/50'
+                        : 'border border-zinc-200 bg-white text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40',
+                ])
+            >
+                All
+            </button>
+            <button
+                type="button"
+                wire:click="setEnvironment('outdoor')"
+                @class([
+                    'rounded-full px-6 py-3 text-base font-bold tracking-tight transition sm:text-lg sm:py-3.5',
+                    $environment === 'outdoor'
+                        ? 'bg-zinc-900 text-white shadow-md shadow-zinc-900/20 ring-2 ring-emerald-500/40 dark:bg-white dark:text-zinc-900 dark:shadow-none dark:ring-emerald-400/50'
+                        : 'border border-zinc-200 bg-white text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40',
+                ])
+            >
+                Outdoor
+            </button>
+            <button
+                type="button"
+                wire:click="setEnvironment('indoor')"
+                @class([
+                    'rounded-full px-6 py-3 text-base font-bold tracking-tight transition sm:text-lg sm:py-3.5',
+                    $environment === 'indoor'
+                        ? 'bg-zinc-900 text-white shadow-md shadow-zinc-900/20 ring-2 ring-emerald-500/40 dark:bg-white dark:text-zinc-900 dark:shadow-none dark:ring-emerald-400/50'
+                        : 'border border-zinc-200 bg-white text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40',
+                ])
+            >
+                Indoor
+            </button>
+        </div>
+    </div>
+
     {{-- Primary: venues & courts --}}
-    <section class="mt-8 scroll-mt-20" aria-labelledby="venues-heading" id="venues">
+    <section class="mt-6 scroll-mt-20 sm:mt-8" aria-labelledby="venues-heading" id="venues">
         <div class="flex flex-wrap items-end justify-between gap-4">
             <div>
                 <h1 id="venues-heading" class="font-display text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
@@ -351,28 +353,26 @@
                             class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:ring-offset-zinc-900"
                             aria-label="Book {{ $venue->name }}"
                         ></a>
-                        <div class="relative z-[2] flex flex-col">
+                        <div class="relative z-[2] flex flex-col pointer-events-none">
                             <div class="relative bg-zinc-100 dark:bg-zinc-800">
-                                <div class="pointer-events-auto">
-                                    <x-image-carousel
-                                        :slides="$venue->carouselSlides()"
-                                        :interval="6000"
-                                        aria-label="{{ $venue->name }} photos"
-                                        aspect-class="aspect-[4/3] sm:aspect-[16/10]"
-                                        class="w-full"
+                                <x-image-carousel
+                                    :slides="$venue->carouselSlides()"
+                                    :interval="6000"
+                                    aria-label="{{ $venue->name }} photos"
+                                    aspect-class="aspect-[4/3] sm:aspect-[16/10]"
+                                    class="w-full"
+                                >
+                                    <div
+                                        class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-800 sm:aspect-[16/10]"
+                                        aria-hidden="true"
                                     >
-                                        <div
-                                            class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-emerald-500 to-teal-800 sm:aspect-[16/10]"
-                                            aria-hidden="true"
-                                        >
-                                            <span class="font-display text-3xl font-extrabold text-white/90 transition group-hover:scale-105">
-                                                {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
-                                            </span>
-                                        </div>
-                                    </x-image-carousel>
-                                </div>
+                                        <span class="font-display text-3xl font-extrabold text-white/90 transition group-hover:scale-105">
+                                            {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
+                                        </span>
+                                    </div>
+                                </x-image-carousel>
                             </div>
-                            <div class="pointer-events-none flex flex-1 flex-col p-5">
+                            <div class="flex flex-1 flex-col p-5">
                                 <p class="text-xs font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-400/90">
                                     Venue
                                 </p>
@@ -437,28 +437,26 @@
                                                 class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-amber-400 dark:ring-offset-zinc-900"
                                                 aria-label="Book featured venue {{ $venue->name }}"
                                             ></a>
-                                            <div class="relative z-[2] flex flex-1 flex-col">
+                                            <div class="relative z-[2] flex flex-1 flex-col pointer-events-none">
                                                 <div class="bg-zinc-100 dark:bg-zinc-800">
-                                                    <div class="pointer-events-auto">
-                                                        <x-image-carousel
-                                                            :slides="$venue->carouselSlides()"
-                                                            :interval="6500"
-                                                            aria-label="{{ $venue->name }} photos"
-                                                            aspect-class="aspect-[4/3]"
-                                                            class="w-full"
+                                                    <x-image-carousel
+                                                        :slides="$venue->carouselSlides()"
+                                                        :interval="6500"
+                                                        aria-label="{{ $venue->name }} photos"
+                                                        aspect-class="aspect-[4/3]"
+                                                        class="w-full"
+                                                    >
+                                                        <div
+                                                            class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-amber-500 to-orange-900"
+                                                            aria-hidden="true"
                                                         >
-                                                            <div
-                                                                class="relative flex aspect-[4/3] items-center justify-center bg-gradient-to-br from-amber-500 to-orange-900"
-                                                                aria-hidden="true"
-                                                            >
-                                                                <span class="font-display text-3xl font-extrabold text-white/90">
-                                                                    {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
-                                                                </span>
-                                                            </div>
-                                                        </x-image-carousel>
-                                                    </div>
+                                                            <span class="font-display text-3xl font-extrabold text-white/90">
+                                                                {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($venue->name, 0, 2)) }}
+                                                            </span>
+                                                        </div>
+                                                    </x-image-carousel>
                                                 </div>
-                                                <div class="pointer-events-none flex flex-1 flex-col p-4">
+                                                <div class="flex flex-1 flex-col p-4">
                                                     <p class="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300/90">
                                                         Featured venue
                                                     </p>

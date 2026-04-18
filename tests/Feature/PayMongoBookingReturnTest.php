@@ -7,6 +7,7 @@ use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\PaymongoBookingIntent;
 use App\Models\User;
+use App\Models\VenueWeeklyHour;
 use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -118,6 +119,7 @@ class PayMongoBookingReturnTest extends TestCase
         $this->assertIsArray($flash);
         $this->assertSame('unpaid', $flash['kind']);
         $this->assertArrayHasKey('amount_label', $flash);
+        $this->assertSame($intentId, $flash['intent_id']);
     }
 
     public function test_failed_intent_shows_failed_checkout_notice(): void
@@ -172,5 +174,68 @@ class PayMongoBookingReturnTest extends TestCase
             ->assertSessionHas('paymongo_checkout');
 
         $this->assertSame('cancelled', session('paymongo_checkout')['kind']);
+        $this->assertArrayHasKey('intent_id', session('paymongo_checkout'));
+        $this->assertSame($intentId, session('paymongo_checkout')['intent_id']);
+    }
+
+    public function test_cancel_restores_review_step_and_shows_slots_from_intent_payload(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
+
+        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-restore-club']);
+        for ($d = 0; $d < 7; $d++) {
+            VenueWeeklyHour::query()->create([
+                'court_client_id' => $client->id,
+                'day_of_week' => $d,
+                'is_closed' => false,
+                'opens_at' => '07:00',
+                'closes_at' => '22:00',
+            ]);
+        }
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $player = User::factory()->player()->create();
+        $intentId = (string) Str::uuid();
+        $targetDate = '2026-04-18';
+        $slots = [(string) $court->id.'-18', (string) $court->id.'-19'];
+
+        PaymongoBookingIntent::query()->create([
+            'id' => $intentId,
+            'user_id' => $player->id,
+            'court_client_id' => $client->id,
+            'amount_centavos' => 103_500,
+            'currency' => 'PHP',
+            'payload_json' => [
+                'booking_calendar_date' => $targetDate,
+                'selected_slots' => $slots,
+                'gift_card_code' => '',
+                'coach_user_id' => null,
+                'coach_paid_hours' => 0,
+                'is_open_play' => false,
+            ],
+            'status' => PaymongoBookingIntent::STATUS_PENDING,
+        ]);
+
+        $this->actingAs($player)
+            ->get(route('paymongo.booking.cancel', ['intent' => $intentId]))
+            ->assertRedirect(route('book-now.venue.book', $client));
+
+        $page = $this->actingAs($player)
+            ->get(route('book-now.venue.book', $client));
+
+        $page->assertOk();
+        $page->assertSee('Review your request', false);
+        $page->assertSee('Selected slots', false);
+
+        Carbon::setTestNow();
     }
 }

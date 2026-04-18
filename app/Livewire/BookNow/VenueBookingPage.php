@@ -7,6 +7,7 @@ use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\CourtDateSlotBlock;
 use App\Models\GiftCard;
+use App\Models\PaymongoBookingIntent;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\BookingFeeService;
@@ -104,11 +105,131 @@ class VenueBookingPage extends Component
         }
 
         $this->applyBookAgainQueryParameters();
+        $this->hydrateFromPaymongoCheckoutFlash();
         $this->clearInvalidPrefilledSlotsIfNeeded();
         $this->maybeAdvanceBookAgainToReviewFromQuery();
+        $this->maybeRestoreReviewStepAfterPaymongoReturn();
 
         $this->clearCoachWhenCheckoutHidden();
         $this->syncOpenPlayEligibility();
+    }
+
+    /**
+     * Restore review-step state from {@see PaymongoBookingIntent::payload_json} after checkout cancel / unpaid return.
+     */
+    protected function hydrateFromPaymongoCheckoutFlash(): void
+    {
+        $flash = session('paymongo_checkout');
+        if (! is_array($flash) || empty($flash['intent_id']) || ! is_string($flash['intent_id'])) {
+            return;
+        }
+
+        $intent = PaymongoBookingIntent::query()->find($flash['intent_id']);
+        if ($intent === null || $intent->court_client_id !== $this->courtClient->id) {
+            return;
+        }
+
+        $user = auth()->user();
+        if ($user === null || $intent->user_id !== $user->id) {
+            return;
+        }
+
+        if ($intent->status === PaymongoBookingIntent::STATUS_COMPLETED) {
+            return;
+        }
+
+        $payload = $intent->payload_json;
+        if (! is_array($payload)) {
+            return;
+        }
+
+        $this->applyPayloadFromPaymongoIntent($payload);
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    protected function applyPayloadFromPaymongoIntent(array $payload): void
+    {
+        $rawDate = $payload['booking_calendar_date'] ?? null;
+        if (is_string($rawDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $rawDate)) {
+            try {
+                $this->bookingCalendarDate = Carbon::parse($rawDate, config('app.timezone', 'UTC'))->format('Y-m-d');
+            } catch (\Throwable) {
+                // keep mount default
+            }
+        }
+
+        $slots = $payload['selected_slots'] ?? [];
+        $this->selectedSlots = is_array($slots)
+            ? array_values(array_unique(array_filter(array_map('strval', $slots))))
+            : [];
+
+        $this->paymentMethod = Booking::PAYMENT_PAYMONGO;
+        $this->paymentReference = '';
+
+        if (is_string($payload['gift_card_code'] ?? null)) {
+            $this->giftCardCode = $payload['gift_card_code'];
+        }
+
+        if ($this->venueCheckoutShowCoach() && is_string($payload['coach_user_id'] ?? null)) {
+            $this->coachUserId = $payload['coach_user_id'];
+        }
+        if (isset($payload['coach_paid_hours'])) {
+            $this->coachPaidHours = max(0, (int) $payload['coach_paid_hours']);
+        }
+
+        $this->isOpenPlay = (bool) ($payload['is_open_play'] ?? false);
+        $openPlay = $payload['open_play'] ?? null;
+        if ($this->isOpenPlay && is_array($openPlay)) {
+            if (isset($openPlay['max_slots'])) {
+                $this->openPlayMaxSlots = max(1, min(48, (int) $openPlay['max_slots']));
+            }
+            if (array_key_exists('public_notes', $openPlay) && is_string($openPlay['public_notes'])) {
+                $this->openPlayPublicNotes = $openPlay['public_notes'];
+            }
+            if (array_key_exists('host_payment_details', $openPlay) && is_string($openPlay['host_payment_details'])) {
+                $this->openPlayHostPaymentDetails = $openPlay['host_payment_details'];
+            }
+            if (array_key_exists('external_contact', $openPlay) && is_string($openPlay['external_contact'])) {
+                $this->openPlayExternalContact = $openPlay['external_contact'];
+            }
+            if (array_key_exists('refund_policy', $openPlay) && is_string($openPlay['refund_policy'])) {
+                $this->openPlayRefundPolicy = $openPlay['refund_policy'];
+            }
+        }
+
+        $this->step = 'times';
+        $this->ackConvenienceFeeNonRefundable = false;
+
+        $this->clearCoachWhenCheckoutHidden();
+
+        $hydratedDate = $this->normalizedBookingCalendarDate();
+        if ($hydratedDate !== null && $this->courtClient->isClosedOnDate($hydratedDate)) {
+            $this->selectedSlots = [];
+            $this->step = 'times';
+        }
+
+        $this->syncOpenPlayEligibility();
+    }
+
+    /** After payload restore + slot validation, return to review so the grid and totals match the PayMongo banner. */
+    protected function maybeRestoreReviewStepAfterPaymongoReturn(): void
+    {
+        $flash = session('paymongo_checkout');
+        if (! is_array($flash) || empty($flash['intent_id'])) {
+            return;
+        }
+
+        if ($this->selectedSlots === []) {
+            return;
+        }
+
+        if ($this->step !== 'times') {
+            return;
+        }
+
+        $this->goToReview();
     }
 
     protected function applyBookAgainQueryParameters(): void
