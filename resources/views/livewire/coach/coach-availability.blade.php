@@ -149,9 +149,13 @@
                             <button
                                 type="button"
                                 wire:click="shiftAvailabilityDate(-1)"
-                                class="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                aria-label="Previous day"
+                                class="inline-flex items-center justify-center rounded-lg border border-zinc-200 px-2 py-2 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                             >
-                                Previous day
+                                <span class="sr-only">Previous day</span>
+                                <svg class="size-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                                </svg>
                             </button>
                             <input
                                 type="date"
@@ -161,9 +165,13 @@
                             <button
                                 type="button"
                                 wire:click="shiftAvailabilityDate(1)"
-                                class="rounded-lg border border-zinc-200 px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                aria-label="Next day"
+                                class="inline-flex items-center justify-center rounded-lg border border-zinc-200 px-2 py-2 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                             >
-                                Next day
+                                <span class="sr-only">Next day</span>
+                                <svg class="size-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                </svg>
                             </button>
                             <button
                                 type="button"
@@ -175,9 +183,6 @@
                         </div>
                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">
                             {{ $this->availabilityDateLabel() }}
-                            <span class="text-zinc-500 dark:text-zinc-400">
-                                ({{ $dayLabels[$this->selectedDayOfWeek()] ?? '' }})
-                            </span>
                         </p>
                     </div>
                 </div>

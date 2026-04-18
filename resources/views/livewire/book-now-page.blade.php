@@ -1,28 +1,8 @@
 <div class="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-    <header class="max-w-2xl">
+    <header>
         <h1 class="font-display text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
             Book now
         </h1>
-        <p class="mt-3 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
-            Explore courts across our partner venues — filter by location or surface, check ratings, and pick up where
-            you left off with recently viewed spots.
-        </p>
-        <div
-            class="mt-5 rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"
-        >
-            <span class="font-semibold">Player-facing tool.</span>
-            <span class="text-emerald-900/90 dark:text-emerald-100/90">
-                Venues, desk staff, coaches, and GameQ use other workspaces —
-            </span>
-            <a href="{{ url('/#pricing') }}" wire:navigate class="font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300">
-                how convenience fees work
-            </a>
-            ·
-            <a href="{{ url('/#tools') }}" wire:navigate class="font-semibold text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300">
-                full platform tour
-            </a>
-            .
-        </div>
     </header>
 
     {{-- Search & filters --}}

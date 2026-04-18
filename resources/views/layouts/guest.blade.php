@@ -141,6 +141,18 @@
                                 </div>
                             </div>
                             <a
+                                href="{{ route('book-now') }}"
+                                wire:navigate
+                                @class([
+                                    'font-display ml-1 inline-flex items-center rounded-full bg-gradient-to-r from-yellow-400 to-amber-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-amber-950 shadow-md shadow-amber-900/25 transition hover:from-yellow-300 hover:to-amber-400 hover:shadow-lg dark:from-amber-500 dark:to-yellow-600 dark:text-amber-50 dark:shadow-amber-950/40 dark:hover:from-amber-400 dark:hover:to-yellow-500',
+                                    request()->routeIs('book-now*')
+                                        ? 'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-white dark:ring-amber-300/80 dark:ring-offset-zinc-900'
+                                        : '',
+                                ])
+                            >
+                                Book now
+                            </a>
+                            <a
                                 href="{{ route('contact') }}"
                                 wire:navigate
                                 @class([
@@ -163,18 +175,6 @@
                                 ])
                             >
                                 <x-gameq-mark compact />
-                            </a>
-                            <a
-                                href="{{ route('book-now') }}"
-                                wire:navigate
-                                @class([
-                                    'font-display ml-1 inline-flex items-center rounded-full bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-md shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500 hover:shadow-lg dark:shadow-emerald-950/40',
-                                    request()->routeIs('book-now*')
-                                        ? 'ring-2 ring-amber-400/80 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900'
-                                        : '',
-                                ])
-                            >
-                                Book now
                             </a>
                             @auth
                                 <a
@@ -344,6 +344,19 @@
                             </div>
                         </div>
                         <a
+                            href="{{ route('book-now') }}"
+                            wire:navigate
+                            @click="mobileNavOpen = false"
+                            @class([
+                                'font-display mt-1 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-4 py-3.5 text-center text-sm font-bold uppercase tracking-wide text-amber-950 shadow-lg shadow-amber-900/25 transition dark:from-amber-500 dark:to-yellow-600 dark:text-amber-50',
+                                request()->routeIs('book-now*')
+                                    ? 'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-white dark:ring-amber-300/80 dark:ring-offset-zinc-900'
+                                    : '',
+                            ])
+                        >
+                            Book now
+                        </a>
+                        <a
                             href="{{ route('contact') }}"
                             wire:navigate
                             @click="mobileNavOpen = false"
@@ -368,19 +381,6 @@
                             ])
                         >
                             <x-gameq-mark compact />
-                        </a>
-                        <a
-                            href="{{ route('book-now') }}"
-                            wire:navigate
-                            @click="mobileNavOpen = false"
-                            @class([
-                                'font-display mt-1 inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3.5 text-center text-sm font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-900/25 transition',
-                                request()->routeIs('book-now*')
-                                    ? 'ring-2 ring-amber-400/90 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900'
-                                    : '',
-                            ])
-                        >
-                            Book now
                         </a>
                         @auth
                             <a
@@ -454,6 +454,7 @@
                     @unless ($hideGuestPrimaryNav)
                     <nav class="flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs font-semibold uppercase tracking-wider text-zinc-600 dark:text-zinc-400" aria-label="Footer">
                         <a href="{{ route('home') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
+                        <a href="{{ route('book-now') }}" wire:navigate class="font-semibold text-amber-700 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300">Book now</a>
                         <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
                         <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
                         <a href="{{ url('/#pricing') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Pricing</a>
@@ -469,7 +470,6 @@
                         >
                             <x-gameq-mark compact />
                         </a>
-                        <a href="{{ route('book-now') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Book now</a>
                     </nav>
                     @endunless
                     <p class="text-xs text-zinc-500 dark:text-zinc-400">

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 
@@ -51,6 +52,11 @@ class Court extends Model
     public function courtClient(): BelongsTo
     {
         return $this->belongsTo(CourtClient::class);
+    }
+
+    public function favoredByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'favorite_courts')->withTimestamps();
     }
 
     public function bookings(): HasMany

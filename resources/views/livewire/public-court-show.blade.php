@@ -45,15 +45,38 @@
                     class="w-full"
                 />
                 <div class="p-6 sm:p-8">
-                    <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                        {{ $client?->name ?? 'Venue' }}
-                        @if ($client?->city)
-                            · {{ $client->city }}
-                        @endif
-                    </p>
-                    <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
-                        {{ $c->name }}
-                    </h1>
+                    <div class="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                {{ $client?->name ?? 'Venue' }}
+                                @if ($client?->city)
+                                    · {{ $client->city }}
+                                @endif
+                            </p>
+                            <h1 class="mt-2 font-display text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">
+                                {{ $c->name }}
+                            </h1>
+                        </div>
+                        <button
+                            type="button"
+                            wire:click="toggleFavorite"
+                            aria-pressed="{{ $courtIsFavorite ? 'true' : 'false' }}"
+                            title="{{ $courtIsFavorite ? 'Remove from favorites' : 'Save this court to your favorites' }}"
+                            @class([
+                                'inline-flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40',
+                                'border-rose-300 bg-rose-50 text-rose-700 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/50 dark:text-rose-100 dark:hover:bg-rose-950/80' => $courtIsFavorite,
+                                'border-zinc-200 bg-white text-zinc-700 hover:border-emerald-300 hover:bg-emerald-50/80 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40' => ! $courtIsFavorite,
+                            ])
+                        >
+                            @if ($courtIsFavorite)
+                                <x-app-icon name="heart-solid" class="size-5 text-rose-600 dark:text-rose-400" />
+                                <span>Favorited</span>
+                            @else
+                                <x-app-icon name="heart" class="size-5 text-zinc-500 dark:text-zinc-400" />
+                                <span>Favorite</span>
+                            @endif
+                        </button>
+                    </div>
                     <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                         <span
                             class="inline-flex rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-bold text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200"

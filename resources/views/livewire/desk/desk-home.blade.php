@@ -56,9 +56,13 @@
                     <button
                         type="button"
                         wire:click="shiftDaily(-1)"
-                        class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+                        aria-label="Previous day"
+                        class="inline-flex items-center justify-center rounded-lg border border-stone-200 px-2 py-2 text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
                     >
-                        Previous day
+                        <span class="sr-only">Previous day</span>
+                        <svg class="size-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                        </svg>
                     </button>
                     <button
                         type="button"
@@ -70,9 +74,13 @@
                     <button
                         type="button"
                         wire:click="shiftDaily(1)"
-                        class="rounded-lg border border-stone-200 px-3 py-2 text-xs font-semibold text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
+                        aria-label="Next day"
+                        class="inline-flex items-center justify-center rounded-lg border border-stone-200 px-2 py-2 text-stone-700 hover:bg-stone-50 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-800"
                     >
-                        Next day
+                        <span class="sr-only">Next day</span>
+                        <svg class="size-5 shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        </svg>
                     </button>
                     <label class="flex items-center gap-2 text-xs font-medium text-stone-600 dark:text-stone-400">
                         <span class="sr-only">Pick date</span>
