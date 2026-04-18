@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvoicePdfController;
 use App\Http\Controllers\DemoQuickLoginController;
 use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
+use App\Http\Controllers\MemberBookAgainController;
 use App\Http\Controllers\MemberBookingCalendarController;
 use App\Http\Controllers\OpenPlaySessionController;
 use App\Http\Controllers\OpenPlayShareController;
@@ -158,6 +159,7 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
     Route::prefix('account')->name('account.')->group(function (): void {
         Route::livewire('/', MemberDashboard::class)->name('dashboard');
         Route::livewire('/book', BookNowPage::class)->name('book');
+        Route::get('/book/again', MemberBookAgainController::class)->name('book.again');
         Route::livewire('/book/venues/{courtClient:slug}', VenueBookingPage::class)->name('book.venue');
         Route::livewire('/bookings', MemberBookingHistory::class)->name('bookings');
         Route::get('/bookings/{booking}/calendar.ics', MemberBookingCalendarController::class)

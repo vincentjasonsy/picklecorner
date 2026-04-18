@@ -2,9 +2,7 @@
 
 namespace App\Livewire\Member;
 
-use App\GameQ\ProfileOpponentAggregator;
 use App\Models\CourtClient;
-use App\Models\OpenPlaySession;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\Rule;
@@ -14,7 +12,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::member')]
-#[Title('Profile & settings')]
+#[Title('Settings')]
 class MemberProfileSettings extends Component
 {
     public string $name = '';
@@ -90,13 +88,6 @@ class MemberProfileSettings extends Component
 
     public function render(): View
     {
-        $user = auth()->user();
-        $gameqSessions = OpenPlaySession::query()
-            ->where('user_id', $user->id)
-            ->orderByDesc('updated_at')
-            ->get();
-        $gameqProfile = ProfileOpponentAggregator::forUser($user, $gameqSessions);
-
         $homeCityOptions = CourtClient::query()
             ->where('is_active', true)
             ->whereNotNull('city')
@@ -105,8 +96,6 @@ class MemberProfileSettings extends Component
             ->pluck('city');
 
         return view('livewire.member.member-profile-settings', [
-            'gameqSessionsTotal' => $gameqSessions->count(),
-            'gameqProfile' => $gameqProfile,
             'homeCityOptions' => $homeCityOptions,
         ]);
     }

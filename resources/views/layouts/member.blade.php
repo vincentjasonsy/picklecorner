@@ -146,7 +146,7 @@
                                                 : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                         ])
                                     >
-                                        Home
+                                        Dashboard
                                     </a>
                                     <a
                                         href="{{ route('account.book') }}"
@@ -317,7 +317,7 @@
                                             : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
                                     ])
                                 >
-                                    Profile &amp; settings
+                                    Settings
                                 </a>
                                 <a
                                     href="{{ route('home') }}"
@@ -334,8 +334,8 @@
                             @unless (auth()->user()->isCoach())
                                 <ul class="mt-2 list-inside list-disc space-y-1">
                                     <li>
-                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Home</strong>
-                                        — what’s next.
+                                        <strong class="font-medium text-zinc-600 dark:text-zinc-300">Dashboard</strong>
+                                        — profile &amp; what’s next.
                                     </li>
                                     <li>
                                         <strong class="font-medium text-zinc-600 dark:text-zinc-300">Book Now</strong>

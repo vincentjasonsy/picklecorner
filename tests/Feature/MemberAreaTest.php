@@ -35,7 +35,8 @@ class MemberAreaTest extends TestCase
         $this->actingAs($player)->get(route('account.book'))->assertOk();
         $this->actingAs($player)->get(route('account.bookings'))->assertOk();
         $this->actingAs($player)->get(route('account.court-open-plays.index'))->assertOk();
-        $this->actingAs($player)->get(route('account.settings'))->assertOk()->assertSee('GameQ — your rivals', false);
+        $this->actingAs($player)->get(route('account.dashboard'))->assertOk()->assertSee('GameQ — your rivals', false);
+        $this->actingAs($player)->get(route('account.settings'))->assertOk()->assertSee('Account details', false);
     }
 
     public function test_player_can_update_profile(): void

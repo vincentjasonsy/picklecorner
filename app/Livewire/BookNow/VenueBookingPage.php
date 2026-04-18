@@ -15,6 +15,7 @@ use App\Services\CourtSlotPricing;
 use App\Services\GiftCardService;
 use App\Services\PaymongoVenueBookingPayment;
 use App\Services\PublicVenueBookingSubmission;
+use App\Services\VenueBookingSlotProbe;
 use App\Services\VenueBookingSpecsBuilder;
 use App\Support\BookingCalendar;
 use App\Support\Money;
@@ -102,8 +103,89 @@ class VenueBookingPage extends Component
             }
         }
 
+        $this->applyBookAgainQueryParameters();
+        $this->clearInvalidPrefilledSlotsIfNeeded();
+
         $this->clearCoachWhenCheckoutHidden();
         $this->syncOpenPlayEligibility();
+    }
+
+    protected function applyBookAgainQueryParameters(): void
+    {
+        $tz = config('app.timezone', 'UTC');
+
+        $bookDate = request()->query('book_date');
+        if (is_string($bookDate) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $bookDate)) {
+            try {
+                $this->bookingCalendarDate = Carbon::parse($bookDate, $tz)->format('Y-m-d');
+            } catch (\Throwable) {
+                // ignore invalid GET
+            }
+        }
+
+        $slotsRaw = request()->query('book_slots');
+        if (! is_string($slotsRaw) || trim($slotsRaw) === '') {
+            return;
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode(',', $slotsRaw))));
+        $clean = [];
+
+        foreach ($parts as $p) {
+            if (! preg_match('/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})-(\d{1,2})$/i', $p, $m)) {
+                continue;
+            }
+
+            $clean[] = strtolower($m[1]).'-'.((int) $m[2]);
+        }
+
+        if ($clean !== []) {
+            $this->selectedSlots = array_values(array_unique($clean));
+            $this->step = 'times';
+            $this->coachUserId = '';
+            $this->coachPaidHours = 0;
+            $this->syncOpenPlayEligibility();
+        }
+    }
+
+    protected function clearInvalidPrefilledSlotsIfNeeded(): void
+    {
+        if ($this->selectedSlots === []) {
+            return;
+        }
+
+        $courtId = null;
+
+        foreach ($this->selectedSlots as $slot) {
+            if (preg_match('/^(.+)-(\d+)$/', $slot, $m)) {
+                $courtId = $m[1];
+
+                break;
+            }
+        }
+
+        if ($courtId === null) {
+            return;
+        }
+
+        $hours = [];
+
+        foreach ($this->selectedSlots as $slot) {
+            $quoted = preg_quote((string) $courtId, '/');
+
+            if (preg_match('/^'.$quoted.'-(\d+)$/', $slot, $hm)) {
+                $hours[] = (int) $hm[1];
+            }
+        }
+
+        sort($hours);
+
+        $date = $this->normalizedBookingCalendarDate();
+
+        if ($date === null || ! VenueBookingSlotProbe::canSelectSlots($this->courtClient, $date, $courtId, $hours)) {
+            $this->selectedSlots = [];
+            session()->flash('status', 'Those exact times aren’t available anymore — tap open slots on the grid.');
+        }
     }
 
     protected function venueCheckoutShowCoach(): bool

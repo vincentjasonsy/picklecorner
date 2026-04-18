@@ -6,56 +6,255 @@
     $tz = config('app.timezone', 'UTC');
 @endphp
 
-<div class="space-y-8">
-    <x-member.guide title="First time here?">
-        <p>
-            Pick <strong class="font-semibold text-sky-950 dark:text-white">Book Now</strong> in the sidebar to book.
-            Everything you’ve reserved shows up below — no spreadsheets required.
-        </p>
-    </x-member.guide>
+<div class="space-y-10">
+    @php
+        $firstName = strtok(auth()->user()->name ?? '', ' ') ?: 'there';
+    @endphp
 
-    <section
-        class="relative overflow-hidden rounded-3xl border border-emerald-200/70 bg-gradient-to-br from-emerald-400/95 via-teal-500 to-cyan-600 p-6 text-white shadow-lg shadow-emerald-900/15 dark:border-emerald-800/40 dark:from-emerald-700/90 dark:via-teal-800 dark:to-cyan-900 sm:p-8"
-    >
-        <div
-            class="pointer-events-none absolute -right-8 -top-8 size-40 rounded-full bg-white/10 blur-2xl"
-            aria-hidden="true"
-        ></div>
-        <div
-            class="pointer-events-none absolute -bottom-10 -left-10 size-48 rounded-full bg-black/10 blur-2xl"
-            aria-hidden="true"
-        ></div>
-        <p class="relative text-sm font-semibold text-emerald-50/95">Nice to see you</p>
-        <h1 class="relative mt-1 font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
-            Hi, {{ $this->firstName }}!
-        </h1>
-        <p class="relative mt-3 max-w-xl text-base leading-relaxed text-white/95">
-            Here’s the simple version: what’s coming up, what you just played, and a shortcut to book again when the
-            paddle itch hits.
-        </p>
-        <div class="relative mt-6 flex flex-wrap gap-2.5">
+    <div class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div>
+            <h1 class="font-display text-2xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Dashboard</h1>
+            <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+                Your profile pulse, streak, and what’s next on court.
+            </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
             <a
                 href="{{ route('account.book') }}"
                 wire:navigate
-                class="inline-flex items-center rounded-xl bg-amber-300 px-4 py-2.5 text-sm font-bold text-amber-950 shadow-md transition hover:bg-amber-200 dark:bg-amber-400 dark:text-amber-950 dark:hover:bg-amber-300"
+                class="inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500"
             >
                 Book Now
             </a>
             <a
                 href="{{ route('account.bookings') }}"
                 wire:navigate
-                class="inline-flex items-center rounded-xl bg-white px-4 py-2.5 text-sm font-bold text-emerald-800 shadow-md transition hover:bg-emerald-50"
+                class="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
             >
                 All bookings
             </a>
             <a
                 href="{{ route('account.settings') }}"
                 wire:navigate
-                class="inline-flex items-center rounded-xl border-2 border-white/45 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/20"
+                class="inline-flex items-center rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 shadow-sm transition hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
             >
-                Your profile
+                Settings
             </a>
         </div>
+    </div>
+
+    {{-- Profile hero --}}
+    <section
+        class="overflow-hidden rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50 via-white to-teal-50/90 p-6 shadow-sm dark:border-emerald-900/40 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-teal-950/30 sm:p-8"
+    >
+        <div class="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex items-center gap-4">
+                <div
+                    class="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 font-display text-xl font-bold uppercase text-white shadow-inner shadow-emerald-900/20 dark:bg-emerald-500 sm:size-16 sm:text-2xl"
+                    aria-hidden="true"
+                >
+                    {{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr(trim(auth()->user()->name ?? '?'), 0, 1)) }}
+                </div>
+                <div>
+                    <p class="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
+                        Hey {{ $firstName }}
+                    </p>
+                    <p class="mt-1 text-sm text-emerald-900/80 dark:text-emerald-200/90">
+                        You’re an active player — keep the rallies coming.
+                    </p>
+                </div>
+            </div>
+            <div class="grid flex-1 grid-cols-1 gap-4 sm:grid-cols-3">
+                <div class="rounded-xl border border-emerald-200/70 bg-white/80 px-4 py-4 dark:border-emerald-800/50 dark:bg-zinc-950/60">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-400/90">
+                        Hours this week
+                    </p>
+                    <p class="mt-1 font-display text-3xl font-extrabold tabular-nums text-zinc-900 dark:text-white">
+                        {{ $bookingStats['hours_this_week'] }}
+                    </p>
+                    <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Court time booked</p>
+                </div>
+                <div class="rounded-xl border border-emerald-200/70 bg-white/80 px-4 py-4 dark:border-emerald-800/50 dark:bg-zinc-950/60">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-400/90">
+                        Bookings this month
+                    </p>
+                    <p class="mt-1 font-display text-3xl font-extrabold tabular-nums text-zinc-900 dark:text-white">
+                        {{ $bookingStats['bookings_this_month'] }}
+                    </p>
+                    <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Confirmed &amp; completed</p>
+                </div>
+                <div class="rounded-xl border border-emerald-200/70 bg-white/80 px-4 py-4 dark:border-emerald-800/50 dark:bg-zinc-950/60">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-400/90">
+                        Favorite venue
+                    </p>
+                    <p class="mt-1 line-clamp-2 font-display text-lg font-bold leading-snug text-zinc-900 dark:text-white">
+                        {{ $bookingStats['favorite_venue'] ?? 'Not yet — explore Book Now' }}
+                    </p>
+                    <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Most visits</p>
+                </div>
+            </div>
+        </div>
+        @if ($lastBookingForRepeat !== null)
+            <div
+                class="mt-6 flex flex-col gap-4 rounded-xl border border-emerald-200/80 bg-white/70 px-4 py-4 dark:border-emerald-800/50 dark:bg-zinc-950/50 sm:flex-row sm:items-center sm:justify-between sm:px-5"
+            >
+                <div class="min-w-0">
+                    <p class="font-display text-sm font-bold text-zinc-900 dark:text-white">Book again</p>
+                    <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                        Same venue, duration, and time band — we’ll aim for the next matching day (weekends → next weekend
+                        slot, weekdays → your next weekday).
+                        @if ($lastBookingForRepeat->courtClient)
+                            <span class="font-medium text-zinc-800 dark:text-zinc-200">
+                                Last: {{ $lastBookingForRepeat->courtClient->name }}
+                            </span>
+                        @endif
+                    </p>
+                </div>
+                <a
+                    href="{{ route('account.book.again') }}"
+                    class="inline-flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-5 py-3 text-center text-sm font-bold text-amber-950 shadow-md shadow-amber-900/20 transition hover:from-amber-400 hover:to-orange-400 dark:text-amber-950"
+                >
+                    Book again
+                </a>
+            </div>
+        @endif
+    </section>
+
+    {{-- Streak --}}
+    <section class="rounded-2xl border border-orange-200/90 bg-orange-50/95 p-6 shadow-sm dark:border-orange-900/50 dark:bg-orange-950/35 sm:p-8">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div class="flex items-start gap-3">
+                <span class="text-2xl leading-none" aria-hidden="true">🔥</span>
+                <div>
+                    <h2 class="font-display text-lg font-bold text-orange-950 dark:text-orange-100">
+                        @if ($bookingStats['streak_weeks'] > 0)
+                            {{ $bookingStats['streak_weeks'] }}-week streak
+                        @else
+                            Build your streak
+                        @endif
+                    </h2>
+                    <p class="mt-1 text-sm leading-relaxed text-orange-950/85 dark:text-orange-100/85">
+                        Each week counts when you book at least once (confirmed or completed).
+                    </p>
+                    @if ($bookingStats['streak_weeks'] > 0 && ! $bookingStats['this_week_has_booking'])
+                        <p class="mt-3 text-sm font-semibold text-orange-950 dark:text-orange-50">
+                            Book this week to keep your streak alive.
+                        </p>
+                    @elseif ($bookingStats['streak_weeks'] === 0)
+                        <p class="mt-3 text-sm font-semibold text-orange-950 dark:text-orange-50">
+                            Book at least once per week to grow a 🔥 streak you won’t want to lose.
+                        </p>
+                    @endif
+                </div>
+            </div>
+            <a
+                href="{{ route('account.book') }}"
+                wire:navigate
+                class="inline-flex shrink-0 items-center justify-center rounded-xl bg-orange-600 px-4 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-900/25 transition hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-400"
+            >
+                Book Now
+            </a>
+        </div>
+    </section>
+
+    {{-- Personal stats --}}
+    <section class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8">
+        <div class="flex flex-wrap items-center gap-2">
+            <span aria-hidden="true">🧠</span>
+            <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Personal stats</h2>
+        </div>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            Light reminders of how often you hit the courts.
+        </p>
+        <dl class="mt-6 grid gap-4 sm:grid-cols-3">
+            <div class="rounded-xl border border-zinc-100 bg-zinc-50/80 px-4 py-4 dark:border-zinc-700 dark:bg-zinc-950/60">
+                <dt class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Total hours played</dt>
+                <dd class="mt-1 font-display text-2xl font-extrabold tabular-nums text-zinc-900 dark:text-white">{{ $bookingStats['total_hours'] }}</dd>
+            </div>
+            <div class="rounded-xl border border-zinc-100 bg-zinc-50/80 px-4 py-4 dark:border-zinc-700 dark:bg-zinc-950/60">
+                <dt class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Games this month</dt>
+                <dd class="mt-1 font-display text-2xl font-extrabold tabular-nums text-zinc-900 dark:text-white">{{ $bookingStats['bookings_this_month'] }}</dd>
+                <dd class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Booking sessions · this calendar month</dd>
+            </div>
+            <div class="rounded-xl border border-zinc-100 bg-zinc-50/80 px-4 py-4 dark:border-zinc-700 dark:bg-zinc-950/60">
+                <dt class="text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Favorite day / time</dt>
+                <dd class="mt-1 text-lg font-semibold leading-snug text-zinc-900 dark:text-white">
+                    {{ $bookingStats['favorite_day_time'] ?? 'Still learning your rhythm' }}
+                </dd>
+                <dd class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Most common slot you book</dd>
+            </div>
+        </dl>
+    </section>
+
+    {{-- GameQ --}}
+    <section class="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-8">
+        <div class="flex items-center gap-2">
+            <x-app-icon name="squares-2x2" class="size-6 text-emerald-600 dark:text-emerald-400" />
+            <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">GameQ — your rivals &amp; partners</h2>
+        </div>
+        <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            When you save a GameQ session, we match <span class="font-medium text-zinc-700 dark:text-zinc-300">this name</span> to the roster (case doesn’t matter) and tally who you’ve played. Update your display name in
+            <a href="{{ route('account.settings') }}" wire:navigate class="font-semibold text-emerald-700 underline decoration-emerald-600/30 underline-offset-2 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">Settings</a>
+            if needed.
+        </p>
+
+        @if ($gameqSessionsTotal === 0)
+            <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                You don’t have any saved GameQ sessions yet. Host in
+                <a href="{{ route('account.open-play') }}" wire:navigate class="font-semibold text-emerald-700 underline decoration-emerald-600/30 underline-offset-2 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-300">GameQ</a>
+                and save a session to build history here.
+            </p>
+        @elseif ($gameqProfile['sessions_matched'] === 0)
+            <div class="mt-4 rounded-xl border border-amber-200/90 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/35 dark:text-amber-100">
+                None of your {{ $gameqSessionsTotal }} saved session{{ $gameqSessionsTotal === 1 ? '' : 's' }} include a player whose name matches your profile name. Use the same spelling as your roster entry (or update your display name in Settings) so we can attribute matches to you.
+            </div>
+        @elseif ($gameqProfile['matches_counted'] === 0 && count($gameqProfile['opponents']) === 0)
+            <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
+                You’re on the roster in {{ $gameqProfile['sessions_matched'] }} saved session{{ $gameqProfile['sessions_matched'] === 1 ? '' : 's' }}, but there are no finished matches in the log yet.
+            </p>
+        @else
+            <div class="mt-6 space-y-6">
+                @if (count($gameqProfile['opponents']) > 0)
+                    <div>
+                        <p class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Head-to-head</p>
+                        <ul class="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach ($gameqProfile['opponents'] as $row)
+                                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 first:pt-0">
+                                    <span class="min-w-0 font-medium text-zinc-900 dark:text-zinc-100">{{ $row['displayName'] }}</span>
+                                    <span class="shrink-0 text-right">
+                                        <span class="font-mono text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
+                                            {{ $row['wins'] }}W · {{ $row['losses'] }}L
+                                        </span>
+                                        @if (($row['ties'] ?? 0) > 0)
+                                            <span class="ml-2 text-[11px] text-zinc-400 dark:text-zinc-500">{{ $row['ties'] }} tie{{ $row['ties'] === 1 ? '' : 's' }}</span>
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (count($gameqProfile['partners']) > 0)
+                    <div>
+                        <p class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">Doubles partners</p>
+                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Same-side games — not wins/losses against them.</p>
+                        <ul class="mt-3 divide-y divide-zinc-100 dark:divide-zinc-800">
+                            @foreach ($gameqProfile['partners'] as $row)
+                                <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3 first:pt-0">
+                                    <span class="min-w-0 font-medium text-zinc-900 dark:text-zinc-100">{{ $row['displayName'] }}</span>
+                                    <span class="shrink-0 font-mono text-sm tabular-nums text-zinc-600 dark:text-zinc-400">{{ $row['games'] }} {{ $row['games'] === 1 ? 'game' : 'games' }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <p class="text-[11px] leading-relaxed text-zinc-400 dark:text-zinc-500">
+                    Based on {{ $gameqProfile['matches_counted'] }} finished match{{ $gameqProfile['matches_counted'] === 1 ? '' : 'es' }} across {{ $gameqProfile['sessions_matched'] }} session{{ $gameqProfile['sessions_matched'] === 1 ? '' : 's' }}. Duplicate names on different people are merged by name.
+                </p>
+            </div>
+        @endif
     </section>
 
     <section class="grid gap-4 sm:grid-cols-3">

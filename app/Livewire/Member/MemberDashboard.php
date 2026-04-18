@@ -2,8 +2,11 @@
 
 namespace App\Livewire\Member;
 
+use App\GameQ\ProfileOpponentAggregator;
 use App\Models\Booking;
 use App\Models\OpenPlayParticipant;
+use App\Models\OpenPlaySession;
+use App\Support\MemberBookingStats;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Livewire\Attributes\Computed;
@@ -12,7 +15,7 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 #[Layout('layouts::member')]
-#[Title('Home')]
+#[Title('Dashboard')]
 class MemberDashboard extends Component
 {
     #[Computed]
@@ -99,6 +102,23 @@ class MemberDashboard extends Component
 
     public function render(): View
     {
-        return view('livewire.member.member-dashboard');
+        $user = auth()->user();
+        $gameqSessions = OpenPlaySession::query()
+            ->where('user_id', $user->id)
+            ->orderByDesc('updated_at')
+            ->get();
+
+        return view('livewire.member.member-dashboard', [
+            'bookingStats' => MemberBookingStats::forUser($user),
+            'lastBookingForRepeat' => Booking::query()
+                ->where('user_id', $user->id)
+                ->whereIn('status', [Booking::STATUS_CONFIRMED, Booking::STATUS_COMPLETED])
+                ->whereNotNull('court_id')
+                ->with(['courtClient:id,name'])
+                ->latest('starts_at')
+                ->first(),
+            'gameqSessionsTotal' => $gameqSessions->count(),
+            'gameqProfile' => ProfileOpponentAggregator::forUser($user, $gameqSessions),
+        ]);
     }
 }
