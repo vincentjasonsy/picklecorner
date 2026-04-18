@@ -5,177 +5,290 @@
     {{-- Minimal page label --}}
     <p class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Book now</p>
 
-    {{-- Search & filters — tinted panel + gradient accent --}}
-    <div class="relative mt-5" aria-label="Search and filters">
-        <div
-            class="pointer-events-none absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-emerald-400/80 to-transparent dark:via-emerald-500/50"
-            aria-hidden="true"
-        ></div>
-        <div
-            class="relative overflow-hidden rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/90 shadow-lg shadow-emerald-900/[0.06] ring-1 ring-emerald-500/10 dark:border-emerald-800/60 dark:from-emerald-950/40 dark:via-zinc-900 dark:to-teal-950/35 dark:shadow-emerald-950/20 dark:ring-emerald-500/15"
-        >
-            <div
-                class="pointer-events-none absolute -right-20 -top-16 size-48 rounded-full bg-teal-400/20 blur-3xl dark:bg-teal-500/10"
-                aria-hidden="true"
-            ></div>
-            <div
-                class="pointer-events-none absolute -bottom-12 -left-12 size-40 rounded-full bg-emerald-400/15 blur-3xl dark:bg-emerald-500/10"
-                aria-hidden="true"
-            ></div>
-
-            <div class="relative border-b border-emerald-200/50 bg-gradient-to-r from-emerald-600/10 via-teal-600/10 to-cyan-600/10 px-5 py-3 dark:border-emerald-800/50 dark:from-emerald-500/15 dark:via-teal-600/10 dark:to-cyan-600/10">
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 text-white shadow-sm dark:from-emerald-500 dark:to-teal-500" aria-hidden="true">
-                        <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                        </svg>
-                    </span>
-                    <div>
-                        <p class="font-display text-sm font-bold text-emerald-950 dark:text-emerald-100">Find your spot</p>
-                        <p class="text-xs text-emerald-800/80 dark:text-emerald-200/70">
-                            Search, filters, and availability — the venue list updates as you tap.
-                        </p>
-                    </div>
-                </div>
+    {{-- Search & filters --}}
+    <div class="mt-6 space-y-4" aria-label="Search and filters">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+            <div class="relative min-w-0 flex-1 sm:max-w-md">
+                <label for="book-now-search" class="sr-only">Search venues</label>
+                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-zinc-400 dark:text-zinc-500" aria-hidden="true">
+                    <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                    </svg>
+                </span>
+                <input
+                    id="book-now-search"
+                    type="search"
+                    wire:model.live.debounce.300ms="search"
+                    autocomplete="off"
+                    placeholder="Search venue, court, city…"
+                    class="w-full rounded-lg border border-zinc-200 bg-white py-2.5 pl-9 pr-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500 dark:focus:border-emerald-400"
+                />
             </div>
-
-            <div class="relative space-y-5 p-5 sm:p-6">
-                {{-- Availability filter (court-level open slot in horizon) --}}
-                <div
-                    class="rounded-xl border border-indigo-300/55 bg-gradient-to-br from-indigo-100/70 via-white to-amber-100/60 p-4 shadow-inner shadow-indigo-900/5 ring-1 ring-indigo-400/15 dark:border-indigo-800/50 dark:from-indigo-950/55 dark:via-zinc-900/80 dark:to-amber-950/35 dark:ring-indigo-500/20"
+            <div class="flex flex-wrap items-center gap-1.5">
+                <button
+                    type="button"
+                    wire:click="setEnvironment('all')"
+                    @class([
+                        'rounded-md px-3 py-1.5 text-xs font-semibold transition',
+                        $environment === 'all'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
+                    ])
                 >
-                    <div class="flex flex-wrap items-start gap-3">
-                        <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-md dark:from-indigo-500 dark:to-violet-500" aria-hidden="true">
-                            <svg class="size-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5" />
-                            </svg>
-                        </span>
-                        <div class="min-w-0 flex-1">
-                            <p class="text-[11px] font-bold uppercase tracking-wide text-indigo-900 dark:text-indigo-200">Court availability</p>
-                            <p class="mt-0.5 text-xs text-indigo-950/75 dark:text-indigo-200/75">
-                                “Open soon” keeps venues that still have at least one bookable hour in the next
-                                <span class="font-semibold text-indigo-950 dark:text-white">14 days</span>
-                                (schedule, closures, blocks &amp; existing bookings).
-                            </p>
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <button
-                                    type="button"
-                                    wire:click="setAvailability('all')"
-                                    @class([
-                                        'rounded-full px-4 py-2 text-xs font-bold transition sm:text-sm',
-                                        $availability === 'all'
-                                            ? 'bg-gradient-to-r from-zinc-700 to-zinc-900 text-white shadow-md ring-2 ring-white/25 dark:from-zinc-600 dark:to-zinc-800'
-                                            : 'border border-indigo-200/90 bg-white/90 text-indigo-950 hover:border-indigo-400 hover:bg-white dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-100 dark:hover:bg-indigo-950/70',
-                                    ])
-                                >
-                                    All listings
-                                </button>
-                                <button
-                                    type="button"
-                                    wire:click="setAvailability('open_soon')"
-                                    @class([
-                                        'inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold transition sm:text-sm',
-                                        $availability === 'open_soon'
-                                            ? 'bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 text-white shadow-lg shadow-orange-900/25 ring-2 ring-amber-200/50 dark:from-amber-500 dark:via-orange-500 dark:to-rose-600 dark:ring-amber-400/30'
-                                            : 'border border-amber-300/90 bg-amber-50/95 text-amber-950 hover:border-amber-500 hover:bg-amber-100/90 dark:border-amber-800/60 dark:bg-amber-950/45 dark:text-amber-100 dark:hover:bg-amber-950/70',
-                                    ])
-                                >
-                                    <span aria-hidden="true" class="text-base leading-none">✨</span>
-                                    Open slots soon
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-6">
-                    <div class="relative min-w-0 flex-1 lg:max-w-lg">
-                        <label for="book-now-search" class="sr-only">Search venues</label>
-                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-emerald-600 dark:text-emerald-400" aria-hidden="true">
-                            <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                            </svg>
-                        </span>
-                        <input
-                            id="book-now-search"
-                            type="search"
-                            wire:model.live.debounce.300ms="search"
-                            autocomplete="off"
-                            placeholder="Venue, court, or city…"
-                            class="w-full rounded-xl border border-emerald-200/80 bg-white/90 py-3 pl-11 pr-4 text-sm text-zinc-900 shadow-inner shadow-emerald-900/5 placeholder:text-emerald-900/35 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 dark:border-emerald-700/60 dark:bg-zinc-950/70 dark:text-white dark:placeholder:text-emerald-200/35 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/25"
-                        />
-                    </div>
-                    <div class="flex flex-wrap items-center gap-2 lg:shrink-0">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-teal-700/90 dark:text-teal-300/90">Surface</span>
-                        <button
-                            type="button"
-                            wire:click="setEnvironment('all')"
-                            @class([
-                                'rounded-full px-3.5 py-2 text-xs font-bold transition sm:text-sm',
-                                $environment === 'all'
-                                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-900/25 ring-2 ring-white/30 dark:from-emerald-500 dark:to-teal-500 dark:shadow-emerald-950/40'
-                                    : 'border border-emerald-200/80 bg-white/90 text-emerald-900 hover:border-emerald-400 hover:bg-emerald-50/90 dark:border-emerald-700/60 dark:bg-emerald-950/30 dark:text-emerald-100 dark:hover:bg-emerald-950/50',
-                            ])
-                        >
-                            All
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="setEnvironment('outdoor')"
-                            @class([
-                                'rounded-full px-3.5 py-2 text-xs font-bold transition sm:text-sm',
-                                $environment === 'outdoor'
-                                    ? 'bg-gradient-to-r from-sky-600 to-emerald-600 text-white shadow-md shadow-sky-900/25 ring-2 ring-white/30 dark:from-sky-500 dark:to-emerald-500'
-                                    : 'border border-sky-200/90 bg-sky-50/90 text-sky-900 hover:border-sky-400 hover:bg-sky-100/80 dark:border-sky-800/60 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-950/60',
-                            ])
-                        >
-                            Outdoor
-                        </button>
-                        <button
-                            type="button"
-                            wire:click="setEnvironment('indoor')"
-                            @class([
-                                'rounded-full px-3.5 py-2 text-xs font-bold transition sm:text-sm',
-                                $environment === 'indoor'
-                                    ? 'bg-gradient-to-r from-violet-600 to-teal-600 text-white shadow-md shadow-violet-900/25 ring-2 ring-white/30 dark:from-violet-500 dark:to-teal-500'
-                                    : 'border border-violet-200/90 bg-violet-50/90 text-violet-900 hover:border-violet-400 hover:bg-violet-100/80 dark:border-violet-800/60 dark:bg-violet-950/40 dark:text-violet-100 dark:hover:bg-violet-950/60',
-                            ])
-                        >
-                            Indoor
-                        </button>
-                    </div>
-                </div>
-
-                @if ($this->cityPills()->isNotEmpty())
-                    <div class="flex flex-wrap items-center gap-2 border-t border-emerald-200/60 pt-5 dark:border-emerald-800/50">
-                        <span class="text-[11px] font-bold uppercase tracking-wider text-cyan-800 dark:text-cyan-300/90">City</span>
-                        @foreach ($this->cityPills() as $cityName)
-                            <button
-                                type="button"
-                                wire:click="setCity(@js($cityName))"
-                                @class([
-                                    'rounded-full px-3.5 py-2 text-xs font-bold transition sm:text-sm',
-                                    $city === $cityName
-                                        ? 'bg-gradient-to-r from-cyan-600 to-emerald-600 text-white shadow-md shadow-cyan-900/20 ring-2 ring-white/25 dark:from-cyan-500 dark:to-emerald-500'
-                                        : 'border border-cyan-200/80 bg-cyan-50/80 text-cyan-950 hover:border-cyan-400 hover:bg-cyan-100/70 dark:border-cyan-800/50 dark:bg-cyan-950/35 dark:text-cyan-50 dark:hover:bg-cyan-950/55',
-                                ])
-                            >
-                                {{ $cityName }}
-                            </button>
-                        @endforeach
-                        @if ($city !== null)
-                            <button
-                                type="button"
-                                wire:click="setCity(null)"
-                                class="rounded-full px-2 py-1.5 text-xs font-bold text-emerald-800 underline decoration-2 decoration-emerald-400/50 underline-offset-2 hover:text-emerald-950 dark:text-emerald-300 dark:hover:text-white"
-                            >
-                                Clear city
-                            </button>
-                        @endif
-                    </div>
-                @endif
+                    All
+                </button>
+                <button
+                    type="button"
+                    wire:click="setEnvironment('outdoor')"
+                    @class([
+                        'rounded-md px-3 py-1.5 text-xs font-semibold transition',
+                        $environment === 'outdoor'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
+                    ])
+                >
+                    Outdoor
+                </button>
+                <button
+                    type="button"
+                    wire:click="setEnvironment('indoor')"
+                    @class([
+                        'rounded-md px-3 py-1.5 text-xs font-semibold transition',
+                        $environment === 'indoor'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900'
+                            : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800',
+                    ])
+                >
+                    Indoor
+                </button>
             </div>
         </div>
+
+        @if ($this->cityPills()->isNotEmpty())
+            <div class="flex flex-wrap items-center gap-1.5">
+                @foreach ($this->cityPills() as $cityName)
+                    <button
+                        type="button"
+                        wire:click="setCity(@js($cityName))"
+                        @class([
+                            'rounded-md px-2.5 py-1 text-xs font-medium transition',
+                            $city === $cityName
+                                ? 'bg-emerald-600 text-white dark:bg-emerald-500'
+                                : 'border border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600',
+                        ])
+                    >
+                        {{ $cityName }}
+                    </button>
+                @endforeach
+                @if ($city !== null)
+                    <button
+                        type="button"
+                        wire:click="setCity(null)"
+                        class="px-2 py-1 text-xs font-medium text-zinc-500 underline-offset-2 hover:text-zinc-800 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                    >
+                        Clear
+                    </button>
+                @endif
+            </div>
+        @endif
+
+        <div class="relative overflow-hidden rounded-2xl border border-emerald-200/70 bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/90 shadow-[0_12px_40px_-16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-400/15 dark:border-emerald-800/55 dark:from-emerald-950/50 dark:via-zinc-900 dark:to-teal-950/45 dark:shadow-emerald-950/30 dark:ring-emerald-500/20">
+            <div class="pointer-events-none absolute -right-16 -top-12 size-40 rounded-full bg-teal-400/25 blur-3xl dark:bg-teal-500/15" aria-hidden="true"></div>
+            <div class="pointer-events-none absolute -bottom-10 -left-10 size-36 rounded-full bg-violet-400/20 blur-3xl dark:bg-violet-600/15" aria-hidden="true"></div>
+
+            <div class="relative flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                <div class="flex min-w-0 flex-1 gap-4">
+                    <span class="relative flex size-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 text-white shadow-lg shadow-emerald-600/35 ring-2 ring-white/40 dark:shadow-emerald-950/50 dark:ring-emerald-400/30" aria-hidden="true">
+                        <svg class="size-7" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
+                    </span>
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="font-display text-lg font-bold tracking-tight text-emerald-950 dark:text-emerald-50">
+                                Match my schedule
+                            </span>
+                            @if ($slotFilterEnabled)
+                                <span class="inline-flex items-center rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white shadow-sm dark:bg-emerald-500">
+                                    On
+                                </span>
+                            @endif
+                        </div>
+                        <p class="mt-0.5 text-sm text-emerald-900/75 dark:text-emerald-200/80">
+                            Only show clubs with real open court time for the day and window you pick.
+                        </p>
+                        @if ($slotFilterEnabled)
+                            <p class="mt-2 text-xs font-medium text-emerald-800/90 dark:text-emerald-200/90">
+                                {{ $this->slotFilterSummary() }}
+                            </p>
+                        @endif
+                    </div>
+                </div>
+                <div class="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                    @if ($slotFilterEnabled)
+                        <button
+                            type="button"
+                            wire:click="clearSlotFilter"
+                            class="rounded-xl border border-emerald-200/90 bg-white/90 px-4 py-2.5 text-xs font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-100 dark:hover:bg-emerald-950/80"
+                        >
+                            Clear
+                        </button>
+                    @endif
+                    <button
+                        type="button"
+                        wire:click="openSlotFilterModal"
+                        class="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-2.5 text-xs font-bold uppercase tracking-wide text-white shadow-lg shadow-emerald-900/25 ring-2 ring-white/25 transition hover:from-emerald-500 hover:to-teal-500 dark:from-emerald-500 dark:to-teal-500 dark:shadow-emerald-950/40 dark:ring-emerald-400/20"
+                    >
+                        {{ $slotFilterEnabled ? 'Edit' : 'Set schedule' }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        @if ($slotFilterModalOpen)
+            <div
+                class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4"
+                wire:click="closeSlotFilterModal"
+                role="presentation"
+            >
+                <div class="absolute inset-0 z-0 bg-zinc-900/60 backdrop-blur-[2px]" aria-hidden="true"></div>
+                <div
+                    class="relative z-10 flex max-h-[min(92vh,640px)] w-full max-w-lg flex-col rounded-t-[1.75rem] border border-emerald-200/80 bg-white shadow-2xl dark:border-emerald-800/60 dark:bg-zinc-900 sm:rounded-[1.75rem]"
+                    wire:click.stop
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="slot-filter-modal-title"
+                >
+                    <div class="flex items-start justify-between gap-3 border-b border-emerald-100 px-5 py-4 dark:border-emerald-900/50">
+                        <div>
+                            <h2 id="slot-filter-modal-title" class="font-display text-xl font-extrabold text-zinc-900 dark:text-white">
+                                Match my schedule
+                            </h2>
+                            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                                We check closures, blocks, and bookings — not just “venue exists.”
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="rounded-2xl p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800"
+                            wire:click="closeSlotFilterModal"
+                            aria-label="Close"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    <div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+                        <div class="space-y-6">
+                            <div>
+                                <p class="flex items-center gap-2 font-display text-sm font-bold text-zinc-900 dark:text-white">
+                                    <span class="flex size-7 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950 dark:text-teal-300">1</span>
+                                    Which day?
+                                </p>
+                                <input
+                                    type="date"
+                                    wire:model.live="filterDate"
+                                    class="mt-2 w-full rounded-xl border-2 border-dashed border-teal-300/80 bg-white px-3 py-2.5 text-sm font-semibold text-zinc-900 transition hover:border-teal-400 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 dark:border-teal-700 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-400"
+                                />
+                            </div>
+
+                            <div>
+                                <p class="flex items-center gap-2 font-display text-sm font-bold text-zinc-900 dark:text-white">
+                                    <span class="flex size-7 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">2</span>
+                                    How long in one stretch?
+                                </p>
+                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Contiguous hours inside your time window.</p>
+                                <div class="mt-2 flex flex-wrap gap-2">
+                                    @foreach ([1, 2, 3, 4] as $mh)
+                                        <button
+                                            type="button"
+                                            wire:click="$set('filterMinHours', {{ $mh }})"
+                                            @class([
+                                                'rounded-full px-4 py-2 text-xs font-bold transition',
+                                                (int) $filterMinHours === (int) $mh
+                                                    ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-md shadow-violet-900/25 ring-2 ring-white/30 dark:from-violet-500 dark:to-fuchsia-600'
+                                                    : 'border border-violet-200 bg-white text-violet-900 hover:border-violet-400 hover:bg-violet-50 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-100 dark:hover:bg-violet-950/70',
+                                            ])
+                                        >
+                                            {{ $mh }} {{ \Illuminate\Support\Str::plural('hr', $mh) }}
+                                        </button>
+                                    @endforeach
+                                    <select
+                                        wire:model.live="filterMinHours"
+                                        class="rounded-full border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200"
+                                        aria-label="More hour options"
+                                    >
+                                        @for ($h = 1; $h <= 12; $h++)
+                                            <option value="{{ $h }}">{{ $h }} {{ \Illuminate\Support\Str::plural('hr', $h) }}</option>
+                                        @endfor
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p class="flex items-center gap-2 font-display text-sm font-bold text-zinc-900 dark:text-white">
+                                    <span class="flex size-7 items-center justify-center rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200">3</span>
+                                    Between what times?
+                                </p>
+                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Your free window — court starts must fall inside it.</p>
+                                <div class="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
+                                    <div class="min-w-0 flex-1">
+                                        <span class="text-[11px] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300/90">From</span>
+                                        <select
+                                            wire:model.live="filterWindowStart"
+                                            class="mt-1 w-full rounded-xl border border-teal-200 bg-white px-3 py-2.5 text-sm font-semibold tabular-nums text-zinc-900 shadow-sm dark:border-teal-800 dark:bg-zinc-950 dark:text-white"
+                                        >
+                                            @for ($h = 0; $h < 24; $h++)
+                                                <option value="{{ $h }}">{{ \Carbon\Carbon::parse(sprintf('2000-01-01 %02d:00:00', $h))->format('g:i A') }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                    <span class="hidden pb-2 text-lg font-black text-teal-400 sm:block" aria-hidden="true">→</span>
+                                    <div class="min-w-0 flex-1">
+                                        <span class="text-[11px] font-bold uppercase tracking-wide text-teal-700 dark:text-teal-300/90">Until (cutoff)</span>
+                                        <select
+                                            wire:model.live="filterWindowEnd"
+                                            class="mt-1 w-full rounded-xl border border-teal-200 bg-white px-3 py-2.5 text-sm font-semibold tabular-nums text-zinc-900 shadow-sm dark:border-teal-800 dark:bg-zinc-950 dark:text-white"
+                                        >
+                                            @for ($h = 1; $h <= 24; $h++)
+                                                <option value="{{ $h }}">
+                                                    @if ($h === 24)
+                                                        Midnight — end of window
+                                                    @else
+                                                        {{ \Carbon\Carbon::parse(sprintf('2000-01-01 %02d:00:00', $h))->format('g:i A') }}
+                                                    @endif
+                                                </option>
+                                            @endfor
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="rounded-xl bg-gradient-to-r from-emerald-600/10 to-teal-600/10 px-3 py-2 text-xs font-medium text-emerald-950 dark:from-emerald-400/10 dark:to-teal-500/10 dark:text-emerald-100">
+                                “Until” stops the window (exclusive). Example: cutoff 10:00 PM → last start hour is 9.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col-reverse gap-2 border-t border-zinc-200 px-5 py-4 dark:border-zinc-700 sm:flex-row sm:justify-end">
+                        <button
+                            type="button"
+                            wire:click="closeSlotFilterModal"
+                            class="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-bold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 sm:w-auto"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            wire:click="applySlotFilter"
+                            class="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/20 transition hover:from-emerald-500 hover:to-teal-500 dark:shadow-emerald-950/40 sm:w-auto"
+                        >
+                            Apply filter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     {{-- Primary: venues & courts --}}
@@ -217,6 +330,8 @@
                 <p class="mt-2 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
                     @if (trim($search) !== '')
                         Try another keyword or clear the search box.
+                    @elseif ($slotFilterEnabled)
+                        Try another day, widen the time window, lower minimum hours, or clear the schedule filter above.
                     @else
                         Clear the city filter or switch indoor / outdoor to see more clubs.
                     @endif

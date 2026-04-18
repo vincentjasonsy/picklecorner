@@ -18,6 +18,12 @@ class BookNowBrowseTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+        parent::tearDown();
+    }
+
     public function test_guest_can_open_book_now_and_court_detail(): void
     {
         $this->seed(UserTypeSeeder::class);
@@ -64,9 +70,12 @@ class BookNowBrowseTest extends TestCase
         $this->actingAs($user)->get(route('account.book'))->assertOk()->assertSee('Venues &amp; courts', false);
     }
 
-    public function test_book_now_open_soon_availability_requires_schedule_and_open_slot(): void
+    public function test_book_now_slot_filter_requires_schedule_and_open_slot_on_date(): void
     {
         $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
 
         $client = CourtClient::factory()->create([
             'is_active' => true,
@@ -82,7 +91,11 @@ class BookNowBrowseTest extends TestCase
         ]);
 
         Livewire::test(BookNowPage::class)
-            ->set('availability', 'open_soon')
+            ->set('slotFilterEnabled', true)
+            ->set('filterDate', '2026-04-18')
+            ->set('filterMinHours', 1)
+            ->set('filterWindowStart', 0)
+            ->set('filterWindowEnd', 24)
             ->tap(function ($lw): void {
                 $this->assertSame(0, $lw->instance()->filteredCourts()->count());
             });
@@ -98,7 +111,11 @@ class BookNowBrowseTest extends TestCase
         }
 
         Livewire::test(BookNowPage::class)
-            ->set('availability', 'open_soon')
+            ->set('slotFilterEnabled', true)
+            ->set('filterDate', '2026-04-18')
+            ->set('filterMinHours', 1)
+            ->set('filterWindowStart', 0)
+            ->set('filterWindowEnd', 24)
             ->tap(function ($lw): void {
                 $this->assertSame(1, $lw->instance()->filteredCourts()->count());
             })

@@ -6,9 +6,11 @@ use App\Models\CityFeaturedCourtClient;
 use App\Models\Court;
 use App\Models\CourtClient;
 use App\Support\BrowseCourtOpenSlots;
+use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Livewire\Component;
 
 class BookNowPage extends Component
@@ -22,17 +24,49 @@ class BookNowPage extends Component
     /** Search court name, venue name, or city */
     public string $search = '';
 
-    /** all = any matching court; open_soon = at least one bookable hour in the next 14 days */
-    public string $availability = 'all';
+    /** Narrow list to courts with enough contiguous open hours on {@see $filterDate} within the time window. */
+    public bool $slotFilterEnabled = false;
+
+    /** Y-m-d (app timezone) */
+    public string $filterDate = '';
+
+    /** Minimum contiguous bookable hours within the window */
+    public int $filterMinHours = 1;
+
+    /** Start hour (0–23), inclusive */
+    public int $filterWindowStart = 7;
+
+    /** End hour (1–24), exclusive — e.g. 22 keeps starts before 10:00 PM */
+    public int $filterWindowEnd = 22;
+
+    public bool $slotFilterModalOpen = false;
 
     public function mount(): void
     {
+        $tz = config('app.timezone', 'UTC');
+        $this->filterDate = Carbon::now($tz)->format('Y-m-d');
+
         if (! session()->has('book_now_nearby_city')) {
             $default = $this->resolvedDefaultNearbyCity();
             if ($default !== null) {
                 session(['book_now_nearby_city' => $default]);
             }
         }
+    }
+
+    protected function normalizedFilterDate(): string
+    {
+        $tz = config('app.timezone', 'UTC');
+        $raw = trim($this->filterDate);
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
+            try {
+                return Carbon::parse($raw, $tz)->format('Y-m-d');
+            } catch (\Throwable) {
+                // fall through
+            }
+        }
+
+        return Carbon::now($tz)->format('Y-m-d');
     }
 
     protected function resolvedDefaultNearbyCity(): ?string
@@ -93,20 +127,69 @@ class BookNowPage extends Component
         $this->environment = $value;
     }
 
+    public function updatedFilterWindowStart(mixed $value): void
+    {
+        if ((int) $this->filterWindowStart >= (int) $this->filterWindowEnd) {
+            $this->filterWindowEnd = min(24, (int) $this->filterWindowStart + 1);
+        }
+    }
+
+    public function updatedFilterWindowEnd(mixed $value): void
+    {
+        if ((int) $this->filterWindowEnd <= (int) $this->filterWindowStart) {
+            $this->filterWindowStart = max(0, (int) $this->filterWindowEnd - 1);
+        }
+    }
+
+    public function openSlotFilterModal(): void
+    {
+        $this->slotFilterModalOpen = true;
+    }
+
+    public function closeSlotFilterModal(): void
+    {
+        $this->slotFilterModalOpen = false;
+    }
+
+    public function applySlotFilter(): void
+    {
+        $this->slotFilterEnabled = true;
+        $this->slotFilterModalOpen = false;
+    }
+
+    public function clearSlotFilter(): void
+    {
+        $this->slotFilterEnabled = false;
+    }
+
+    /** Human-readable summary for the slot filter controls (modal + card). */
+    public function slotFilterSummary(): string
+    {
+        $tz = config('app.timezone', 'UTC');
+
+        try {
+            $day = Carbon::parse($this->normalizedFilterDate(), $tz);
+        } catch (\Throwable) {
+            return '';
+        }
+
+        $startLabel = Carbon::parse(sprintf('2000-01-01 %02d:00:00', max(0, min(23, $this->filterWindowStart))))->format('g:i A');
+        $endCut = max(1, min(24, $this->filterWindowEnd));
+        $endLabel = $endCut >= 24
+            ? 'midnight'
+            : Carbon::parse(sprintf('2000-01-01 %02d:00:00', $endCut))->format('g:i A').' cutoff';
+
+        return $day->isoFormat('ddd MMM D').' · '.$this->filterMinHours.' contiguous '
+            .Str::plural('hr', $this->filterMinHours)
+            .' · '.$startLabel.' → '.$endLabel;
+    }
+
     public function setCity(?string $value): void
     {
         $this->city = $value === '' ? null : $value;
         if ($value !== null && $value !== '') {
             session(['book_now_nearby_city' => $value]);
         }
-    }
-
-    public function setAvailability(string $value): void
-    {
-        if (! in_array($value, ['all', 'open_soon'], true)) {
-            return;
-        }
-        $this->availability = $value;
     }
 
     /** @return Collection<int, Court> */
@@ -138,8 +221,14 @@ class BookNowPage extends Component
 
         $courts = $this->sortCourtsForBrowse($q->get());
 
-        if ($this->availability === 'open_soon') {
-            $openIds = BrowseCourtOpenSlots::courtIdsWithAnyOpenSlot($courts, 14);
+        if ($this->slotFilterEnabled) {
+            $openIds = BrowseCourtOpenSlots::courtIdsWithMinContiguousHoursOnDate(
+                $courts,
+                $this->normalizedFilterDate(),
+                $this->filterMinHours,
+                $this->filterWindowStart,
+                $this->filterWindowEnd,
+            );
             $courts = $courts->filter(fn (Court $c) => isset($openIds[(string) $c->id]))->values();
         }
 

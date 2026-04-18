@@ -84,6 +84,131 @@ final class BrowseCourtOpenSlots
     }
 
     /**
+     * Courts that have at least {@see $minContiguousHours} contiguous bookable start hours on one calendar day,
+     * counting only hours in {@code [$windowStartHourInclusive, $windowEndHourExclusive)} (24h clock).
+     *
+     * @param  Collection<int, Court>  $courts
+     * @return array<string, true> court id => true
+     */
+    public static function courtIdsWithMinContiguousHoursOnDate(
+        Collection $courts,
+        string $dateYmd,
+        int $minContiguousHours,
+        int $windowStartHourInclusive,
+        int $windowEndHourExclusive,
+    ): array {
+        if ($courts->isEmpty()) {
+            return [];
+        }
+
+        $tz = config('app.timezone', 'UTC');
+
+        try {
+            $day = Carbon::parse($dateYmd, $tz)->startOfDay();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        $windowStartHourInclusive = max(0, min(23, $windowStartHourInclusive));
+        $windowEndHourExclusive = max(1, min(24, $windowEndHourExclusive));
+        if ($windowStartHourInclusive >= $windowEndHourExclusive) {
+            return [];
+        }
+
+        $minContiguousHours = max(1, min(24, $minContiguousHours));
+
+        $dateStr = $day->format('Y-m-d');
+
+        $courtIds = $courts->pluck('id')->unique()->values()->all();
+        $clientIds = $courts->pluck('court_client_id')->unique()->values()->all();
+
+        $scheduleByClient = self::scheduleRowsByClientId($clientIds);
+        $closedClientDates = self::closedDateSetByClient($clientIds, $day, $day);
+        $dateBlocks = self::dateBlockSet($courtIds, $day, $day);
+        $weeklyBlocks = self::weeklyBlocksByCourt($courtIds);
+        $bookingsByCourt = self::bookingsGrouped($courtIds, $day, $day);
+
+        $out = [];
+
+        foreach ($courts as $court) {
+            $clientKey = (string) $court->court_client_id;
+            $schedule = $scheduleByClient[$clientKey] ?? [];
+            if ($schedule === []) {
+                continue;
+            }
+
+            if (isset($closedClientDates[$clientKey.'|'.$dateStr])) {
+                continue;
+            }
+
+            $dow = (int) $day->format('w');
+            $hours = VenueScheduleHours::slotStartHoursForDay($schedule, $dow);
+
+            $available = [];
+
+            foreach ($hours as $h) {
+                $h = (int) $h;
+                if ($h < $windowStartHourInclusive || $h >= $windowEndHourExclusive) {
+                    continue;
+                }
+                if (self::weeklyBlocked($weeklyBlocks, $court->id, $dow, $h)) {
+                    continue;
+                }
+                if (isset($dateBlocks[(string) $court->id.'|'.$dateStr.'|'.$h])) {
+                    continue;
+                }
+                if (self::bookingBlocksSlot($bookingsByCourt, $court->id, $dateStr, $h, $tz)) {
+                    continue;
+                }
+                $available[] = $h;
+            }
+
+            if ($available === []) {
+                continue;
+            }
+
+            sort($available);
+            $available = array_values(array_unique($available));
+
+            if (self::longestContiguousRun($available) >= $minContiguousHours) {
+                $out[(string) $court->id] = true;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<int>  $sortedUniqueHours
+     */
+    private static function longestContiguousRun(array $sortedUniqueHours): int
+    {
+        $n = count($sortedUniqueHours);
+        if ($n === 0) {
+            return 0;
+        }
+
+        $best = 1;
+        $run = 1;
+
+        for ($i = 1; $i < $n; $i++) {
+            if ($sortedUniqueHours[$i] === $sortedUniqueHours[$i - 1]) {
+                continue;
+            }
+            if ($sortedUniqueHours[$i] === $sortedUniqueHours[$i - 1] + 1) {
+                $run++;
+                if ($run > $best) {
+                    $best = $run;
+                }
+            } else {
+                $run = 1;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
      * @param  list<string>  $clientIds
      * @return array<string, list<array{day_of_week: int, is_closed: bool, opens_at: string, closes_at: string}>>
      */
