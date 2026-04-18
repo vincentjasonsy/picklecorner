@@ -754,6 +754,47 @@ class VenueBookingPage extends Component
         $this->syncOpenPlayEligibility();
     }
 
+    /**
+     * Remove one review-table row: all hourly slots in the contiguous block for that court.
+     *
+     * @param  list<int>  $hours
+     */
+    public function removeReviewSpecSlots(string $courtId, array $hours): void
+    {
+        if ($this->step !== 'review') {
+            return;
+        }
+
+        $court = Court::query()
+            ->where('id', $courtId)
+            ->where('court_client_id', $this->courtClient->id)
+            ->first();
+        if ($court === null) {
+            return;
+        }
+
+        $hours = array_values(array_unique(array_map(static fn (mixed $h): int => (int) $h, $hours)));
+        if ($hours === []) {
+            return;
+        }
+
+        $selected = $this->selectedSlots;
+        foreach ($hours as $h) {
+            $key = $courtId.'-'.$h;
+            $idx = array_search($key, $selected, true);
+            if ($idx !== false) {
+                unset($selected[$idx]);
+            }
+        }
+        $this->selectedSlots = array_values($selected);
+        $this->clampCoachPaidHours();
+        $this->syncOpenPlayEligibility();
+
+        if ($this->selectedSlots === []) {
+            $this->backToTimes();
+        }
+    }
+
     protected function syncOpenPlayEligibility(): void
     {
         $user = auth()->user();

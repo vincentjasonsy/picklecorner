@@ -293,4 +293,48 @@ class VenueBookingPageTest extends TestCase
         $this->assertGreaterThan(0, (int) $booking->gift_card_redeemed_cents);
         $this->assertTrue($booking->amount_cents === null || (int) $booking->amount_cents === 0);
     }
+
+    public function test_removing_last_review_row_returns_to_pick_times_step(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
+
+        $client = CourtClient::factory()->create([
+            'is_active' => true,
+            'slug' => 'remove-review-row',
+            'hourly_rate_cents' => 10_000,
+        ]);
+        for ($d = 0; $d < 7; $d++) {
+            VenueWeeklyHour::query()->create([
+                'court_client_id' => $client->id,
+                'day_of_week' => $d,
+                'is_closed' => false,
+                'opens_at' => '07:00',
+                'closes_at' => '23:00',
+            ]);
+        }
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 1,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $player = User::factory()->player()->create();
+        $date = '2026-04-18';
+
+        Livewire::actingAs($player)
+            ->test(VenueBookingPage::class, ['courtClient' => $client])
+            ->set('bookingCalendarDate', $date)
+            ->set('selectedSlots', [$court->id.'-18'])
+            ->set('step', 'review')
+            ->call('removeReviewSpecSlots', $court->id, [18])
+            ->assertSet('step', 'times')
+            ->assertSet('selectedSlots', []);
+
+        Carbon::setTestNow();
+    }
 }

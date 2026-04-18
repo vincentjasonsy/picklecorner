@@ -666,6 +666,12 @@
                                         >
                                             Fee
                                         </th>
+                                        <th
+                                            scope="col"
+                                            class="w-[1%] py-2 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                        >
+                                            <span class="sr-only">Remove</span>
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
@@ -676,9 +682,37 @@
                                             </td>
                                             <td class="py-2.5 pr-3 align-top text-zinc-600 dark:text-zinc-400">
                                                 {{ $spec['starts']->format('g:i A') }} – {{ $spec['ends']->format('g:i A') }}
+                                                <span class="whitespace-nowrap text-zinc-500 dark:text-zinc-500">
+                                                    ({{ count($spec['hours']) }} {{ count($spec['hours']) === 1 ? 'hr' : 'hrs' }})
+                                                </span>
                                             </td>
                                             <td class="py-2.5 text-right align-top tabular-nums">
                                                 {{ Money::formatMinor($spec['court_gross_cents'] ?? $spec['gross_cents'], $currency) }}
+                                            </td>
+                                            <td class="py-2.5 pl-2 text-right align-top">
+                                                <button
+                                                    type="button"
+                                                    wire:click="removeReviewSpecSlots('{{ $spec['court']->id }}', {{ json_encode($spec['hours']) }})"
+                                                    wire:loading.attr="disabled"
+                                                    class="inline-flex items-center justify-center rounded-md p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700 disabled:opacity-50 dark:text-zinc-500 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                                                    title="Remove this block from your request"
+                                                >
+                                                    <span class="sr-only">Remove</span>
+                                                    <svg
+                                                        class="size-4 shrink-0"
+                                                        fill="none"
+                                                        viewBox="0 0 24 24"
+                                                        stroke-width="1.5"
+                                                        stroke="currentColor"
+                                                        aria-hidden="true"
+                                                    >
+                                                        <path
+                                                            stroke-linecap="round"
+                                                            stroke-linejoin="round"
+                                                            d="M6 18 18 6M6 6l12 12"
+                                                        />
+                                                    </svg>
+                                                </button>
                                             </td>
                                         </tr>
                                     @endforeach
@@ -694,6 +728,7 @@
                                         <td class="pt-3 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
                                             {{ Money::formatMinor($courtSub, $currency) }}
                                         </td>
+                                        <td class="pt-3"></td>
                                     </tr>
                                     @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '' && $this->coachPaidHours > 0)
                                         <tr>
@@ -708,6 +743,7 @@
                                             <td class="pt-1 text-right text-sm tabular-nums text-zinc-800 dark:text-zinc-200">
                                                 {{ Money::formatMinor($coachFee, $currency) }}
                                             </td>
+                                            <td class="pt-1"></td>
                                         </tr>
                                     @endif
                                     <tr>
@@ -720,6 +756,7 @@
                                         <td class="pt-2 text-right text-sm tabular-nums text-zinc-800 dark:text-zinc-200">
                                             {{ Money::formatMinor($bookingFee, $currency) }}
                                         </td>
+                                        <td class="pt-2"></td>
                                     </tr>
                                     <tr>
                                         <td
@@ -731,6 +768,7 @@
                                         <td class="pt-2 text-right text-sm font-bold tabular-nums text-zinc-900 dark:text-white">
                                             {{ Money::formatMinor($checkoutTotal, $currency) }}
                                         </td>
+                                        <td class="pt-2"></td>
                                     </tr>
                                     @if ($giftEst > 0)
                                         <tr>
@@ -743,6 +781,7 @@
                                             <td class="pt-1 text-right text-sm tabular-nums text-emerald-700 dark:text-emerald-400">
                                                 −{{ Money::formatMinor($giftEst, $currency) }}
                                             </td>
+                                            <td class="pt-1"></td>
                                         </tr>
                                         <tr>
                                             <td
@@ -754,6 +793,7 @@
                                             <td class="pt-2 text-right text-base font-bold tabular-nums text-zinc-900 dark:text-white">
                                                 {{ Money::formatMinor($this->reviewBalanceAfterGiftCents, $currency) }}
                                             </td>
+                                            <td class="pt-2"></td>
                                         </tr>
                                     @endif
                                 </tfoot>
