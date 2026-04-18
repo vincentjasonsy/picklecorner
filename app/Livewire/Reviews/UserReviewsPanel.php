@@ -67,6 +67,12 @@ class UserReviewsPanel extends Component
 
     public function submitReview(): void
     {
+        if (! config('booking.public_review_form_enabled')) {
+            throw ValidationException::withMessages([
+                'review' => 'Review submissions are turned off right now.',
+            ]);
+        }
+
         $user = auth()->user();
         if ($user === null) {
             throw ValidationException::withMessages([
@@ -202,6 +208,7 @@ class UserReviewsPanel extends Component
             'approvedReviews' => $this->approvedReviews(),
             'pendingMine' => $pendingMine,
             'canSubmitReview' => $canSubmitReview,
+            'showReviewForm' => config('booking.public_review_form_enabled'),
             'reviewWindowDays' => UserReviewEligibility::windowDays(),
             'targetLabel' => $this->resolveTargetLabel(),
             'ratingSummary' => $this->resolveRatingSummary(),

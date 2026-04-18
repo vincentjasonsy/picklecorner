@@ -13,8 +13,12 @@
                     Read what other players say. Sign in after you play if you’d like to leave your own — submissions are
                     checked before they appear.
                 @else
-                    Ratings and comments are checked before they appear publicly. You can submit only after a confirmed booking
-                    ends, within a short window.
+                    @if ($showReviewForm)
+                        Ratings and comments are checked before they appear publicly. You can submit only after a confirmed booking
+                        ends, within a short window.
+                    @else
+                        Ratings and comments are moderated before they appear publicly. Submitting new reviews is turned off for now.
+                    @endif
                 @endguest
             </p>
         </div>
@@ -25,7 +29,11 @@
                 @guest
                     Anyone can read published feedback. Sign in after you play to submit your own.
                 @else
-                    Submit or update your review when your booking window is open.
+                    @if ($showReviewForm)
+                        Submit or update your review when your booking window is open.
+                    @else
+                        Published feedback appears below; submitting reviews is turned off for now.
+                    @endif
                 @endguest
             </p>
         </div>
@@ -135,9 +143,13 @@
                 role="status"
             >
                 <p class="font-semibold">Your review is pending moderation.</p>
-                @if ($canSubmitReview)
+                @if ($canSubmitReview && $showReviewForm)
                     <p class="mt-1 text-xs opacity-90">
                         You can update it below; it replaces your previous pending submission.
+                    </p>
+                @elseif ($canSubmitReview && ! $showReviewForm)
+                    <p class="mt-1 text-xs opacity-90">
+                        Review submissions are turned off right now; your pending review stays in the queue.
                     </p>
                 @else
                     <p class="mt-1 text-xs opacity-90">
@@ -148,7 +160,7 @@
         @endif
 
         @if (! auth()->user()->usesStaffAppNav())
-            @if ($canSubmitReview)
+            @if ($canSubmitReview && $showReviewForm)
                 <form wire:submit="submitReview" class="space-y-4 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/80">
                     <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                         Write a review — {{ $targetLabel }}
@@ -250,7 +262,7 @@
                         Submit for review
                     </button>
                 </form>
-            @else
+            @elseif (! $canSubmitReview)
                 <div
                     class="rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-700 dark:border-zinc-800 dark:bg-zinc-900/50 dark:text-zinc-300"
                     role="status"
@@ -269,9 +281,11 @@
             @endif
         @endif
     @else
-        <p class="text-sm text-zinc-600 dark:text-zinc-400">
-            <a href="{{ route('login') }}" wire:navigate class="font-semibold text-emerald-600 hover:underline dark:text-emerald-400">Sign in</a>
-            to leave a review after you’ve played here.
-        </p>
+        @if ($showReviewForm)
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                <a href="{{ route('login') }}" wire:navigate class="font-semibold text-emerald-600 hover:underline dark:text-emerald-400">Sign in</a>
+                to leave a review after you’ve played here.
+            </p>
+        @endif
     @endauth
 </div>

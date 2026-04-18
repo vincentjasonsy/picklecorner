@@ -30,13 +30,9 @@
         ← Back to Book now
     </a>
 
-    <div
-        @class([
-            'mt-6 grid gap-8 lg:grid-cols-4 lg:items-start lg:gap-10',
-        ])
-    >
-        {{-- 3/4 — court card --}}
-        <div class="min-w-0 lg:col-span-3">
+    <div class="mt-6 space-y-10">
+        {{-- Court showcase --}}
+        <div class="min-w-0">
             <div class="overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
                 @php
                     $courtSlides = $c->carouselSlides();
@@ -119,28 +115,25 @@
             </div>
         </div>
 
-        {{-- 1/4 — venue details + reviews --}}
         @if ($client)
-            <aside class="min-w-0 space-y-8 border-t border-zinc-200 pt-8 lg:col-span-1 lg:border-t-0 lg:border-l lg:border-zinc-200 lg:pl-8 lg:pt-0 dark:border-zinc-800">
-                <div>
-                    <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Venue details</h2>
-                    <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        Location, contact, and amenities.
-                    </p>
-                    <div class="mt-4">
-                        <x-venue-public-listing :venue="$client" />
-                    </div>
-                </div>
+            <div id="venue-reviews" class="scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+                <livewire:reviews.user-reviews-panel
+                    target-type="venue"
+                    :target-id="$client->id"
+                    :show-heading="false"
+                    :key="'ur-public-court-'.$client->id"
+                />
+            </div>
 
-                <div id="venue-reviews" class="scroll-mt-24 border-t border-zinc-200 pt-8 dark:border-zinc-800 lg:border-t lg:pt-8">
-                    <livewire:reviews.user-reviews-panel
-                        target-type="venue"
-                        :target-id="$client->id"
-                        :show-heading="false"
-                        :key="'ur-public-court-'.$client->id"
-                    />
+            <section class="border-t border-zinc-200 pt-10 dark:border-zinc-800">
+                <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Venue details</h2>
+                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                    Location, contact, and amenities.
+                </p>
+                <div class="mt-4">
+                    <x-venue-public-listing :venue="$client" />
                 </div>
-            </aside>
+            </section>
         @endif
     </div>
 </div>

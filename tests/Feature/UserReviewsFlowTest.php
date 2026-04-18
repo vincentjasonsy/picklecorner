@@ -83,6 +83,53 @@ class UserReviewsFlowTest extends TestCase
         ]);
     }
 
+    public function test_submit_review_blocked_when_public_form_disabled(): void
+    {
+        config(['booking.public_review_form_enabled' => false]);
+
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-06-15 15:00:00', $tz));
+
+        $venue = CourtClient::factory()->create();
+        $court = Court::query()->create([
+            'court_client_id' => $venue->id,
+            'name' => 'Court A',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+        ]);
+        $player = User::factory()->player()->create();
+
+        Booking::query()->create([
+            'court_client_id' => $venue->id,
+            'court_id' => $court->id,
+            'user_id' => $player->id,
+            'starts_at' => Carbon::parse('2026-06-15 10:00:00', $tz),
+            'ends_at' => Carbon::parse('2026-06-15 12:00:00', $tz),
+            'status' => Booking::STATUS_CONFIRMED,
+            'currency' => 'PHP',
+        ]);
+
+        Livewire::actingAs($player)
+            ->test(UserReviewsPanel::class, [
+                'targetType' => UserReview::TARGET_VENUE,
+                'targetId' => $venue->id,
+            ])
+            ->set('ratingLocation', 4)
+            ->set('ratingAmenities', 4)
+            ->set('ratingPrice', 5)
+            ->set('body', 'Nice courts.')
+            ->call('submitReview')
+            ->assertHasErrors(['review']);
+
+        $this->assertDatabaseMissing('user_reviews', [
+            'user_id' => $player->id,
+            'target_type' => UserReview::TARGET_VENUE,
+            'target_id' => $venue->id,
+        ]);
+    }
+
     public function test_profanity_flag_is_set_when_body_matches_blocklist(): void
     {
         $this->seed(UserTypeSeeder::class);

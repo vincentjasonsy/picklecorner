@@ -42,6 +42,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public “write a review” form (member-facing pages)
+    |--------------------------------------------------------------------------
+    |
+    | When false, venue/court pages and signed email links hide the compose form.
+    | Approved reviews remain visible; submitting via Livewire is blocked.
+    |
+    */
+
+    'public_review_form_enabled' => (bool) env('BOOKING_PUBLIC_REVIEW_FORM_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Member account “book soon” popup (My Corner)
     |--------------------------------------------------------------------------
     |
