@@ -10,8 +10,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
 @php
     $contactEmail = config('mail.from.address');
     if (! is_string($contactEmail) || $contactEmail === '') {
-        $host = parse_url((string) config('app.url'), PHP_URL_HOST) ?: 'example.com';
-        $contactEmail = 'hello@'.$host;
+        $contactEmail = 'support@picklecorner.ph';
     }
     $reviews = [
         [

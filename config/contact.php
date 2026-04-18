@@ -12,6 +12,6 @@ return [
     |
     */
 
-    'recipient' => env('CONTACT_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+    'recipient' => env('CONTACT_EMAIL', env('MAIL_FROM_ADDRESS', 'support@picklecorner.ph')),
 
 ];

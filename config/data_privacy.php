@@ -29,6 +29,6 @@ return [
     | who can handle data subject requests (access, correction, deletion, etc.).
     |
     */
-    'contact_email' => env('DATA_PRIVACY_CONTACT_EMAIL', env('MAIL_FROM_ADDRESS', 'hello@example.com')),
+    'contact_email' => env('DATA_PRIVACY_CONTACT_EMAIL', env('MAIL_FROM_ADDRESS', 'support@picklecorner.ph')),
 
 ];
