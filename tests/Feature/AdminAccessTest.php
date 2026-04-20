@@ -58,6 +58,19 @@ class AdminAccessTest extends TestCase
         $this->actingAs($super)->get('/admin/activity')->assertOk();
     }
 
+    public function test_super_admin_can_open_manual_automated_booking_report(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $super = User::factory()->superAdmin()->create();
+
+        $this->actingAs($super)
+            ->get(route('admin.reports.booking-channels'))
+            ->assertOk()
+            ->assertSee('Manual', escape: false)
+            ->assertSee('automated bookings', escape: false);
+    }
+
     public function test_super_admin_can_open_manual_booking_hub(): void
     {
         $this->seed(UserTypeSeeder::class);

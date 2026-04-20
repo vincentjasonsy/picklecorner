@@ -628,7 +628,9 @@
                 </div>
             </form>
 
-            @php($photoCourts = $this->courtsOrderedForGrid())
+            @php
+                $photoCourts = $this->courtsOrderedForGrid();
+            @endphp
             @if ($photoCourts->isNotEmpty())
                 <div class="mt-8 space-y-4 lg:col-span-2">
                     <h3 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Court photos</h3>
@@ -647,9 +649,9 @@
         <div class="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
             <h3 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Weekly slots</h3>
             <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-                Use the <strong>weekday chips</strong> for hourly <strong>pricing</strong> (same pattern as venue hours).
-                Use the <strong>calendar date</strong> below for <strong>availability</strong> — blocks can apply to that
-                date only, every matching weekday, or both. Use <strong>whole-venue closed days</strong> for holidays
+                The <strong>availability calendar date</strong> sets which weekday you edit for both
+                <strong>hourly slot pricing</strong> and <strong>availability</strong> — blocks can apply to that date only,
+                every matching weekday, or both. Use <strong>whole-venue closed days</strong> for holidays
                 (no public bookings that calendar day). Confirmed bookings for players and coaches are on
                 @if ($isVenuePortal)
                     <a
@@ -669,18 +671,6 @@
                     </a>.
                 @endif
             </p>
-
-            <div class="mt-4 flex flex-wrap gap-2">
-                @foreach ($dayLabels as $dow => $label)
-                    <button
-                        type="button"
-                        wire:click="setSlotPricingDay({{ $dow }})"
-                        class="rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors {{ $slotPricingDay === $dow ? 'bg-emerald-600 text-white' : 'border border-zinc-200 text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800' }}"
-                    >
-                        {{ $label }}
-                    </button>
-                @endforeach
-            </div>
 
             <div
                 class="mt-8 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
@@ -747,14 +737,15 @@
                     <p
                         class="mt-6 rounded-lg border border-dashed border-zinc-300 px-4 py-6 text-center text-sm text-zinc-500 dark:border-zinc-600"
                     >
-                        The selected weekday is closed or has no bookable hourly window. Adjust the venue schedule above
-                        to edit pricing for that day.
+                        For this calendar date, the venue has no bookable hourly window. Pick another date below or adjust
+                        venue hours above.
                     </p>
                 @else
                     <div class="mt-8">
                         <h4 class="font-display text-base font-bold text-zinc-900 dark:text-white">Hourly slot pricing</h4>
                     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        Click a card for Normal, Peak, or Manual pesos per hour. Defaults follow venue or court overrides.
+                        Same weekday as the <strong>availability calendar date</strong> below. Click a card for Normal,
+                        Peak, or Manual pesos per hour. Defaults follow venue or court overrides.
                     </p>
                     <div class="mt-3 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
                         <div class="overflow-x-auto">
@@ -784,7 +775,9 @@
                                             {{ $this->slotHourLabel($hour) }}
                                         </td>
                                         @foreach ($slotGridCourts as $court)
-                                            @php($slotCell = $this->slotPricingGridCell($court, $hour))
+                                            @php
+                                                $slotCell = $this->slotPricingGridCell($court, $hour);
+                                            @endphp
                                             <td class="p-1.5 align-middle">
                                                 <button
                                                     type="button"
@@ -812,10 +805,9 @@
                 <div class="mt-10">
                     <h4 class="font-display text-base font-bold text-zinc-900 dark:text-white">Availability</h4>
                     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        Grid follows the <strong>calendar date</strong> (weekday
-                        {{ $dayLabels[$availabilityDow] ?? '' }}). Matches the
-                        <strong>whole-venue closed days</strong> calendar above. <strong>Blocked</strong> if closed for that
-                        weekday every week and/or blocked for this date only.
+                        <strong>Hourly slot pricing</strong> above uses this same weekday. Matches the
+                        <strong>whole-venue closed days</strong> calendar. <strong>Blocked</strong> if closed for that weekday
+                        every week and/or blocked for this date only.
                     </p>
                     <div
                         class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4"
@@ -897,7 +889,9 @@
                                                 {{ $this->slotHourLabel($hour) }}
                                             </td>
                                             @foreach ($slotGridCourts as $court)
-                                                @php($availCell = $this->availabilityGridCell($court, $hour))
+                                                @php
+                                                    $availCell = $this->availabilityGridCell($court, $hour);
+                                                @endphp
                                                 <td class="p-1.5 align-middle">
                                                     <button
                                                         type="button"
@@ -936,7 +930,7 @@
                 <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                     {{ $editCourt?->name ?? 'Court' }}
                     ·
-                    {{ $dayLabels[$slotPricingDay] ?? '' }}
+                    {{ $dayLabels[$availabilityDow] ?? '' }}
                     ·
                     {{ $this->slotHourLabel($slotEditHour) }}
                 </p>

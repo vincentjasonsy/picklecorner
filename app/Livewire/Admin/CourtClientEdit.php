@@ -77,9 +77,6 @@ class CourtClientEdit extends Component
     /** @var list<array{id: string, day_of_week: int, is_closed: bool, opens_at: string, closes_at: string}> */
     public array $scheduleRows = [];
 
-    /** @var int 0 = Sunday … 6 = Saturday (matches venue schedule). */
-    public int $slotPricingDay = 1;
-
     /** @var string Y-m-d in app timezone — calendar day for availability grid. */
     public string $availabilityCalendarDate = '';
 
@@ -254,9 +251,6 @@ class CourtClientEdit extends Component
             $this->reorderCourtRowsByEnvironment();
         }
 
-        if ($fullPath === 'slotPricingDay') {
-            $this->closeSlotEditor();
-        }
     }
 
     public function updatedAvailabilityCalendarDate(): void
@@ -269,6 +263,7 @@ class CourtClientEdit extends Component
         }
         $this->closureCalendarYm = Carbon::parse($this->availabilityCalendarDate, $tz)->format('Y-m');
         $this->closeAvailabilityEditor();
+        $this->closeSlotEditor();
     }
 
     public function shiftAvailabilityDate(int $days): void
@@ -282,6 +277,7 @@ class CourtClientEdit extends Component
         $this->availabilityCalendarDate = $d->format('Y-m-d');
         $this->closureCalendarYm = $d->format('Y-m');
         $this->closeAvailabilityEditor();
+        $this->closeSlotEditor();
     }
 
     public function availabilityDayOfWeek(): int
@@ -358,6 +354,7 @@ class CourtClientEdit extends Component
         $this->availabilityCalendarDate = $d;
         $this->closureCalendarYm = Carbon::parse($d, $tz)->format('Y-m');
         $this->closeAvailabilityEditor();
+        $this->closeSlotEditor();
         unset($this->availabilityDateBlockLookup);
         $this->courtClient->refresh();
         $this->courtClient->load([
@@ -476,7 +473,7 @@ class CourtClientEdit extends Component
      */
     public function slotHoursForGrid(): array
     {
-        return $this->computeSlotHoursForDay($this->slotPricingDay);
+        return $this->computeSlotHoursForDay($this->availabilityDayOfWeek());
     }
 
     /**
@@ -496,21 +493,12 @@ class CourtClientEdit extends Component
         );
     }
 
-    public function setSlotPricingDay(int $day): void
-    {
-        if ($day < 0 || $day > 6) {
-            return;
-        }
-
-        $this->slotPricingDay = $day;
-        $this->closeSlotEditor();
-    }
-
     public function openSlotEditor(string $courtId, int $hour): void
     {
         $this->closeAvailabilityEditor();
 
-        $hours = $this->computeSlotHoursForDay($this->slotPricingDay);
+        $dow = $this->availabilityDayOfWeek();
+        $hours = $this->computeSlotHoursForDay($dow);
         if (! in_array($hour, $hours, true)) {
             return;
         }
@@ -529,7 +517,7 @@ class CourtClientEdit extends Component
 
         $existing = CourtTimeSlotSetting::query()
             ->where('court_id', $courtId)
-            ->where('day_of_week', $this->slotPricingDay)
+            ->where('day_of_week', $dow)
             ->where('slot_start_hour', $hour)
             ->first();
 
@@ -559,7 +547,8 @@ class CourtClientEdit extends Component
             return;
         }
 
-        $hours = $this->computeSlotHoursForDay($this->slotPricingDay);
+        $dow = $this->availabilityDayOfWeek();
+        $hours = $this->computeSlotHoursForDay($dow);
         if (! in_array($this->slotEditHour, $hours, true)) {
             $this->addError('slotEditHour', 'This time slot is outside venue hours for this day.');
 
@@ -609,14 +598,14 @@ class CourtClientEdit extends Component
         if ($this->slotEditMode === CourtTimeSlotSetting::MODE_NORMAL) {
             CourtTimeSlotSetting::query()
                 ->where('court_id', $court->id)
-                ->where('day_of_week', $this->slotPricingDay)
+                ->where('day_of_week', $dow)
                 ->where('slot_start_hour', $this->slotEditHour)
                 ->delete();
         } else {
             CourtTimeSlotSetting::query()->updateOrCreate(
                 [
                     'court_id' => $court->id,
-                    'day_of_week' => $this->slotPricingDay,
+                    'day_of_week' => $dow,
                     'slot_start_hour' => $this->slotEditHour,
                 ],
                 [
@@ -795,7 +784,7 @@ class CourtClientEdit extends Component
      */
     public function slotPricingGridCell(Court $court, int $hour): array
     {
-        $cell = CourtSlotPricing::resolveForSlot($court, $this->slotPricingDay, $hour);
+        $cell = CourtSlotPricing::resolveForSlot($court, $this->availabilityDayOfWeek(), $hour);
         $cellStyle = match ($cell['mode']) {
             CourtTimeSlotSetting::MODE_PEAK => 'border-amber-200 bg-amber-50/90 dark:border-amber-900/50 dark:bg-amber-950/25',
             CourtTimeSlotSetting::MODE_MANUAL => 'border-violet-200 bg-violet-50/90 dark:border-violet-900/50 dark:bg-violet-950/25',

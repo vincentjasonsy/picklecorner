@@ -15,9 +15,10 @@
         </a>
         <h1 class="mt-4 font-display text-2xl font-bold text-zinc-900 dark:text-white">New client invoice</h1>
         <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-            Includes <strong>confirmed</strong> and <strong>completed</strong> bookings in the period whose scheduled start falls
-            in the range. Bookings already on another invoice are skipped. Amounts use each booking’s stored total (missing
-            amounts count as zero).
+            Includes only <strong>desk or admin manual</strong> bookings <strong>paid manually</strong> (cash, transfer,
+            GCash, etc.) — not Book now / PayMongo checkouts. Only <strong>confirmed</strong> and
+            <strong>completed</strong> rows whose scheduled start falls in the range. Bookings already on another invoice
+            are skipped. Amounts use each booking’s stored total (missing amounts count as zero).
         </p>
     </div>
 
@@ -94,7 +95,8 @@
                 <p class="mt-4 text-sm text-zinc-500">Select a court client to preview line items.</p>
             @elseif ($previewBookings->isEmpty())
                 <p class="mt-4 text-sm text-amber-800 dark:text-amber-200">
-                    No eligible bookings in this range (or all matching bookings are already invoiced).
+                    No eligible bookings in this range — need manual desk/admin bookings paid outside PayMongo (or all
+                    matching rows are already invoiced).
                 </p>
             @else
                 <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">

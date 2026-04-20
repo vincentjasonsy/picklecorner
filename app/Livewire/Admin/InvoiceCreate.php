@@ -8,6 +8,7 @@ use App\Models\CourtClientInvoice;
 use App\Services\ActivityLogger;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -33,7 +34,7 @@ class InvoiceCreate extends Component
     }
 
     /**
-     * @return \Illuminate\Support\Collection<int, Booking>
+     * @return Collection<int, Booking>
      */
     protected function eligibleBookingsQuery()
     {
@@ -57,6 +58,7 @@ class InvoiceCreate extends Component
             ->where('court_client_id', $this->courtClientId)
             ->whereBetween('starts_at', [$from, $to])
             ->countingTowardRevenue()
+            ->eligibleForCourtClientInvoice()
             ->whereDoesntHave('courtClientInvoices')
             ->with(['court:id,name', 'user:id,name,email'])
             ->orderBy('starts_at')
@@ -102,13 +104,17 @@ class InvoiceCreate extends Component
             ->where('court_client_id', $this->courtClientId)
             ->whereBetween('starts_at', [$from, $to])
             ->countingTowardRevenue()
+            ->eligibleForCourtClientInvoice()
             ->whereDoesntHave('courtClientInvoices')
             ->orderBy('starts_at')
             ->lockForUpdate()
             ->get();
 
         if ($bookings->isEmpty()) {
-            $this->addError('courtClientId', 'No billable bookings in this range (confirmed or completed, not already on an invoice).');
+            $this->addError(
+                'courtClientId',
+                'No billable bookings in this range — only desk/admin manual bookings paid outside PayMongo (confirmed or completed, not already on an invoice).',
+            );
 
             return;
         }

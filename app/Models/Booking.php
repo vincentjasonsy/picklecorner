@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\BookingCheckoutSnapshot;
 use App\Support\PublicStorageUrl;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
@@ -286,5 +287,18 @@ class Booking extends Model
     public function scopeCountingTowardRevenue($query)
     {
         return $query->whereIn('status', [self::STATUS_CONFIRMED, self::STATUS_COMPLETED]);
+    }
+
+    /**
+     * Desk / admin manual bookings only (not member Book now checkout), paid outside hosted PayMongo.
+     */
+    public function scopeEligibleForCourtClientInvoice($query)
+    {
+        return $query
+            ->where('checkout_snapshot->source', BookingCheckoutSnapshot::SOURCE_MANUAL_DESK)
+            ->where(function ($q) {
+                $q->whereNull('payment_method')
+                    ->orWhere('payment_method', '<>', self::PAYMENT_PAYMONGO);
+            });
     }
 }

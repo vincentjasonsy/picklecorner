@@ -142,6 +142,13 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                 Weekly booking history
             </a>
             <a
+                href="{{ route('admin.reports.booking-channels') }}"
+                wire:navigate
+                class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/60"
+            >
+                Manual &amp; automated report
+            </a>
+            <a
                 href="{{ route('admin.reports.export.bookings', ['from' => $mw['start']->toDateString(), 'to' => $mw['end']->toDateString()]) }}"
                 class="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
             >

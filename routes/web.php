@@ -14,6 +14,7 @@ use App\Http\Controllers\ReportExportController;
 use App\Http\Controllers\ReviewFromEmailController;
 use App\Livewire\Admin\ActivityIndex;
 use App\Livewire\Admin\AdminCourtChangeRequests;
+use App\Livewire\Admin\BookingChannelReport;
 use App\Livewire\Admin\BookingHistory;
 use App\Livewire\Admin\BookingRates;
 use App\Livewire\Admin\BookingShow;
@@ -265,6 +266,7 @@ Route::middleware(['auth', 'demo.valid', 'super_admin', 'admin_not_impersonating
         Route::livewire('/invoices/{invoice}', InvoiceShow::class)->name('invoices.show');
         Route::get('/invoices/{invoice}/pdf', InvoicePdfController::class)->name('invoices.pdf');
         Route::livewire('/reports', 'admin-reports')->name('reports');
+        Route::livewire('/reports/booking-channels', BookingChannelReport::class)->name('reports.booking-channels');
         Route::livewire('/bookings', BookingHistory::class)->name('bookings.index');
         Route::livewire('/coach-bookings', CoachBookingManagement::class)->name('coach-bookings.index');
         Route::livewire('/bookings/{booking}', BookingShow::class)->name('bookings.show');
