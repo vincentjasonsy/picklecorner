@@ -274,10 +274,10 @@ class Engine
     {
         $m = [
             'random' => 'Random order',
-            'wins' => 'Fewest wins first',
-            'levels' => 'By skill level',
+            // 'wins' => 'Fewest wins first',
+            // 'levels' => 'By skill level',
             'levels_rotate' => 'Skill level rotation',
-            'teams' => 'Fixed pairs (team codes)',
+            // 'teams' => 'Fixed pairs (team codes)',
         ];
         $method = (string) $this->state['shuffleMethod'];
 
@@ -758,39 +758,40 @@ class Engine
             return $arr;
         }
         if ($method === 'levels_rotate') {
+            // Step 1: Sort by level, then by name
             usort($arr, function ($a, $b) {
                 $al = (int) ($a['level'] ?? 0);
                 $bl = (int) ($b['level'] ?? 0);
-                if ($al !== $bl) {
-                    return $al <=> $bl;
-                }
-
-                return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+        
+                return $al <=> $bl ?: strcmp($a['name'] ?? '', $b['name'] ?? '');
             });
+        
+            // Step 2: Group by level
             $byLevel = [];
             foreach ($arr as $p) {
                 $lv = (int) ($p['level'] ?? 0);
-                if (! isset($byLevel[$lv])) {
-                    $byLevel[$lv] = [];
-                }
                 $byLevel[$lv][] = $p;
             }
+        
             ksort($byLevel, SORT_NUMERIC);
-            $levelKeys = array_keys($byLevel);
+        
+            // Step 3: Round-robin extraction
             $out = [];
-            while (true) {
-                $progress = false;
-                foreach ($levelKeys as $lv) {
-                    if ($byLevel[$lv] !== []) {
-                        $out[] = array_shift($byLevel[$lv]);
-                        $progress = true;
+        
+            while (!empty($byLevel)) {
+                foreach ($byLevel as $lv => &$group) {
+                    if (!empty($group)) {
+                        $out[] = array_shift($group);
+                    }
+        
+                    // Clean up empty groups
+                    if (empty($group)) {
+                        unset($byLevel[$lv]);
                     }
                 }
-                if (! $progress) {
-                    break;
-                }
+                unset($group); // break reference
             }
-
+        
             return $out;
         }
         if ($method === 'teams') {

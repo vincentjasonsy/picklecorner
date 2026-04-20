@@ -202,10 +202,10 @@
                             Who plays next
                             <select wire:model.live="state.shuffleMethod" class="mt-1.5 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100">
                                 <option value="random">Random</option>
-                                <option value="wins">Fewest wins first</option>
-                                <option value="levels">By skill level</option>
+                                <!-- <option value="wins">Fewest wins first</option>
+                                <option value="levels">By skill level</option> -->
                                 <option value="levels_rotate">Skill level rotation</option>
-                                <option value="teams">Fixed pairs (team on each player)</option>
+                                <!-- <option value="teams">Fixed pairs (team on each player)</option> -->
                             </select>
                         </label>
                         @if (($state['shuffleMethod'] ?? '') === 'levels')
