@@ -758,24 +758,23 @@ class Engine
             return $arr;
         }
         if ($method === 'levels_rotate') {
-            // Step 1: Sort by level, then by name
-            usort($arr, function ($a, $b) {
-                $al = (int) ($a['level'] ?? 0);
-                $bl = (int) ($b['level'] ?? 0);
-        
-                return $al <=> $bl ?: strcmp($a['name'] ?? '', $b['name'] ?? '');
-            });
-        
-            // Step 2: Group by level
+            // Step 1: Group by level (no sorting yet)
             $byLevel = [];
             foreach ($arr as $p) {
                 $lv = (int) ($p['level'] ?? 0);
                 $byLevel[$lv][] = $p;
             }
         
+            // Step 2: Sort levels (skill order still respected)
             ksort($byLevel, SORT_NUMERIC);
         
-            // Step 3: Round-robin extraction
+            // Step 3: Shuffle INSIDE each level
+            foreach ($byLevel as &$group) {
+                self::shuffleInPlace($group); // <-- important
+            }
+            unset($group);
+        
+            // Step 4: Round-robin across levels
             $out = [];
         
             while (!empty($byLevel)) {
@@ -784,12 +783,11 @@ class Engine
                         $out[] = array_shift($group);
                     }
         
-                    // Clean up empty groups
                     if (empty($group)) {
                         unset($byLevel[$lv]);
                     }
                 }
-                unset($group); // break reference
+                unset($group);
             }
         
             return $out;
@@ -903,6 +901,9 @@ class Engine
          * games played then shuffleMethod. Pair consecutively; do not shuffle/sort again or Fill courts ignores the queue.
          */
         $arr = array_values($poolPlayers);
+
+        // 🔥 break predictable adjacency (very important)
+        self::shuffleInPlace($arr);
         $sides = [];
         for ($i = 0; $i + 1 < count($arr); $i += 2) {
             $sides[] = [$arr[$i]['id'], $arr[$i + 1]['id']];

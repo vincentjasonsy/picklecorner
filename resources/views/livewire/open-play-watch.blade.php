@@ -59,44 +59,9 @@
 
         @if (! $loadFailed)
             <div class="mt-8 space-y-10 sm:mt-10">
-                {{-- Standings (same order as host modal) --}}
-                <section class="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:ring-slate-700/50">
-                    <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Standings</h2>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Win–loss from the host session (updates as matches finish)</p>
-                    @php $rankRows = $eq->rankings(); @endphp
-                    @if (count($rankRows) === 0)
-                        <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">No active players yet</p>
-                    @else
-                        <ol class="mt-5 space-y-2">
-                            @foreach ($rankRows as $ri => $r)
-                                <li
-                                    class="flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-sm transition dark:border-slate-800 {{ $ri === 0 ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-white dark:border-amber-900/40 dark:from-amber-950/30 dark:to-slate-900/50' : 'border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/50' }}"
-                                    wire:key="standings-{{ $openPlayShare->uuid }}-{{ $r['id'] }}"
-                                >
-                                    <span class="flex min-w-0 items-center gap-3">
-                                        <span
-                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold tabular-nums {{ $ri === 0 ? 'bg-amber-400/25 text-amber-950 dark:bg-amber-500/20 dark:text-amber-100' : ($ri === 1 ? 'bg-slate-200/90 text-slate-700 dark:bg-slate-600 dark:text-slate-100' : ($ri === 2 ? 'bg-orange-200/50 text-orange-950 dark:bg-orange-500/15 dark:text-orange-100' : 'bg-slate-200/60 text-slate-500 dark:bg-slate-800 dark:text-slate-400')) }}"
-                                        >
-                                            {{ $ri + 1 }}
-                                        </span>
-                                        <a
-                                            href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $r['id']]) }}"
-                                            class="truncate font-semibold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
-                                        >
-                                            {{ $r['name'] }}
-                                        </a>
-                                    </span>
-                                    <span class="shrink-0 text-right tabular-nums">
-                                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ (int) ($r['wins'] ?? 0) }}W · {{ (int) ($r['losses'] ?? 0) }}L</span>
-                                        <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ ! empty($r['played']) ? ($r['pct'] ?? 0).'%' : '—' }}</span>
-                                    </span>
-                                </li>
-                            @endforeach
-                        </ol>
-                    @endif
-                </section>
 
-                {{-- Courts --}}
+
+            {{-- Courts --}}
                 <section class="space-y-4">
                     <div class="flex items-end justify-between gap-4">
                         <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Courts</h2>
@@ -155,8 +120,46 @@
                         <p class="text-center text-sm text-slate-500 dark:text-slate-400">No court data from the host yet.</p>
                     @endif
                 </section>
+            
+                {{-- Standings (same order as host modal) --}}
+                <section class="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:ring-slate-700/50">
+                    <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Standings</h2>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Win–loss from the host session (updates as matches finish)</p>
+                    @php $rankRows = $eq->rankings(); @endphp
+                    @if (count($rankRows) === 0)
+                        <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">No active players yet</p>
+                    @else
+                        <ol class="mt-5 space-y-2">
+                            @foreach ($rankRows as $ri => $r)
+                                <li
+                                    class="flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-sm transition dark:border-slate-800 {{ $ri === 0 ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-white dark:border-amber-900/40 dark:from-amber-950/30 dark:to-slate-900/50' : 'border-slate-100 bg-slate-50/80 dark:border-slate-800 dark:bg-slate-950/50' }}"
+                                    wire:key="standings-{{ $openPlayShare->uuid }}-{{ $r['id'] }}"
+                                >
+                                    <span class="flex min-w-0 items-center gap-3">
+                                        <span
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-bold tabular-nums {{ $ri === 0 ? 'bg-amber-400/25 text-amber-950 dark:bg-amber-500/20 dark:text-amber-100' : ($ri === 1 ? 'bg-slate-200/90 text-slate-700 dark:bg-slate-600 dark:text-slate-100' : ($ri === 2 ? 'bg-orange-200/50 text-orange-950 dark:bg-orange-500/15 dark:text-orange-100' : 'bg-slate-200/60 text-slate-500 dark:bg-slate-800 dark:text-slate-400')) }}"
+                                        >
+                                            {{ $ri + 1 }}
+                                        </span>
+                                        <a
+                                            href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $r['id']]) }}"
+                                            class="truncate font-semibold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
+                                        >
+                                            {{ $r['name'] }}
+                                        </a>
+                                    </span>
+                                    <span class="shrink-0 text-right tabular-nums">
+                                        <span class="block text-xs text-slate-500 dark:text-slate-400">{{ (int) ($r['wins'] ?? 0) }}W · {{ (int) ($r['losses'] ?? 0) }}L</span>
+                                        <span class="text-sm font-bold text-emerald-700 dark:text-emerald-400">{{ ! empty($r['played']) ? ($r['pct'] ?? 0).'%' : '—' }}</span>
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ol>
+                    @endif
+                </section>
 
                 {{-- Queue --}}
+                @if (false)
                 <section class="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:ring-slate-700/50">
                     <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Up next</h2>
                     <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Queue order from the host session</p>
@@ -180,6 +183,7 @@
                         <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">Queue is empty</p>
                     @endif
                 </section>
+                @endif
             </div>
         @endif
     </div>

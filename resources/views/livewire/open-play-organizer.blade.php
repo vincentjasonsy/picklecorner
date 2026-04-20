@@ -996,6 +996,7 @@
                                 @endforeach
                             </section>
 
+                            @if (false)
                             <section class="w-full rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900/60 sm:p-4" aria-label="Queue">
                                 <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Queue</p>
                                 <p class="mt-1 hidden text-xs leading-relaxed text-zinc-500 md:block dark:text-zinc-400">
@@ -1020,6 +1021,7 @@
                                     <p class="mt-2 text-xs text-zinc-400">Nobody waiting</p>
                                 @endif
                             </section>
+                            @endif
                         </div>
             </div>
         </div>
