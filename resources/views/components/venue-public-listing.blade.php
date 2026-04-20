@@ -15,8 +15,7 @@
 <div class="space-y-8">
     @if (! $venue->hasPublicListingExtras())
         <p class="text-sm text-zinc-500 dark:text-zinc-400">
-            This venue has not added a public address, map pin, or amenities yet. You can still see member reviews
-            beside this panel.
+            This venue has not added a public address, map pin, or amenities yet.@if (public_reviews_enabled()) You can still see member reviews beside this panel.@endif
         </p>
     @else
         @if ($venue->address !== null && trim((string) $venue->address) !== '')

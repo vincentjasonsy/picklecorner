@@ -64,6 +64,6 @@ class OpenPlayWatchPlayerH2h extends Component
 
         return view('livewire.open-play-watch-player-h2h')
             ->layout('layouts::guest')
-            ->title($title.' — '.config('app.name'));
+            ->title($title);
     }
 }

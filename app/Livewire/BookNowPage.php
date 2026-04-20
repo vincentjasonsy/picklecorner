@@ -299,14 +299,16 @@ class BookNowPage extends Component
             }
         }
 
-        $cmp = $this->comparePublicRatingTuples(
-            $a->public_rating_average,
-            (int) ($a->public_rating_count ?? 0),
-            $b->public_rating_average,
-            (int) ($b->public_rating_count ?? 0),
-        );
-        if ($cmp !== 0) {
-            return $cmp;
+        if (config('booking.public_reviews_enabled')) {
+            $cmp = $this->comparePublicRatingTuples(
+                $a->public_rating_average,
+                (int) ($a->public_rating_count ?? 0),
+                $b->public_rating_average,
+                (int) ($b->public_rating_count ?? 0),
+            );
+            if ($cmp !== 0) {
+                return $cmp;
+            }
         }
 
         return strnatcasecmp((string) $a->name, (string) $b->name);
@@ -422,10 +424,15 @@ class BookNowPage extends Component
             $q->orderByRaw('CASE WHEN court_clients.city = ? THEN 0 ELSE 1 END', [$preferred]);
         }
 
+        if (config('booking.public_reviews_enabled')) {
+            $q->orderByRaw('court_clients.public_rating_average IS NULL')
+                ->orderByDesc('court_clients.public_rating_average')
+                ->orderByDesc('court_clients.public_rating_count');
+        } else {
+            $q->orderBy('court_clients.name');
+        }
+
         return $q
-            ->orderByRaw('court_clients.public_rating_average IS NULL')
-            ->orderByDesc('court_clients.public_rating_average')
-            ->orderByDesc('court_clients.public_rating_count')
             ->with('courtClient')
             ->limit(8)
             ->get();

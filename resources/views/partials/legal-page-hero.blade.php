@@ -12,12 +12,12 @@
             {{ $title }}
         </h1>
         @if ($subtitle)
-            <p class="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-emerald-100/90">
+            <p class="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-emerald-100/90 lg:max-w-3xl">
                 {{ $subtitle }}
             </p>
         @endif
         @if ($meta)
-            <p class="mx-auto mt-3 max-w-lg text-xs text-emerald-200/80">
+            <p class="mx-auto mt-4 max-w-xl text-xs font-medium tracking-wide text-emerald-200/85">
                 {{ $meta }}
             </p>
         @endif

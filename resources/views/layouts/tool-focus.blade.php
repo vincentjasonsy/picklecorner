@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'GameQ (Beta)' }} — {{ config('app.name') }}</title>
+        @include('partials.document-title')
 
         @include('partials.favicon')
 

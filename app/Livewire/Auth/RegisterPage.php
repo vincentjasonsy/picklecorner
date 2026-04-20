@@ -84,7 +84,7 @@ class RegisterPage extends Component
 
     public function render()
     {
-        $title = $this->demo ? 'Try demo' : 'Create account';
+        $title = $this->demo ? 'Try demo' : 'Register';
 
         return view('livewire.auth.register-page')
             ->layout('layouts::auth', ['title' => $title]);

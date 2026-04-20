@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? config('app.name') }}</title>
+        @include('partials.document-title')
 
         @include('partials.favicon')
 
@@ -122,14 +122,16 @@
                                     >
                                         About
                                     </a>
-                                    <a
-                                        role="menuitem"
-                                        href="{{ url('/#reviews') }}"
-                                        class="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
-                                        @click="homeNavOpen = false"
-                                    >
-                                        Reviews
-                                    </a>
+                                    @if (public_reviews_enabled())
+                                        <a
+                                            role="menuitem"
+                                            href="{{ url('/#reviews') }}"
+                                            class="block px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                            @click="homeNavOpen = false"
+                                        >
+                                            Reviews
+                                        </a>
+                                    @endif
                                     <a
                                         role="menuitem"
                                         href="{{ url('/#pricing') }}"
@@ -218,20 +220,6 @@
                                 >
                                     Register
                                 </a>
-                                @if (config('demo.registration_enabled'))
-                                    <a
-                                        href="{{ route('register.demo') }}"
-                                        wire:navigate
-                                        @class([
-                                            'rounded-lg px-2.5 py-2 text-sm transition-colors',
-                                            request()->routeIs('register.demo')
-                                                ? 'font-semibold text-amber-800 dark:text-amber-200'
-                                                : 'text-amber-800/90 hover:text-amber-950 dark:text-amber-200/90 dark:hover:text-amber-100',
-                                        ])
-                                    >
-                                        Try demo
-                                    </a>
-                                @endif
                             @endauth
                         </nav>
                         {{-- Mobile menu toggle --}}
@@ -327,13 +315,15 @@
                                 >
                                     About
                                 </a>
-                                <a
-                                    href="{{ url('/#reviews') }}"
-                                    class="block rounded-lg py-2 pl-2 text-sm text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
-                                    @click="mobileNavOpen = false; homeSubOpen = false"
-                                >
-                                    Reviews
-                                </a>
+                                @if (public_reviews_enabled())
+                                    <a
+                                        href="{{ url('/#reviews') }}"
+                                        class="block rounded-lg py-2 pl-2 text-sm text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
+                                        @click="mobileNavOpen = false; homeSubOpen = false"
+                                    >
+                                        Reviews
+                                    </a>
+                                @endif
                                 <a
                                     href="{{ url('/#pricing') }}"
                                     class="block rounded-lg py-2 pl-2 text-sm text-zinc-700 hover:text-emerald-700 dark:text-zinc-300 dark:hover:text-emerald-400"
@@ -427,16 +417,6 @@
                             >
                                 Register
                             </a>
-                            @if (config('demo.registration_enabled'))
-                                <a
-                                    href="{{ route('register.demo') }}"
-                                    wire:navigate
-                                    @click="mobileNavOpen = false"
-                                    class="rounded-lg border border-amber-300/70 bg-amber-50/90 px-3 py-3 text-center font-semibold text-amber-950 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-950/50 dark:text-amber-100 dark:hover:bg-amber-950/80"
-                                >
-                                    Try demo
-                                </a>
-                            @endif
                         @endauth
                     </nav>
                 </div>
@@ -456,7 +436,9 @@
                         <a href="{{ route('home') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Home</a>
                         <a href="{{ route('book-now') }}" wire:navigate class="font-semibold text-amber-700 hover:text-amber-600 dark:text-amber-400 dark:hover:text-amber-300">Book now</a>
                         <a href="{{ url('/#about') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">About</a>
-                        <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
+                        @if (public_reviews_enabled())
+                            <a href="{{ url('/#reviews') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Reviews</a>
+                        @endif
                         <a href="{{ url('/#pricing') }}" class="hover:text-emerald-600 dark:hover:text-emerald-400">Pricing</a>
                         <a href="{{ route('contact') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Contact</a>
                         <a href="{{ route('terms') }}" wire:navigate class="hover:text-emerald-600 dark:hover:text-emerald-400">Terms</a>

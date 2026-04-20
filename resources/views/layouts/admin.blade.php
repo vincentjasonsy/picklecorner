@@ -6,7 +6,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'Admin' }} — {{ config('app.name') }}</title>
+        @include('partials.document-title')
 
         @include('partials.favicon')
 

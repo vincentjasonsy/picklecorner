@@ -152,8 +152,6 @@ new #[Layout('layouts::auth'), Title('Sign in')] class extends Component
             </button>
         </form>
 
-        @include('partials.demo-quick-login')
-
         <p class="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
             New here?
             <a

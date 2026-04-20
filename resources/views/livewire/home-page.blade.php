@@ -1,37 +1,8 @@
-<?php
-
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
-use Livewire\Component;
-
-new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
-?>
-
 @php
     $contactEmail = config('mail.from.address');
     if (! is_string($contactEmail) || $contactEmail === '') {
         $contactEmail = 'support@picklecorner.ph';
     }
-    $reviews = [
-        [
-            'name' => 'Mia R.',
-            'meta' => 'League player · Quezon City',
-            'stars' => 5,
-            'body' => 'Booking used to be a group chat nightmare. Now I grab court time in two taps before work.',
-        ],
-        [
-            'name' => 'Coach Javier D.',
-            'meta' => 'Skills clinic · Makati',
-            'stars' => 5,
-            'body' => 'Clients see the schedule, I see fewer no-shows. The flow actually matches how venues operate.',
-        ],
-        [
-            'name' => 'Aira & Ben T.',
-            'meta' => 'Weekend doubles · BGC',
-            'stars' => 5,
-            'body' => 'Love the venue photos and clear hourly rates. Feels built by people who actually play.',
-        ],
-    ];
 @endphp
 
 <div>
@@ -61,8 +32,10 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
             aria-hidden="true"
         ></div>
 
-        <div class="relative mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-2 lg:items-center lg:gap-12 lg:px-8 lg:py-16">
-            <div>
+        <div class="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+            <div
+                class="w-full rounded-2xl border border-white/10 bg-zinc-950/40 p-6 shadow-2xl shadow-black/40 backdrop-blur-sm sm:p-8 lg:p-10"
+            >
                 <p
                     class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-200/90"
                 >
@@ -77,7 +50,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         Run the club.
                     </span>
                 </h1>
-                <p class="mt-5 max-w-lg text-sm leading-relaxed text-emerald-100/85 sm:text-base">
+                <p class="mt-5 max-w-none text-sm leading-relaxed text-emerald-100/85 sm:text-base lg:max-w-4xl">
                     {{ config('app.name') }} is your home base for finding venues, locking in hours, and keeping members
                     on the same page—without the spreadsheet chaos. We keep convenience fees lean so
                     <span class="font-semibold text-white/95">more of your budget stays on the court</span>, not buried
@@ -108,29 +81,20 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         Venues · Book a demo
                     </a>
                 </div>
-                <dl class="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-8 sm:max-w-md">
+                <dl class="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-8 sm:gap-8">
                     <div>
                         <dt class="text-[10px] font-bold uppercase tracking-wider text-emerald-300/80">Courts listed</dt>
-                        <dd class="font-display mt-1 text-2xl font-bold tabular-nums text-white">50+</dd>
+                        <dd class="font-display mt-1 text-2xl font-bold tabular-nums text-white">{{ number_format($listedCourtsCount) }}</dd>
                     </div>
                     <div>
                         <dt class="text-[10px] font-bold uppercase tracking-wider text-emerald-300/80">Happy players</dt>
-                        <dd class="font-display mt-1 text-2xl font-bold tabular-nums text-white">12k+</dd>
+                        <dd class="font-display mt-1 text-2xl font-bold tabular-nums text-white">{{ number_format($happyPlayersCount) }}</dd>
                     </div>
                     <div>
-                        <dt class="text-[10px] font-bold uppercase tracking-wider text-emerald-300/80">Avg. book time</dt>
-                        <dd class="font-display mt-1 text-2xl font-bold tabular-nums text-white">&lt;2m</dd>
+                        <dt class="text-[10px] font-bold uppercase tracking-wider text-emerald-300/80">Avg. session</dt>
+                        <dd class="font-display mt-1 text-2xl font-bold tabular-nums text-white">{{ $avgSessionLabel }}</dd>
                     </div>
                 </dl>
-            </div>
-            <div class="relative lg:pl-4">
-                <div
-                    class="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-emerald-500/20 to-amber-400/10 blur-2xl lg:-inset-6"
-                    aria-hidden="true"
-                ></div>
-                <div class="relative rounded-2xl border border-white/10 bg-zinc-950/40 p-2 shadow-2xl shadow-black/40 backdrop-blur-sm">
-                    <x-hero-slider />
-                </div>
             </div>
         </div>
     </section>
@@ -396,7 +360,7 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                         aria-hidden="true"
                     ></div>
                     <div class="relative">
-                        <x-app-icon name="flag" class="size-8 text-emerald-600 dark:text-emerald-400" />
+                        <x-app-icon name="sparkles" class="size-8 text-emerald-600 dark:text-emerald-400" />
                         <h3 class="font-display mt-4 text-lg font-bold uppercase text-zinc-900 dark:text-white">Mission</h3>
                         <p class="mt-2 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                             Make court time as easy to reserve as it is to play—transparent, fast, and fair for everyone
@@ -440,52 +404,76 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
         </div>
     </section>
 
-    {{-- Reviews --}}
-    <section id="reviews" class="scroll-mt-16 border-y border-zinc-200 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-900 sm:py-20">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
-                <div>
-                    <p class="font-display text-xs font-bold uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
-                        Player voices
-                    </p>
-                    <h2 class="font-display mt-2 text-3xl font-bold uppercase tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
-                        From the court
-                    </h2>
-                    <p class="mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-400">
-                        Real feedback from players and coaches (sample quotes for the landing page).
-                    </p>
+    @if (public_reviews_enabled())
+        @php
+            $reviews = [
+                [
+                    'name' => 'Mia R.',
+                    'meta' => 'League player · Quezon City',
+                    'stars' => 5,
+                    'body' => 'Booking used to be a group chat nightmare. Now I grab court time in two taps before work.',
+                ],
+                [
+                    'name' => 'Coach Javier D.',
+                    'meta' => 'Skills clinic · Makati',
+                    'stars' => 5,
+                    'body' => 'Clients see the schedule, I see fewer no-shows. The flow actually matches how venues operate.',
+                ],
+                [
+                    'name' => 'Aira & Ben T.',
+                    'meta' => 'Weekend doubles · BGC',
+                    'stars' => 5,
+                    'body' => 'Love the venue photos and clear hourly rates. Feels built by people who actually play.',
+                ],
+            ];
+        @endphp
+        {{-- Reviews --}}
+        <section id="reviews" class="scroll-mt-16 border-y border-zinc-200 bg-white py-16 dark:border-zinc-800 dark:bg-zinc-900 sm:py-20">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
+                    <div>
+                        <p class="font-display text-xs font-bold uppercase tracking-[0.25em] text-emerald-600 dark:text-emerald-400">
+                            Player voices
+                        </p>
+                        <h2 class="font-display mt-2 text-3xl font-bold uppercase tracking-tight text-zinc-900 dark:text-white sm:text-4xl">
+                            From the court
+                        </h2>
+                        <p class="mt-2 max-w-xl text-sm text-zinc-600 dark:text-zinc-400">
+                            Real feedback from players and coaches (sample quotes for the landing page).
+                        </p>
+                    </div>
+                    <div class="hidden items-center gap-1 sm:flex" aria-hidden="true">
+                        @for ($i = 0; $i < 5; $i++)
+                            <span class="size-2 rotate-45 bg-emerald-500/80"></span>
+                        @endfor
+                    </div>
                 </div>
-                <div class="hidden items-center gap-1 sm:flex" aria-hidden="true">
-                    @for ($i = 0; $i < 5; $i++)
-                        <span class="size-2 rotate-45 bg-emerald-500/80"></span>
-                    @endfor
-                </div>
+                <ul class="mt-12 grid gap-6 md:grid-cols-3">
+                    @foreach ($reviews as $idx => $r)
+                        <li
+                            wire:key="landing-review-{{ $idx }}"
+                            class="flex flex-col rounded-2xl border border-zinc-200 bg-zinc-50/80 p-6 dark:border-zinc-700 dark:bg-zinc-950/50"
+                        >
+                            <div class="flex gap-0.5 text-amber-500" aria-label="{{ $r['stars'] }} out of 5 stars">
+                                @for ($s = 0; $s < $r['stars']; $s++)
+                                    <svg class="size-5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                        <path
+                                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                                        />
+                                    </svg>
+                                @endfor
+                            </div>
+                            <p class="mt-4 flex-1 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">“{{ $r['body'] }}”</p>
+                            <footer class="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+                                <p class="font-display text-sm font-bold uppercase text-zinc-900 dark:text-white">{{ $r['name'] }}</p>
+                                <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{{ $r['meta'] }}</p>
+                            </footer>
+                        </li>
+                    @endforeach
+                </ul>
             </div>
-            <ul class="mt-12 grid gap-6 md:grid-cols-3">
-                @foreach ($reviews as $idx => $r)
-                    <li
-                        wire:key="landing-review-{{ $idx }}"
-                        class="flex flex-col rounded-2xl border border-zinc-200 bg-zinc-50/80 p-6 dark:border-zinc-700 dark:bg-zinc-950/50"
-                    >
-                        <div class="flex gap-0.5 text-amber-500" aria-label="{{ $r['stars'] }} out of 5 stars">
-                            @for ($s = 0; $s < $r['stars']; $s++)
-                                <svg class="size-5 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path
-                                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                                    />
-                                </svg>
-                            @endfor
-                        </div>
-                        <p class="mt-4 flex-1 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300">“{{ $r['body'] }}”</p>
-                        <footer class="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-                            <p class="font-display text-sm font-bold uppercase text-zinc-900 dark:text-white">{{ $r['name'] }}</p>
-                            <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">{{ $r['meta'] }}</p>
-                        </footer>
-                    </li>
-                @endforeach
-            </ul>
-        </div>
-    </section>
+        </section>
+    @endif
 
     {{-- Contact --}}
     <section id="contact" class="scroll-mt-16 bg-gradient-to-b from-zinc-100 to-zinc-50 py-16 dark:from-zinc-950 dark:to-zinc-900 sm:py-20">
@@ -627,15 +615,6 @@ new #[Layout('layouts::guest'), Title('Home')] class extends Component {};
                     >
                         Register
                     </a>
-                    @if (config('demo.registration_enabled'))
-                        <a
-                            href="{{ route('register.demo') }}"
-                            wire:navigate
-                            class="inline-flex items-center rounded-xl border border-amber-300/80 bg-amber-50 px-5 py-3 text-sm font-semibold text-amber-950 transition hover:bg-amber-100 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/70"
-                        >
-                            Try demo
-                        </a>
-                    @endif
                     <a
                         href="{{ route('login') }}"
                         wire:navigate

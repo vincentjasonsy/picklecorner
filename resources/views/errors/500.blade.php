@@ -1,4 +1,4 @@
-@component('layouts.guest', ['title' => 'Something went wrong — '.config('app.name')])
+@component('layouts.guest', ['title' => 'Something went wrong'])
     <div class="mx-auto max-w-2xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
         <p class="font-display text-sm font-semibold uppercase tracking-[0.2em] text-red-600 dark:text-red-400">
             Error 500

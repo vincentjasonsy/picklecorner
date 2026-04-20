@@ -198,6 +198,10 @@ class UserReviewsPanel extends Component
 
     public function render(): View
     {
+        if (! public_reviews_enabled()) {
+            return view('livewire.reviews.user-reviews-panel-hidden');
+        }
+
         $pendingMine = $this->pendingReviewForAuthUser();
         $user = auth()->user();
         $canSubmitReview = $user !== null

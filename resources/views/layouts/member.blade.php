@@ -7,7 +7,7 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'My Corner' }} — {{ config('app.name') }}</title>
+        @include('partials.document-title')
 
         @include('partials.favicon')
 

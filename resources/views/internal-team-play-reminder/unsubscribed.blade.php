@@ -6,7 +6,8 @@
 
         @include('partials.theme-init')
 
-        <title>{{ $title ?? 'Reminders off' }} — {{ config('app.name') }}</title>
+        @php($title = $title ?? 'Reminders off')
+        @include('partials.document-title')
 
         @include('partials.favicon')
 

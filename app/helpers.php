@@ -3,6 +3,14 @@
 use App\Models\BookingFeeSetting;
 
 /**
+ * Guest/member-facing ratings, review lists, and compose UI (controlled by BOOKING_PUBLIC_REVIEWS_ENABLED).
+ */
+function public_reviews_enabled(): bool
+{
+    return (bool) config('booking.public_reviews_enabled', false);
+}
+
+/**
  * Active booking fee row, or an unsaved model using built-in defaults when none exist.
  */
 function currentBookingFeeSetting(): BookingFeeSetting

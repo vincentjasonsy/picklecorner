@@ -84,7 +84,7 @@
                             {{ $c->environment === Court::ENV_INDOOR ? 'Indoor' : 'Outdoor' }}
                         </span>
                     </p>
-                    @if ($client && $client->public_rating_average !== null)
+                    @if (public_reviews_enabled() && $client && $client->public_rating_average !== null)
                         <p class="mt-4 inline-flex flex-wrap items-center gap-1 text-base font-semibold text-zinc-800 dark:text-zinc-200">
                             <x-app-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
                             {{ number_format((float) $client->public_rating_average, 1) }}
@@ -139,16 +139,21 @@
         </div>
 
         @if ($client)
-            <div id="venue-reviews" class="scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-                <livewire:reviews.user-reviews-panel
-                    target-type="venue"
-                    :target-id="$client->id"
-                    :show-heading="false"
-                    :key="'ur-public-court-'.$client->id"
-                />
-            </div>
+            @if (public_reviews_enabled())
+                <div id="venue-reviews" class="scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+                    <livewire:reviews.user-reviews-panel
+                        target-type="venue"
+                        :target-id="$client->id"
+                        :show-heading="false"
+                        :key="'ur-public-court-'.$client->id"
+                    />
+                </div>
+            @endif
 
-            <section class="border-t border-zinc-200 pt-10 dark:border-zinc-800">
+            <section @class([
+                'border-t border-zinc-200 pt-10 dark:border-zinc-800',
+                'scroll-mt-24' => ! public_reviews_enabled(),
+            ])>
                 <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Venue details</h2>
                 <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
                     Location, contact, and amenities.

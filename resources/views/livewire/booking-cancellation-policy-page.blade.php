@@ -12,10 +12,7 @@
             '.',
     ])
 
-    <article class="mx-auto max-w-3xl px-4 py-12 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 sm:px-6 lg:px-8">
-        <div
-            class="prose prose-zinc max-w-none dark:prose-invert prose-headings:font-display prose-h2:mt-10 prose-h2:text-lg prose-h2:font-bold prose-h2:uppercase prose-h2:tracking-wide"
-        >
+    <x-legal-document>
             <h2>Confirmations</h2>
             <p>
                 A booking is confirmed when the Service shows it as confirmed (or the venue confirms it through the
@@ -34,9 +31,7 @@
             <p>
                 Venues may cancel due to maintenance, weather, staffing, or safety. If your booking is cancelled by the
                 venue, we will use reasonable efforts to reflect that in the app and, where applicable, follow the
-                <a href="{{ route('refund-policy') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Refund policy
-                </a>.
+                <a href="{{ route('refund-policy') }}" wire:navigate>Refund policy</a>.
             </p>
 
             <h2>Rescheduling</h2>
@@ -75,24 +70,15 @@
             <p>
                 Operational questions (access codes, lights, equipment) should be directed to the venue. If you cannot
                 resolve an issue, contact us at
-                <a
-                    href="mailto:{{ config('data_privacy.contact_email') }}"
-                    class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-                >
-                    {{ config('data_privacy.contact_email') }}
-                </a>
+                <a href="mailto:{{ config('data_privacy.contact_email') }}">{{ config('data_privacy.contact_email') }}</a>
                 with your booking reference and we will try to help coordinate a fair outcome within platform limits.
             </p>
 
             <h2>Related policies</h2>
             <p>
                 Payments and refunds are covered in our
-                <a href="{{ route('refund-policy') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Refund policy
-                </a>. Use of the Service is governed by our
-                <a href="{{ route('terms') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Terms &amp; conditions
-                </a>.
+                <a href="{{ route('refund-policy') }}" wire:navigate>Refund policy</a>. Use of the Service is governed by our
+                <a href="{{ route('terms') }}" wire:navigate>Terms &amp; conditions</a>.
             </p>
 
             <h2>Changes</h2>
@@ -100,8 +86,5 @@
                 We may update this policy periodically. The version and effective date at the top of this page will
                 change when we do.
             </p>
-        </div>
-
-        @include('partials.legal-pages-nav')
-    </article>
+    </x-legal-document>
 </div>

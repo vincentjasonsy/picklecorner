@@ -400,7 +400,7 @@
         <div class="mt-14 border-t border-zinc-200 pt-12 dark:border-zinc-800">
             <h2 class="font-display text-lg font-bold text-zinc-500 dark:text-zinc-400">More to explore</h2>
             <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-                Featured picks, shortcuts, and ratings — optional extras after you’ve scanned the full list above.
+                Featured picks and shortcuts{{ public_reviews_enabled() ? ', and ratings' : '' }} — optional extras after you’ve scanned the full list above.
             </p>
 
             @if ($featuredVenues->isNotEmpty())
@@ -463,7 +463,7 @@
                                                     <h4 class="mt-1 font-display text-base font-bold text-zinc-900 dark:text-white">
                                                         {{ $venue->name }}
                                                     </h4>
-                                                    @if ($venue->public_rating_average !== null)
+                                                    @if (public_reviews_enabled() && $venue->public_rating_average !== null)
                                                         <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                                                             {{ number_format((float) $venue->public_rating_average, 1) }}★ guest rating
                                                             @if ($venue->public_rating_count > 0)
@@ -540,13 +540,15 @@
                 <section class="mt-10 rounded-xl border border-zinc-200/80 bg-gradient-to-br from-white to-emerald-50/40 p-5 dark:border-zinc-800 dark:from-zinc-900 dark:to-emerald-950/30 sm:p-6" aria-labelledby="rated-heading">
                     <div class="flex items-start gap-3">
                         <span class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/80 dark:text-amber-300">
-                            <x-app-icon name="star-solid" class="size-4" />
+                            <x-app-icon name="{{ public_reviews_enabled() ? 'star-solid' : 'building-office-2' }}" class="size-4" />
                         </span>
                         <div>
                             <h3 id="rated-heading" class="font-display text-base font-bold text-zinc-900 dark:text-white">
-                                Top rated venues
+                                {{ public_reviews_enabled() ? 'Top rated venues' : 'More courts' }}
                             </h3>
-                            <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">Highest guest ratings.</p>
+                            <p class="mt-0.5 text-sm text-zinc-600 dark:text-zinc-400">
+                                {{ public_reviews_enabled() ? 'Highest guest ratings.' : 'Explore more bookable courts.' }}
+                            </p>
                         </div>
                     </div>
                     <div

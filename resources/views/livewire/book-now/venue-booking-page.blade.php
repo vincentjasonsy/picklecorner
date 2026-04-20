@@ -88,7 +88,7 @@
                             <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{{ $courtClient->city }}</p>
                         @endif
                     </div>
-                    @if ($courtClient->public_rating_average !== null)
+                    @if (public_reviews_enabled() && $courtClient->public_rating_average !== null)
                         <p class="inline-flex flex-wrap items-center gap-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                             <x-app-icon name="star-solid" class="size-4 text-amber-500 dark:text-amber-400" />
                             {{ number_format((float) $courtClient->public_rating_average, 1) }}
@@ -1170,31 +1170,43 @@
         </div>
     </div>
 
-    <section id="venue-reviews" class="mt-10 scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
-            <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">Venue &amp; reviews</h2>
-            <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Location, contact, amenities, and what members say about this club.
-            </p>
-            <div class="mt-8 grid gap-10 lg:grid-cols-2 lg:items-start">
-                <x-venue-public-listing :venue="$courtClient" />
-                <div class="min-w-0">
-                    <livewire:reviews.user-reviews-panel
-                        target-type="venue"
-                        :target-id="$courtClient->id"
-                        :show-heading="false"
-                        :key="'ur-venue-booking-'.$courtClient->id"
-                    />
+    @if (public_reviews_enabled())
+            <section id="venue-reviews" class="mt-10 scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+                <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">Venue &amp; reviews</h2>
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    Location, contact, amenities, and what members say about this club.
+                </p>
+                <div class="mt-8 grid gap-10 lg:grid-cols-2 lg:items-start">
+                    <x-venue-public-listing :venue="$courtClient" />
+                    <div class="min-w-0">
+                        <livewire:reviews.user-reviews-panel
+                            target-type="venue"
+                            :target-id="$courtClient->id"
+                            :show-heading="false"
+                            :key="'ur-venue-booking-'.$courtClient->id"
+                        />
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        @else
+            <section id="venue-details" class="mt-10 scroll-mt-24 border-t border-zinc-200 pt-10 dark:border-zinc-800">
+                <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">Venue details</h2>
+                <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+                    Location, contact, and amenities for this club.
+                </p>
+                <div class="mt-8">
+                    <x-venue-public-listing :venue="$courtClient" />
+                </div>
+            </section>
+        @endif
 
-        @if (config('booking.venue_checkout_show_coach') && $coachUserId !== '')
+        @if (public_reviews_enabled() && config('booking.venue_checkout_show_coach') && $coachUserId !== '')
             <section id="coach-reviews" class="mt-8 scroll-mt-24 border-t border-zinc-200 pt-8 dark:border-zinc-800">
-            <livewire:reviews.user-reviews-panel
-                target-type="coach"
-                :target-id="$coachUserId"
-                :key="'ur-coach-booking-'.$coachUserId"
-            />
-        </section>
-    @endif
+                <livewire:reviews.user-reviews-panel
+                    target-type="coach"
+                    :target-id="$coachUserId"
+                    :key="'ur-coach-booking-'.$coachUserId"
+                />
+            </section>
+        @endif
 </div>

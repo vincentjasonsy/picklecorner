@@ -54,6 +54,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public ratings & reviews (browse, courts, venues)
+    |--------------------------------------------------------------------------
+    |
+    | When false, star ratings and member review panels stay hidden everywhere
+    | on member and guest surfaces (including landing quotes). Site navigation
+    | skips review anchors. Internal admin moderation is unchanged.
+    |
+    */
+
+    'public_reviews_enabled' => (bool) env('BOOKING_PUBLIC_REVIEWS_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Member account “book soon” popup (My Corner)
     |--------------------------------------------------------------------------
     |

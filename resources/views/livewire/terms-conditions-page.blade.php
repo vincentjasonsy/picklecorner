@@ -9,10 +9,7 @@
             '.',
     ])
 
-    <article class="mx-auto max-w-3xl px-4 py-12 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 sm:px-6 lg:px-8">
-        <div
-            class="prose prose-zinc max-w-none dark:prose-invert prose-headings:font-display prose-h2:mt-10 prose-h2:text-lg prose-h2:font-bold prose-h2:uppercase prose-h2:tracking-wide"
-        >
+    <x-legal-document>
             <h2>Agreement</h2>
             <p>
                 By accessing or using {{ config('app.name') }} (the “Service”), you agree to these Terms &amp; Conditions
@@ -49,13 +46,9 @@
                 the time of booking. Payment, invoicing, taxes, and any on-site charges may be handled according to the
                 venue’s configuration and these Terms. Specific cancellation, refund, and no-show rules are summarized in
                 our
-                <a href="{{ route('booking-cancellation-policy') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Booking &amp; cancellation policy
-                </a>
+                <a href="{{ route('booking-cancellation-policy') }}" wire:navigate>Booking &amp; cancellation policy</a>
                 and
-                <a href="{{ route('refund-policy') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Refund policy
-                </a>.
+                <a href="{{ route('refund-policy') }}" wire:navigate>Refund policy</a>.
             </p>
 
             <h2 id="convenience-fee">Convenience fee</h2>
@@ -116,9 +109,7 @@
             <h2>Privacy</h2>
             <p>
                 Our collection and use of personal data is described in the
-                <a href="{{ route('privacy-policy') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Privacy policy
-                </a>
+                <a href="{{ route('privacy-policy') }}" wire:navigate>Privacy policy</a>
                 (including practices aligned with the Data Privacy Act of 2012 of the Philippines, where relevant).
             </p>
 
@@ -132,15 +123,7 @@
             <h2>Contact</h2>
             <p>
                 Questions about these Terms? Email us at
-                <a
-                    href="mailto:{{ config('data_privacy.contact_email') }}"
-                    class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-                >
-                    {{ config('data_privacy.contact_email') }}
-                </a>.
+                <a href="mailto:{{ config('data_privacy.contact_email') }}">{{ config('data_privacy.contact_email') }}</a>.
             </p>
-        </div>
-
-        @include('partials.legal-pages-nav')
-    </article>
+    </x-legal-document>
 </div>

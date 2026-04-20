@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * A basic test example.
      */
@@ -15,8 +17,8 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertStatus(200);
-        $response->assertSee('images/slider/slide-1.jpg', false);
-        $response->assertSee('Featured visuals', false);
+        $response->assertSee('Book courts.', false);
+        $response->assertSee('Courts listed', false);
         $response->assertSee('From the court', false);
     }
 

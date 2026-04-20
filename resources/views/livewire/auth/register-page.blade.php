@@ -35,10 +35,6 @@
             </p>
         </div>
 
-        @if ($demo && config('demo.quick_login_enabled'))
-            @include('partials.demo-quick-login')
-        @endif
-
         <form wire:submit="register" class="mt-8 space-y-5">
             <div>
                 <label for="name" class="block text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
@@ -215,18 +211,5 @@
             </a>
         </p>
 
-        @if (! $demo && config('demo.registration_enabled'))
-            <p class="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                Just exploring?
-                <a
-                    href="{{ route('register.demo') }}"
-                    wire:navigate
-                    class="font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
-                >
-                    Try a {{ config('demo.ttl_hours') }}-hour demo
-                </a>
-                — data is removed automatically.
-            </p>
-        @endif
     </div>
 </div>

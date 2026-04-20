@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\InvoicePdfController;
-use App\Http\Controllers\DemoQuickLoginController;
 use App\Http\Controllers\InternalTeamPlayReminderPreferencesController;
 use App\Http\Controllers\MemberBookAgainController;
 use App\Http\Controllers\MemberBookingCalendarController;
@@ -53,6 +52,7 @@ use App\Livewire\Desk\DeskCourtsLive;
 use App\Livewire\Desk\DeskHome;
 use App\Livewire\Desk\DeskManualBooking;
 use App\Livewire\Desk\DeskMyRequests;
+use App\Livewire\HomePage;
 use App\Livewire\Member\MemberBookingHistory;
 use App\Livewire\Member\MemberBookingShow;
 use App\Livewire\Member\MemberCourtOpenPlayHost;
@@ -85,7 +85,7 @@ use App\Services\ActivityLogger;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::livewire('/', 'home-page')->name('home');
+Route::livewire('/', HomePage::class)->name('home');
 Route::get('/about', function () {
     return redirect()->route('home')->withFragment('about');
 })->name('about');
@@ -135,9 +135,6 @@ Route::middleware('guest')->group(function (): void {
     Route::livewire('/login', 'login-page')->name('login');
     Route::livewire('/register', RegisterPage::class)->name('register');
     Route::livewire('/try', RegisterPage::class)->name('register.demo');
-    Route::post('/demo/quick-login', DemoQuickLoginController::class)
-        ->middleware('throttle:30,1')
-        ->name('demo.quick-login');
 });
 
 Route::middleware(['auth', 'demo.valid'])->post(

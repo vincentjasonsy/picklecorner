@@ -26,6 +26,8 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="BOOKING_COURT_OPENING_EMAILS" value="false"/>
+        <env name="BOOKING_PUBLIC_REVIEWS_ENABLED" value="true"/>
+        <env name="BOOKING_PUBLIC_REVIEW_FORM_ENABLED" value="true"/>
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="sqlite"/>
         <env name="DB_DATABASE" value=":memory:"/>

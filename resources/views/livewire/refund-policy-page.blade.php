@@ -12,18 +12,13 @@
             '.',
     ])
 
-    <article class="mx-auto max-w-3xl px-4 py-12 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 sm:px-6 lg:px-8">
-        <div
-            class="prose prose-zinc max-w-none dark:prose-invert prose-headings:font-display prose-h2:mt-10 prose-h2:text-lg prose-h2:font-bold prose-h2:uppercase prose-h2:tracking-wide"
-        >
+    <x-legal-document>
             <h2>Overview</h2>
             <p>
                 {{ config('app.name') }} helps you book courts and related services with participating venues. Refunds
                 depend on how the payment was taken, what the venue published at the time of booking, and whether a
                 cancellation was made in line with the
-                <a href="{{ route('booking-cancellation-policy') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Booking &amp; cancellation policy
-                </a>.
+                <a href="{{ route('booking-cancellation-policy') }}" wire:navigate>Booking &amp; cancellation policy</a>.
             </p>
 
             <h2>Convenience fee</h2>
@@ -36,9 +31,7 @@
                 <strong>We do not refund the convenience fee.</strong> Where you receive a refund of amounts owed to a venue
                 (such as court rental after an eligible cancellation), any refund is limited to those venue-related amounts
                 and does not include repayment of the convenience fee, except where mandatory law requires otherwise. See also our
-                <a href="{{ route('terms') }}" wire:navigate class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-                    Terms &amp; conditions
-                </a>.
+                <a href="{{ route('terms') }}" wire:navigate>Terms &amp; conditions</a>.
             </p>
 
             <h2>Venue-specific rules</h2>
@@ -71,12 +64,7 @@
             <p>
                 Start from your booking details in {{ config('app.name') }} where self-service options exist, or contact
                 the venue directly for venue-managed payments. For platform-related billing issues, email
-                <a
-                    href="mailto:{{ config('data_privacy.contact_email') }}"
-                    class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-                >
-                    {{ config('data_privacy.contact_email') }}
-                </a>
+                <a href="mailto:{{ config('data_privacy.contact_email') }}">{{ config('data_privacy.contact_email') }}</a>
                 with your booking reference and a short description. We may need a few business days to coordinate with the
                 venue or payment provider.
             </p>
@@ -106,8 +94,5 @@
                 We may update this Refund policy from time to time. Material changes will be reflected on this page with
                 an updated version or effective date.
             </p>
-        </div>
-
-        @include('partials.legal-pages-nav')
-    </article>
+    </x-legal-document>
 </div>

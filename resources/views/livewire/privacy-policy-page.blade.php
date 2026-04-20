@@ -9,18 +9,12 @@
             '.',
     ])
 
-    <article class="mx-auto max-w-3xl px-4 py-12 text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 sm:px-6 lg:px-8">
-        <div class="prose prose-zinc max-w-none dark:prose-invert prose-headings:font-display prose-h2:mt-10 prose-h2:text-lg prose-h2:font-bold prose-h2:uppercase prose-h2:tracking-wide">
+    <x-legal-document>
             <h2>Who we are</h2>
             <p>
                 {{ config('app.name') }} (“we”, “us”) operates this website and related services for court booking,
                 venue tools, and related features. For questions about this policy or your personal data, contact us at
-                <a
-                    href="mailto:{{ config('data_privacy.contact_email') }}"
-                    class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-                >
-                    {{ config('data_privacy.contact_email') }}
-                </a>.
+                <a href="mailto:{{ config('data_privacy.contact_email') }}">{{ config('data_privacy.contact_email') }}</a>.
             </p>
 
             <h2>Personal data we collect</h2>
@@ -106,12 +100,7 @@
             </ul>
             <p>
                 To exercise these rights, email
-                <a
-                    href="mailto:{{ config('data_privacy.contact_email') }}"
-                    class="font-semibold text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-                >
-                    {{ config('data_privacy.contact_email') }}
-                </a>
+                <a href="mailto:{{ config('data_privacy.contact_email') }}">{{ config('data_privacy.contact_email') }}</a>
                 . We may need to verify your identity before responding.
             </p>
 
@@ -140,8 +129,5 @@
                 and, where required, additional notice. Continued use after changes may constitute acceptance where
                 permitted by law.
             </p>
-        </div>
-
-        @include('partials.legal-pages-nav')
-    </article>
+    </x-legal-document>
 </div>
