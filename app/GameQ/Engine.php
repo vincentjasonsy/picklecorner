@@ -902,11 +902,46 @@ class Engine
          */
         $arr = array_values($poolPlayers);
 
-        // 🔥 break predictable adjacency (very important)
+        // randomize first
         self::shuffleInPlace($arr);
+
+        // sort by level
+        usort($arr, fn($a, $b) => $a['level'] <=> $b['level']);
+
+        // check spread
+        $levels = array_map(fn($p) => (int)$p['level'], $arr);
+        $min = min($levels);
+        $max = max($levels);
+
+        $THRESHOLD = 1; // tweak this (1 or 2 is good)
+
+        // 👉 CASE 1: similar skill → keep natural grouping
+        if (($max - $min) <= $THRESHOLD) {
+            $sides = [];
+            for ($i = 0; $i + 1 < count($arr); $i += 2) {
+                $sides[] = [$arr[$i]['id'], $arr[$i + 1]['id']];
+            }
+            return $sides;
+        }
+
+        // 👉 CASE 2: mixed skill → balance teams
+        $half = intdiv(count($arr), 2);
+        $low = array_slice($arr, 0, $half);
+        $high = array_slice($arr, $half);
+
+        // reverse high so strongest pairs with weakest
+        $high = array_reverse($high);
+
+        $flat = [];
+        for ($i = 0; $i < min(count($low), count($high)); $i++) {
+            $flat[] = $low[$i];
+            $flat[] = $high[$i];
+        }
+
+        // build sides
         $sides = [];
-        for ($i = 0; $i + 1 < count($arr); $i += 2) {
-            $sides[] = [$arr[$i]['id'], $arr[$i + 1]['id']];
+        for ($i = 0; $i + 1 < count($flat); $i += 2) {
+            $sides[] = [$flat[$i]['id'], $flat[$i + 1]['id']];
         }
 
         return $sides;
