@@ -488,7 +488,7 @@
                     </h2>
                     <p class="mt-4 text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
                         Questions about partnering, a product walkthrough, or bringing {{ config('app.name') }} to your
-                        venue? Use the contact form — we read every message.
+                        venue? Email us — we read every message.
                     </p>
                     <div class="mt-6">
                         <a
@@ -496,7 +496,7 @@
                             wire:navigate
                             class="font-display inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-5 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:from-emerald-500 hover:to-teal-500"
                         >
-                            Contact &amp; book a demo
+                            Contact us
                         </a>
                     </div>
                     <ul class="mt-8 space-y-4 text-sm text-zinc-700 dark:text-zinc-300">
@@ -541,17 +541,17 @@
                     </p>
                     <div class="mt-6 flex flex-col gap-3">
                         <a
-                            href="{{ route('contact') }}"
-                            wire:navigate
+                            href="mailto:{{ $contactEmail }}?subject={{ rawurlencode(config('app.name').' — Contact') }}"
                             class="font-display inline-flex w-full items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-3 text-center text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:from-emerald-500 hover:to-teal-500"
                         >
-                            Open contact form
+                            Email {{ $contactEmail }}
                         </a>
                         <a
-                            href="mailto:{{ $contactEmail }}?subject={{ rawurlencode(config('app.name').' — Contact') }}"
+                            href="{{ route('contact') }}"
+                            wire:navigate
                             class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800"
                         >
-                            Email us directly
+                            Contact page
                         </a>
                     </div>
                 </div>

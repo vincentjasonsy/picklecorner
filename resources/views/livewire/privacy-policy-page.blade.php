@@ -29,8 +29,8 @@
                     operational records needed to run the platform.
                 </li>
                 <li>
-                    <strong>Communications:</strong> messages you send us (for example through contact forms) and
-                    service-related emails (confirmations, reminders, security notices).
+                    <strong>Communications:</strong> messages you send us (for example by email) and service-related
+                    emails (confirmations, reminders, security notices).
                 </li>
                 <li>
                     <strong>Optional marketing:</strong> where you separately agree, we may send newsletters, product
