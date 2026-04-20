@@ -61,7 +61,7 @@ class CourtClientSeeder extends Seeder
                 'amenities' => $public['amenities'],
                 'admin_user_id' => $admin->id,
                 'subscription_tier' => CourtClient::TIER_PREMIUM,
-                'is_active' => true,
+                'venue_status' => CourtClient::VENUE_STATUS_ACTIVE,
                 'hourly_rate_cents' => 25_000,
                 'peak_hourly_rate_cents' => 37_000,
                 'currency' => 'PHP',

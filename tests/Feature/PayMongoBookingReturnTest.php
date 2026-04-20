@@ -22,7 +22,7 @@ class PayMongoBookingReturnTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-return-club']);
+        $client = CourtClient::factory()->create(['slug' => 'pay-return-club']);
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court 1',
@@ -70,7 +70,7 @@ class PayMongoBookingReturnTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-return-empty']);
+        $client = CourtClient::factory()->create(['slug' => 'pay-return-empty']);
         $player = User::factory()->player()->create();
 
         $intentId = (string) Str::uuid();
@@ -95,7 +95,7 @@ class PayMongoBookingReturnTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-return-pending']);
+        $client = CourtClient::factory()->create(['slug' => 'pay-return-pending']);
         $player = User::factory()->player()->create();
 
         $intentId = (string) Str::uuid();
@@ -126,7 +126,7 @@ class PayMongoBookingReturnTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-return-failed']);
+        $client = CourtClient::factory()->create(['slug' => 'pay-return-failed']);
         $player = User::factory()->player()->create();
 
         $intentId = (string) Str::uuid();
@@ -153,7 +153,7 @@ class PayMongoBookingReturnTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-cancel-club']);
+        $client = CourtClient::factory()->create(['slug' => 'pay-cancel-club']);
         $player = User::factory()->player()->create();
 
         $intentId = (string) Str::uuid();
@@ -185,7 +185,7 @@ class PayMongoBookingReturnTest extends TestCase
         $tz = config('app.timezone', 'UTC');
         Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'pay-restore-club']);
+        $client = CourtClient::factory()->create(['slug' => 'pay-restore-club']);
         for ($d = 0; $d < 7; $d++) {
             VenueWeeklyHour::query()->create([
                 'court_client_id' => $client->id,

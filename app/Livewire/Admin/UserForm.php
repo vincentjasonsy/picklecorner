@@ -65,6 +65,8 @@ class UserForm extends Component
         $deskTypeId = (string) UserType::query()->where('slug', UserType::SLUG_COURT_CLIENT_DESK)->value('id');
         $courtAdminTypeId = (string) UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id');
 
+        $giftControls = booking_gift_subscription_controls_visible();
+
         $validated = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -83,19 +85,24 @@ class UserForm extends Component
                 'uuid',
                 Rule::exists('court_clients', 'id'),
             ],
-            'venue_subscription_tier' => [
-                Rule::requiredIf(function () use ($courtAdminTypeId) {
-                    if (! $this->user) {
-                        return false;
-                    }
+            'venue_subscription_tier' => array_merge(
+                [Rule::excludeUnless(fn () => $giftControls)],
+                $giftControls
+                    ? [
+                        Rule::requiredIf(function () use ($courtAdminTypeId) {
+                            if (! $this->user) {
+                                return false;
+                            }
 
-                    return (string) $this->user_type_id === $courtAdminTypeId
-                        && $this->user->administeredCourtClient !== null;
-                }),
-                'nullable',
-                'string',
-                Rule::in(CourtClient::subscriptionTierValues()),
-            ],
+                            return (string) $this->user_type_id === $courtAdminTypeId
+                                && $this->user->administeredCourtClient !== null;
+                        }),
+                        'nullable',
+                        'string',
+                        Rule::in(CourtClient::subscriptionTierValues()),
+                    ]
+                    : [],
+            ),
         ]);
 
         if ($this->user) {
@@ -132,10 +139,12 @@ class UserForm extends Component
                 "User {$this->user->email} updated",
             );
 
-            $this->syncCourtAdminVenueSubscriptionTier(
-                $validated,
-                $courtAdminTypeId,
-            );
+            if ($giftControls) {
+                $this->syncCourtAdminVenueSubscriptionTier(
+                    $validated,
+                    $courtAdminTypeId,
+                );
+            }
 
             session()->flash('status', 'User updated.');
 
@@ -249,6 +258,7 @@ class UserForm extends Component
             'courtAdminTypeId' => (string) UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id'),
             'isEdit' => $this->user !== null,
             'heading' => $this->user ? 'Edit user' : 'Create user',
+            'giftSubscriptionControlsVisible' => booking_gift_subscription_controls_visible(),
         ]);
     }
 }

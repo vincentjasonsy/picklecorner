@@ -94,7 +94,6 @@ class PhilippinesRegionalVenuesSeeder extends Seeder
                 'name' => $prefix.' Pickle — '.$meta['city'],
                 'slug' => $slug,
                 'city' => $meta['city'],
-                'is_active' => true,
                 'currency' => 'PHP',
             ]);
 

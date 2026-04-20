@@ -148,7 +148,7 @@ final class InternalTeamPlayReminder
     {
         return Court::query()
             ->where('is_available', true)
-            ->whereHas('courtClient', fn ($q) => $q->where('is_active', true))
+            ->whereHas('courtClient', fn ($q) => $q->wherePubliclyBookable())
             ->with('courtClient')
             ->orderBy('court_client_id')
             ->orderBy('sort_order')

@@ -32,7 +32,7 @@ class InternalTeamPlayDemoSeeder extends Seeder
     {
         $court = Court::query()
             ->where('is_available', true)
-            ->whereHas('courtClient', fn ($q) => $q->where('is_active', true))
+            ->whereHas('courtClient', fn ($q) => $q->wherePubliclyBookable())
             ->orderBy('court_client_id')
             ->first();
 

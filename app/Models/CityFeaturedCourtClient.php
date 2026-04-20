@@ -36,7 +36,7 @@ class CityFeaturedCourtClient extends Model
     {
         return static::query()
             ->where('city', $city)
-            ->whereHas('courtClient', fn ($q) => $q->where('is_active', true))
+            ->whereHas('courtClient', fn ($q) => $q->wherePubliclyBookable())
             ->orderBy('sort_order')
             ->with(['courtClient' => fn ($q) => $q->with('approvedGalleryImages')])
             ->get()

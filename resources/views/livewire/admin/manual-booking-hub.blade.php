@@ -23,8 +23,9 @@
         <x-dashboard.table-search wire:model.live.debounce.300ms="q" placeholder="Venue or city" />
         <x-dashboard.table-filter wire:model.live="statusFilter" label="Status">
             <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="{{ \App\Models\CourtClient::VENUE_STATUS_ACTIVE }}">Active</option>
+            <option value="{{ \App\Models\CourtClient::VENUE_STATUS_UPCOMING }}">Upcoming</option>
+            <option value="{{ \App\Models\CourtClient::VENUE_STATUS_INACTIVE }}">Inactive</option>
         </x-dashboard.table-filter>
     </x-slot:toolbar>
 
@@ -54,7 +55,7 @@
                 :direction="$headerSortDir"
             />
             <x-dashboard.sortable-th
-                column="is_active"
+                column="venue_status"
                 label="Status"
                 :active="$headerSortField"
                 :direction="$headerSortDir"
@@ -82,11 +83,17 @@
                 @endif
             </td>
             <td class="px-4 py-3">
-                @if ($client->is_active)
+                @if ($client->venue_status === \App\Models\CourtClient::VENUE_STATUS_ACTIVE)
                     <span
                         class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
                     >
                         Active
+                    </span>
+                @elseif ($client->venue_status === \App\Models\CourtClient::VENUE_STATUS_UPCOMING)
+                    <span
+                        class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-900 dark:bg-sky-950/50 dark:text-sky-200"
+                    >
+                        Upcoming
                     </span>
                 @else
                     <span

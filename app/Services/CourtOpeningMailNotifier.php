@@ -7,6 +7,7 @@ use App\Models\CourtClient;
 use App\Models\User;
 use App\Models\UserType;
 use App\Notifications\MemberNewCourtOpeningNotification;
+use Illuminate\Database\Eloquent\Collection;
 
 final class CourtOpeningMailNotifier
 {
@@ -23,7 +24,7 @@ final class CourtOpeningMailNotifier
 
         /** @var CourtClient|null $venue */
         $venue = $court->courtClient;
-        if ($venue === null || ! $venue->is_active || ! $court->is_available) {
+        if ($venue === null || ! $venue->isPubliclyBookable() || ! $court->is_available) {
             return;
         }
 
@@ -51,9 +52,9 @@ final class CourtOpeningMailNotifier
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Collection<int, User>
+     * @return Collection<int, User>
      */
-    private static function eligibleRecipientsForCity(string $city): \Illuminate\Database\Eloquent\Collection
+    private static function eligibleRecipientsForCity(string $city): Collection
     {
         $normalized = mb_strtolower(trim($city));
 

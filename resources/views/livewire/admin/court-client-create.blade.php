@@ -70,16 +70,25 @@
                                 class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
                             ></textarea>
                         </div>
-                        <div class="flex items-center gap-2 sm:col-span-2">
-                            <input
-                                wire:model="is_active"
-                                id="is_active_create"
-                                type="checkbox"
-                                class="size-4 rounded border-zinc-300 dark:border-zinc-600"
-                            />
-                            <label for="is_active_create" class="text-sm text-zinc-700 dark:text-zinc-300">
-                                Venue is active
+                        <div class="sm:col-span-2">
+                            <label
+                                for="venue_status_create"
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Venue status
                             </label>
+                            <select
+                                wire:model="venue_status"
+                                id="venue_status_create"
+                                class="mt-1 w-full max-w-md rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                            >
+                                <option value="{{ \App\Models\CourtClient::VENUE_STATUS_UPCOMING }}">Upcoming</option>
+                                <option value="{{ \App\Models\CourtClient::VENUE_STATUS_ACTIVE }}">Active</option>
+                                <option value="{{ \App\Models\CourtClient::VENUE_STATUS_INACTIVE }}">Inactive</option>
+                            </select>
+                            @error('venue_status')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>

@@ -191,6 +191,7 @@
                                             @foreach ($manualCourts as $court)
                                                 @php
                                                     $slotKey = $court->id.'-'.$hour;
+                                                    $slotPriceLabel = $this->slotHourPriceLabel($court, $hour);
                                                     $booked = $manualOccupancy[$slotKey] ?? null;
                                                     $weeklyBlocked = $court->isWeeklySlotBlocked(
                                                         $manualBookingDow,
@@ -250,6 +251,11 @@
                                                             <span class="text-[10px] font-bold uppercase tracking-wide">
                                                                 Booked
                                                             </span>
+                                                            @if ($slotPriceLabel !== '')
+                                                                <span class="mt-0.5 text-[9px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                                                                    {{ $slotPriceLabel }}
+                                                                </span>
+                                                            @endif
                                                             <span class="mt-0.5 line-clamp-2 max-w-full text-[10px] font-semibold leading-tight">
                                                                 {{ $cellSub }}
                                                             </span>
@@ -265,6 +271,11 @@
                                                             <span class="text-[10px] font-bold uppercase tracking-wide">
                                                                 Booked
                                                             </span>
+                                                            @if ($slotPriceLabel !== '')
+                                                                <span class="mt-0.5 text-[9px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                                                                    {{ $slotPriceLabel }}
+                                                                </span>
+                                                            @endif
                                                             <span class="mt-0.5 line-clamp-2 max-w-full text-[10px] font-semibold leading-tight">
                                                                 {{ $cellSub }}
                                                             </span>
@@ -275,17 +286,41 @@
                                                     @elseif ($blocked && ! $this->manualBookingMaySelectBlockedSlots())
                                                         <div
                                                             title="Not available — blocked"
-                                                            class="flex min-h-[3.25rem] w-full cursor-default flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-semibold {{ $availStyle }}"
+                                                            class="flex min-h-[3.25rem] w-full cursor-default flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-2 text-center text-xs font-semibold {{ $availStyle }}"
                                                         >
-                                                            {{ $cellTitle }}
+                                                            <span class="text-[10px] font-bold uppercase tracking-wide">{{ $cellTitle }}</span>
+                                                            @if ($slotPriceLabel !== '')
+                                                                <span class="text-[9px] font-semibold tabular-nums text-red-800/90 dark:text-red-200/90">
+                                                                    {{ $slotPriceLabel }}
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     @else
                                                         <button
                                                             type="button"
                                                             wire:click="toggleManualSlot('{{ $court->id }}', {{ $hour }})"
-                                                            class="flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-emerald-500/60 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 {{ $availStyle }}"
+                                                            class="flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-emerald-500/60 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 {{ $availStyle }}"
                                                         >
-                                                            {{ $cellTitle }}
+                                                            <span
+                                                                @class([
+                                                                    'text-[10px] font-bold uppercase tracking-wide',
+                                                                    'text-white' => $slotSelected,
+                                                                ])
+                                                            >
+                                                                {{ $cellTitle }}
+                                                            </span>
+                                                            @if ($slotPriceLabel !== '')
+                                                                <span
+                                                                    @class([
+                                                                        'text-[9px] font-semibold tabular-nums leading-tight',
+                                                                        'text-white/90' => $slotSelected,
+                                                                        'text-red-800/90 dark:text-red-200/90' => $blocked && ! $slotSelected,
+                                                                        'text-zinc-600 dark:text-zinc-300' => ! $slotSelected && ! $blocked,
+                                                                    ])
+                                                                >
+                                                                    {{ $slotPriceLabel }}
+                                                                </span>
+                                                            @endif
                                                         </button>
                                                     @endif
                                                 </td>
@@ -299,6 +334,85 @@
                         @error('selectedManualSlots')
                             <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
                         @enderror
+
+                        @if (count($this->selectedManualSlots) > 0)
+                            @php
+                                $mbDraft = $this->manualBookingPricingDraft;
+                                $mbCurrency = $courtClient->currency ?? 'PHP';
+                            @endphp
+                            <div
+                                class="mt-4 rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-900/50"
+                            >
+                                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                    Pricing estimate
+                                </p>
+                                @if ($mbDraft['error'] !== null)
+                                    <p class="mt-2 text-sm text-amber-800 dark:text-amber-200">
+                                        {{ $mbDraft['error'] }}
+                                    </p>
+                                @else
+                                    <ul class="mt-3 space-y-2 text-sm text-zinc-800 dark:text-zinc-200">
+                                        @foreach ($mbDraft['specs'] as $spec)
+                                            <li class="flex flex-wrap justify-between gap-2 border-b border-zinc-200/80 pb-2 last:border-0 dark:border-zinc-700/80">
+                                                <span class="min-w-0 font-medium">
+                                                    {{ $spec['court']->name }}
+                                                    <span class="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                                        {{ $spec['starts']->isoFormat('h:mm A') }}
+                                                        –
+                                                        {{ $spec['ends']->isoFormat('h:mm A') }}
+                                                    </span>
+                                                </span>
+                                                <span class="shrink-0 tabular-nums font-semibold text-zinc-900 dark:text-white">
+                                                    {{ \App\Support\Money::formatMinor($spec['gross_cents'], $mbCurrency) }}
+                                                </span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                    <dl class="mt-4 space-y-1.5 text-sm">
+                                        <div class="flex justify-between gap-2">
+                                            <dt class="text-zinc-600 dark:text-zinc-400">Court subtotal</dt>
+                                            <dd class="tabular-nums font-semibold text-zinc-900 dark:text-white">
+                                                {{ \App\Support\Money::formatMinor($this->manualBookingCourtSubtotalCents, $mbCurrency) }}
+                                            </dd>
+                                        </div>
+                                        @if ($this->manualBookingBookingFeePreviewCents > 0)
+                                            <div class="flex justify-between gap-2">
+                                                <dt class="text-zinc-600 dark:text-zinc-400">
+                                                    {{ currentBookingFeeSetting()->breakdownLabel() }}
+                                                </dt>
+                                                <dd class="tabular-nums font-semibold text-zinc-900 dark:text-white">
+                                                    {{ \App\Support\Money::formatMinor($this->manualBookingBookingFeePreviewCents, $mbCurrency) }}
+                                                </dd>
+                                            </div>
+                                        @endif
+                                        @if ($this->manualBookingPortal() !== 'desk' && $this->manualBookingGiftEstimateCents > 0)
+                                            <div class="flex justify-between gap-2">
+                                                <dt class="text-zinc-600 dark:text-zinc-400">Gift card</dt>
+                                                <dd class="tabular-nums font-semibold text-emerald-700 dark:text-emerald-400">
+                                                    − {{ \App\Support\Money::formatMinor($this->manualBookingGiftEstimateCents, $mbCurrency) }}
+                                                </dd>
+                                            </div>
+                                        @endif
+                                        <div class="flex justify-between gap-2 border-t border-zinc-200 pt-2 dark:border-zinc-600">
+                                            <dt class="font-semibold text-zinc-900 dark:text-white">
+                                                @if ($this->manualBookingPortal() === 'desk')
+                                                    Estimated total (court + fee)
+                                                @else
+                                                    Amount due (court + fee, after gift)
+                                                @endif
+                                            </dt>
+                                            <dd class="tabular-nums text-base font-bold text-zinc-900 dark:text-white">
+                                                {{ \App\Support\Money::formatMinor($this->manualBookingBalanceAfterGiftCents, $mbCurrency) }}
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                    <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
+                                        Fee line matches member checkout. Recorded manual/desk bookings still store court
+                                        rental only unless you collect the convenience fee outside this flow.
+                                    </p>
+                                @endif
+                            </div>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -501,7 +615,7 @@
                         </label>
                         <input
                             type="text"
-                            wire:model="manualBookingGiftCardCode"
+                            wire:model.live.debounce.400ms="manualBookingGiftCardCode"
                             class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 font-mono text-sm uppercase dark:border-zinc-700 dark:bg-zinc-950"
                             placeholder="GIFT-…"
                             autocomplete="off"

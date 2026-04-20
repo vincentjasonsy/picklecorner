@@ -34,7 +34,7 @@ class CourtOpenPlayTest extends TestCase
 
         $host = User::factory()->player()->create();
         $joiner = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',
@@ -130,7 +130,7 @@ class CourtOpenPlayTest extends TestCase
 
         $host = User::factory()->player()->create();
         $joiner = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',
@@ -209,7 +209,7 @@ class CourtOpenPlayTest extends TestCase
         $host = User::factory()->player()->create();
         $joiner1 = User::factory()->player()->create();
         $joiner2 = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',

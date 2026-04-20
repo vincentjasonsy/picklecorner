@@ -37,7 +37,7 @@ class CourtClientFactory extends Factory
             'notes' => null,
             'admin_user_id' => null,
             'subscription_tier' => CourtClient::TIER_PREMIUM,
-            'is_active' => true,
+            'venue_status' => CourtClient::VENUE_STATUS_ACTIVE,
             'hourly_rate_cents' => fake()->numberBetween(250, 550) * 100,
             'peak_hourly_rate_cents' => null,
             'currency' => 'PHP',
@@ -68,6 +68,20 @@ class CourtClientFactory extends Factory
     {
         return $this->state(fn () => [
             'subscription_tier' => CourtClient::TIER_PREMIUM,
+        ]);
+    }
+
+    public function upcoming(): static
+    {
+        return $this->state(fn () => [
+            'venue_status' => CourtClient::VENUE_STATUS_UPCOMING,
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn () => [
+            'venue_status' => CourtClient::VENUE_STATUS_INACTIVE,
         ]);
     }
 }

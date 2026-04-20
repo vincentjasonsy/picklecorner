@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\BookingFeeSetting;
+use App\Models\User;
 
 /**
  * Guest/member-facing ratings, review lists, and compose UI (controlled by BOOKING_PUBLIC_REVIEWS_ENABLED).
@@ -8,6 +9,20 @@ use App\Models\BookingFeeSetting;
 function public_reviews_enabled(): bool
 {
     return (bool) config('booking.public_reviews_enabled', false);
+}
+
+/**
+ * Admin UI for venue subscription tier (gift cards / CRM tier). Super-admin-only when configured.
+ */
+function booking_gift_subscription_controls_visible(?User $user = null): bool
+{
+    if (! (bool) config('booking.gift_subscription_controls_super_admin_only', false)) {
+        return true;
+    }
+
+    $user ??= auth()->user();
+
+    return $user instanceof User && $user->isSuperAdmin();
 }
 
 /**

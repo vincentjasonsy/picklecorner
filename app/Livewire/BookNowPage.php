@@ -77,7 +77,7 @@ class BookNowPage extends Component
         }
 
         return CourtClient::query()
-            ->where('is_active', true)
+            ->whereListedOnBookNow()
             ->whereNotNull('city')
             ->orderBy('city')
             ->value('city');
@@ -197,7 +197,7 @@ class BookNowPage extends Component
     {
         return Court::query()
             ->where('is_available', true)
-            ->whereHas('courtClient', fn ($q) => $q->where('is_active', true))
+            ->whereHas('courtClient', fn ($q) => $q->whereListedOnBookNow())
             ->with(['courtClient', 'approvedGalleryImages'])
             ->orderBy('court_client_id')
             ->orderBy('sort_order')
@@ -299,6 +299,12 @@ class BookNowPage extends Component
             }
         }
 
+        $aSoon = $a->isOpeningSoonVenue();
+        $bSoon = $b->isOpeningSoonVenue();
+        if ($aSoon !== $bSoon) {
+            return $aSoon <=> $bSoon;
+        }
+
         if (config('booking.public_reviews_enabled')) {
             $cmp = $this->comparePublicRatingTuples(
                 $a->public_rating_average,
@@ -373,7 +379,7 @@ class BookNowPage extends Component
     public function cityPills(): Collection
     {
         $cities = CourtClient::query()
-            ->where('is_active', true)
+            ->whereListedOnBookNow()
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')
@@ -417,7 +423,10 @@ class BookNowPage extends Component
         $q = Court::query()
             ->select('courts.*')
             ->join('court_clients', 'courts.court_client_id', '=', 'court_clients.id')
-            ->where('court_clients.is_active', true)
+            ->whereIn('court_clients.venue_status', [
+                CourtClient::VENUE_STATUS_ACTIVE,
+                CourtClient::VENUE_STATUS_UPCOMING,
+            ])
             ->where('courts.is_available', true);
 
         if (filled($preferred)) {
@@ -449,7 +458,7 @@ class BookNowPage extends Component
         $courts = Court::query()
             ->whereIn('id', $ids)
             ->where('is_available', true)
-            ->whereHas('courtClient', fn ($q) => $q->where('is_active', true))
+            ->whereHas('courtClient', fn ($q) => $q->whereListedOnBookNow())
             ->with('courtClient')
             ->get()
             ->keyBy('id');

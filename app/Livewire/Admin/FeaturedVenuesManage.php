@@ -59,7 +59,7 @@ class FeaturedVenuesManage extends Component
     public function cityOptions()
     {
         return CourtClient::query()
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')
@@ -76,7 +76,7 @@ class FeaturedVenuesManage extends Component
         }
 
         return CourtClient::query()
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->where('city', $this->selectedCity)
             ->orderBy('name')
             ->get();
@@ -155,7 +155,7 @@ class FeaturedVenuesManage extends Component
 
         $validIds = CourtClient::query()
             ->where('city', $this->selectedCity)
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->whereIn('id', $this->orderedIds)
             ->pluck('id')
             ->map(fn ($id) => (string) $id)

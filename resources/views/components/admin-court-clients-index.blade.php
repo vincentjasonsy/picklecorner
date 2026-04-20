@@ -22,7 +22,7 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
     /** @return list<string> */
     protected function sortableColumns(): array
     {
-        return ['name', 'city', 'hourly_rate_cents', 'is_active'];
+        return ['name', 'city', 'hourly_rate_cents', 'venue_status'];
     }
 
     public function updatedQ(): void
@@ -47,10 +47,12 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
             });
         }
 
-        if ($this->statusFilter === 'active') {
-            $query->where('is_active', true);
-        } elseif ($this->statusFilter === 'inactive') {
-            $query->where('is_active', false);
+        if ($this->statusFilter === \App\Models\CourtClient::VENUE_STATUS_ACTIVE) {
+            $query->where('venue_status', \App\Models\CourtClient::VENUE_STATUS_ACTIVE);
+        } elseif ($this->statusFilter === \App\Models\CourtClient::VENUE_STATUS_UPCOMING) {
+            $query->where('venue_status', \App\Models\CourtClient::VENUE_STATUS_UPCOMING);
+        } elseif ($this->statusFilter === \App\Models\CourtClient::VENUE_STATUS_INACTIVE) {
+            $query->where('venue_status', \App\Models\CourtClient::VENUE_STATUS_INACTIVE);
         }
 
         if ($this->sortField !== '' && in_array($this->sortField, $this->sortableColumns(), true)) {
@@ -122,8 +124,9 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
         <x-dashboard.table-search wire:model.live.debounce.300ms="q" placeholder="Venue or city" />
         <x-dashboard.table-filter wire:model.live="statusFilter" label="Status">
             <option value="">All statuses</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+            <option value="{{ \App\Models\CourtClient::VENUE_STATUS_ACTIVE }}">Active</option>
+            <option value="{{ \App\Models\CourtClient::VENUE_STATUS_UPCOMING }}">Upcoming</option>
+            <option value="{{ \App\Models\CourtClient::VENUE_STATUS_INACTIVE }}">Inactive</option>
         </x-dashboard.table-filter>
     </x-slot:toolbar>
 
@@ -160,7 +163,7 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
                 :direction="$headerSortDir"
             />
             <x-dashboard.sortable-th
-                column="is_active"
+                column="venue_status"
                 label="Status"
                 :active="$headerSortField"
                 :direction="$headerSortDir"
@@ -188,11 +191,17 @@ new #[Layout('layouts::admin'), Title('Court clients')] class extends Component
                 @endif
             </td>
             <td class="px-4 py-3">
-                @if ($client->is_active)
+                @if ($client->venue_status === \App\Models\CourtClient::VENUE_STATUS_ACTIVE)
                     <span
                         class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
                     >
                         Active
+                    </span>
+                @elseif ($client->venue_status === \App\Models\CourtClient::VENUE_STATUS_UPCOMING)
+                    <span
+                        class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-900 dark:bg-sky-950/50 dark:text-sky-200"
+                    >
+                        Upcoming
                     </span>
                 @else
                     <span

@@ -169,7 +169,7 @@ class AdminAccessTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-04-08 12:00:00', config('app.timezone')));
 
         $player = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',
@@ -234,7 +234,7 @@ class AdminAccessTest extends TestCase
 
         $player = User::factory()->player()->create();
         $player->forceFill(['internal_team_play_reminders_unsubscribed_at' => now()->subDay()])->save();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',
@@ -303,7 +303,7 @@ class AdminAccessTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-04-08 12:00:00', config('app.timezone')));
 
         $player = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',

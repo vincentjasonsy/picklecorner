@@ -29,7 +29,6 @@ class CourtOpeningMailTest extends TestCase
 
         $client = CourtClient::factory()->create([
             'city' => 'Makati',
-            'is_active' => true,
             'slug' => 'makati-hub',
         ]);
 
@@ -62,7 +61,6 @@ class CourtOpeningMailTest extends TestCase
 
         $client = CourtClient::factory()->create([
             'city' => 'Cebu',
-            'is_active' => true,
             'slug' => 'cebu-hub',
         ]);
 
@@ -96,7 +94,6 @@ class CourtOpeningMailTest extends TestCase
 
         $client = CourtClient::factory()->create([
             'city' => 'Makati',
-            'is_active' => true,
             'slug' => 'other-hub',
         ]);
 

@@ -101,7 +101,12 @@
                     @endif
                     <p class="text-sm text-zinc-600 dark:text-zinc-400">
                         <span class="font-semibold text-zinc-800 dark:text-zinc-200">{{ $courts->count() }}</span>
-                        {{ \Illuminate\Support\Str::plural('court', $courts->count()) }} available to book
+                        {{ \Illuminate\Support\Str::plural('court', $courts->count()) }}
+                        @if ($this->venueIsOpeningSoon())
+                            at this venue
+                        @else
+                            available to book
+                        @endif
                     </p>
                     @if ($minRate !== null)
                         <p class="text-sm font-bold text-emerald-700 dark:text-emerald-400">
@@ -161,6 +166,32 @@
             </div>
 
             @if ($step === 'times')
+                @if ($this->venueIsOpeningSoon())
+                    <div
+                        class="relative overflow-hidden rounded-2xl border border-zinc-400/60 bg-gradient-to-br from-zinc-200 via-zinc-100 to-zinc-50 px-6 py-16 text-center shadow-[0_12px_40px_-8px_rgba(0,0,0,0.22)] ring-1 ring-zinc-950/10 dark:border-zinc-600 dark:from-zinc-950 dark:via-zinc-950 dark:to-black dark:shadow-[0_16px_48px_-12px_rgba(0,0,0,0.65)] dark:ring-white/10"
+                    >
+                        <div
+                            class="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(0,0,0,0.06),_transparent_55%)] dark:bg-[radial-gradient(ellipse_at_top,_rgba(0,0,0,0.35),_transparent_55%)]"
+                            aria-hidden="true"
+                        ></div>
+                        <p
+                            class="pointer-events-none absolute left-1/2 top-[42%] z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-white/15 bg-zinc-950 px-5 py-2.5 text-sm font-bold uppercase tracking-wide text-white shadow-2xl shadow-black/45 ring-2 ring-black/20 backdrop-blur-sm dark:border-white/10 dark:ring-white/15"
+                        >
+                            Coming soon
+                        </p>
+                        <p class="relative z-[1] mx-auto mt-28 max-w-md text-sm leading-relaxed text-zinc-700 dark:text-zinc-400">
+                            Public booking isn’t open yet for this venue. Browse other clubs from Book now, or check back when we go
+                            live.
+                        </p>
+                        <a
+                            href="{{ $this->backUrl() }}"
+                            wire:navigate
+                            class="relative z-[1] mt-8 inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-500"
+                        >
+                            ← Back to browse
+                        </a>
+                    </div>
+                @else
                 <div class="space-y-6">
                     <div>
                         <h2 class="font-display text-xl font-bold text-zinc-900 dark:text-white">
@@ -344,27 +375,35 @@
                                                                     'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20';
                                                                 $cellTitle = 'Open';
                                                             }
-                                                            $slotPriceLabel = ($isBookedCell || $isBlockedCell)
-                                                                ? ''
-                                                                : $this->slotHourPriceLabel($court, $hour);
+                                                            $slotPriceLabel = $this->slotHourPriceLabel($court, $hour);
                                                         @endphp
                                                         <td class="p-1.5 align-middle">
                                                             @if ($isBookedCell)
                                                                 <div
-                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-1.5 py-1.5 text-center {{ $availStyle }}"
+                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-1.5 py-1.5 text-center {{ $availStyle }}"
                                                                 >
                                                                     <span class="text-[10px] font-bold uppercase tracking-wide">
                                                                         Booked
                                                                     </span>
+                                                                    @if ($slotPriceLabel !== '')
+                                                                        <span class="text-[9px] font-semibold tabular-nums text-slate-700 dark:text-slate-200">
+                                                                            {{ $slotPriceLabel }}
+                                                                        </span>
+                                                                    @endif
                                                                 </div>
                                                             @elseif ($isBlockedCell)
                                                                 <div
                                                                     title="Not available for booking"
-                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-1.5 py-1.5 text-center {{ $availStyle }}"
+                                                                    class="flex min-h-[3.25rem] w-full flex-col items-center justify-center gap-0.5 rounded-lg border px-1.5 py-1.5 text-center {{ $availStyle }}"
                                                                 >
                                                                     <span class="text-[10px] font-bold uppercase tracking-wide">
                                                                         Blocked
                                                                     </span>
+                                                                    @if ($slotPriceLabel !== '')
+                                                                        <span class="text-[9px] font-semibold tabular-nums text-red-800/90 dark:text-red-200/90">
+                                                                            {{ $slotPriceLabel }}
+                                                                        </span>
+                                                                    @endif
                                                                 </div>
                                                             @else
                                                                 <button
@@ -571,6 +610,7 @@
                         </button>
                     </div>
                 </div>
+                @endif
             @else
                 @php
                     $reviewSpecs = $this->buildSpecsForSubmit();

@@ -26,7 +26,7 @@ class ManualBookingHub extends Component
     /** @return list<string> */
     protected function sortableColumns(): array
     {
-        return ['name', 'city', 'hourly_rate_cents', 'is_active'];
+        return ['name', 'city', 'hourly_rate_cents', 'venue_status'];
     }
 
     public function updatedQ(): void
@@ -51,10 +51,12 @@ class ManualBookingHub extends Component
             });
         }
 
-        if ($this->statusFilter === 'active') {
-            $query->where('is_active', true);
-        } elseif ($this->statusFilter === 'inactive') {
-            $query->where('is_active', false);
+        if ($this->statusFilter === CourtClient::VENUE_STATUS_ACTIVE) {
+            $query->where('venue_status', CourtClient::VENUE_STATUS_ACTIVE);
+        } elseif ($this->statusFilter === CourtClient::VENUE_STATUS_UPCOMING) {
+            $query->where('venue_status', CourtClient::VENUE_STATUS_UPCOMING);
+        } elseif ($this->statusFilter === CourtClient::VENUE_STATUS_INACTIVE) {
+            $query->where('venue_status', CourtClient::VENUE_STATUS_INACTIVE);
         }
 
         if ($this->sortField !== '' && in_array($this->sortField, $this->sortableColumns(), true)) {

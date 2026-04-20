@@ -18,7 +18,7 @@ final class BookAgainPlanner
     {
         $courtClient = CourtClient::query()->find($booking->court_client_id);
 
-        if ($courtClient === null || ! $courtClient->is_active || $booking->court_id === null) {
+        if ($courtClient === null || ! $courtClient->isPubliclyBookable() || $booking->court_id === null) {
             return [
                 'url' => route('account.book'),
                 'flash' => 'That venue isn’t available to repeat automatically — browse Book Now.',

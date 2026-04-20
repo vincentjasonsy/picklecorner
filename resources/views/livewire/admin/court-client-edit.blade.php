@@ -33,32 +33,6 @@
         @endif
     </div>
 
-    @if ($isVenuePortal)
-        <div
-            class="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900"
-            role="status"
-        >
-            @if ($courtClient->hasPremiumSubscription())
-                <p class="text-sm text-zinc-700 dark:text-zinc-300">
-                    <span class="font-semibold text-zinc-900 dark:text-white">Premium plan</span>
-                    — Gift cards and customer CRM are included.
-                </p>
-            @else
-                <p class="text-sm text-zinc-700 dark:text-zinc-300">
-                    <span class="font-semibold text-zinc-900 dark:text-white">Basic plan</span>
-                    — Gift cards and CRM require Premium.
-                    <a
-                        href="{{ route('venue.plan') }}"
-                        wire:navigate
-                        class="font-semibold text-emerald-600 underline decoration-emerald-600/30 hover:text-emerald-700 dark:text-emerald-400"
-                    >
-                        View plans
-                    </a>
-                </p>
-            @endif
-        </div>
-    @endif
-
     {{-- Venue, admin, pricing --}}
     <form wire:submit="saveVenue" class="space-y-6">
         <div class="grid gap-6 lg:grid-cols-2 lg:items-start">
@@ -229,16 +203,25 @@
                                 class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
                             ></textarea>
                         </div>
-                        <div class="flex items-center gap-2 sm:col-span-2">
-                            <input
-                                wire:model="is_active"
-                                id="is_active"
-                                type="checkbox"
-                                class="size-4 rounded border-zinc-300 dark:border-zinc-600"
-                            />
-                            <label for="is_active" class="text-sm text-zinc-700 dark:text-zinc-300">
-                                Venue is active
+                        <div class="sm:col-span-2">
+                            <label
+                                for="venue_status"
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
+                                Venue status
                             </label>
+                            <select
+                                wire:model="venue_status"
+                                id="venue_status"
+                                class="mt-1 w-full max-w-md rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                            >
+                                <option value="{{ \App\Models\CourtClient::VENUE_STATUS_UPCOMING }}">Upcoming</option>
+                                <option value="{{ \App\Models\CourtClient::VENUE_STATUS_ACTIVE }}">Active</option>
+                                <option value="{{ \App\Models\CourtClient::VENUE_STATUS_INACTIVE }}">Inactive</option>
+                            </select>
+                            @error('venue_status')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -326,40 +309,42 @@
                         </div>
                     </div>
 
-                    <div
-                        class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
-                    >
-                        <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">
-                            Subscription tier
-                        </h2>
-                        <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                            Basic includes core operations. Premium unlocks gift cards and the customer CRM in the venue
-                            portal.
-                        </p>
-                        <div class="mt-4">
-                            <label
-                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                for="subscription_tier"
-                            >
-                                Tier
-                            </label>
-                            <select
-                                wire:model="subscription_tier"
-                                id="subscription_tier"
-                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                            >
-                                <option value="{{ \App\Models\CourtClient::TIER_BASIC }}">
-                                    Basic — operations only (no gift cards or CRM)
-                                </option>
-                                <option value="{{ \App\Models\CourtClient::TIER_PREMIUM }}">
-                                    Premium — gift cards &amp; customer CRM
-                                </option>
-                            </select>
-                            @error('subscription_tier')
-                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                            @enderror
+                    @if ($giftSubscriptionControlsVisible)
+                        <div
+                            class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
+                        >
+                            <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">
+                                Subscription tier
+                            </h2>
+                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                                Basic includes core operations. Premium unlocks gift cards and the customer CRM in the venue
+                                portal.
+                            </p>
+                            <div class="mt-4">
+                                <label
+                                    class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                                    for="subscription_tier"
+                                >
+                                    Tier
+                                </label>
+                                <select
+                                    wire:model="subscription_tier"
+                                    id="subscription_tier"
+                                    class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                >
+                                    <option value="{{ \App\Models\CourtClient::TIER_BASIC }}">
+                                        Basic — operations only (no gift cards or CRM)
+                                    </option>
+                                    <option value="{{ \App\Models\CourtClient::TIER_PREMIUM }}">
+                                        Premium — gift cards &amp; customer CRM
+                                    </option>
+                                </select>
+                                @error('subscription_tier')
+                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                                @enderror
+                            </div>
                         </div>
-                    </div>
+                    @endif
                 @endunless
             </div>
 
@@ -659,14 +644,6 @@
             @endif
         </div>
 
-        @php
-            $slotGridHours = $this->slotHoursForGrid();
-            $availabilityGridHours = $this->slotHoursForAvailabilityGrid();
-            $availabilityDow = $this->availabilityDayOfWeek();
-            $dateBlockLookup = $this->availabilityDateBlockLookup;
-            $slotGridCourts = $this->courtsOrderedForGrid();
-        @endphp
-
         <div class="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
             <h3 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Weekly slots</h3>
             <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
@@ -734,55 +711,12 @@
                     <strong>availability</strong> date below jumps to that day so the grid stays in sync.
                 </p>
                 <div class="overflow-x-auto">
-                    <div class="min-w-[520px]">
-                        <div
-                            class="grid grid-cols-7 border-b border-zinc-200 bg-zinc-50 text-center text-[11px] font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-400"
-                        >
-                            <div class="px-1 py-2">Mon</div>
-                            <div class="px-1 py-2">Tue</div>
-                            <div class="px-1 py-2">Wed</div>
-                            <div class="px-1 py-2">Thu</div>
-                            <div class="px-1 py-2">Fri</div>
-                            <div class="px-1 py-2">Sat</div>
-                            <div class="px-1 py-2">Sun</div>
-                        </div>
-                        @foreach ($closureMonthWeeks as $week)
-                            <div
-                                class="grid grid-cols-7 divide-x divide-zinc-200 border-b border-zinc-200 last:border-b-0 dark:divide-zinc-800 dark:border-zinc-800"
-                                wire:key="closure-w-{{ $week[0]['date']->format('Y-m-d') }}"
-                            >
-                                @foreach ($week as $day)
-                                    @php
-                                        $closureYmd = $day['date']->format('Y-m-d');
-                                        $closureIsClosed = isset($closureMonthClosedLookup[$closureYmd]);
-                                        $closureIsAvailDate = $closureYmd === $availabilityCalendarDate;
-                                    @endphp
-                                    <div class="p-1 sm:p-1.5" wire:key="closure-d-{{ $closureYmd }}">
-                                        <button
-                                            type="button"
-                                            wire:click="toggleVenueClosedOnCalendarDay('{{ $closureYmd }}')"
-                                            @class([
-                                                'flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-lg border px-1 py-1.5 text-center text-xs font-semibold transition sm:min-h-[3.5rem]',
-                                                'ring-2 ring-emerald-500 ring-offset-1 ring-offset-white dark:ring-emerald-400 dark:ring-offset-zinc-900' => $closureIsAvailDate,
-                                                'border-zinc-200 bg-zinc-50/90 text-zinc-400 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-500' => ! $day['in_month'],
-                                                'border-zinc-200 bg-white text-zinc-800 hover:border-emerald-400/60 hover:bg-emerald-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-emerald-950/25' => $day['in_month'] && ! $closureIsClosed,
-                                                'border-red-300 bg-red-50 text-red-900 dark:border-red-900/60 dark:bg-red-950/35 dark:text-red-100' => $day['in_month'] && $closureIsClosed,
-                                            ])
-                                        >
-                                            <span class="tabular-nums">{{ $day['date']->timezone($closureCalendarTz)->day }}</span>
-                                            @if ($day['in_month'] && $closureIsClosed)
-                                                <span class="mt-0.5 text-[10px] font-bold uppercase tracking-wide text-red-700 dark:text-red-300">
-                                                    Closed
-                                                </span>
-                                            @elseif ($day['in_month'])
-                                                <span class="mt-0.5 text-[10px] font-medium text-zinc-500 dark:text-zinc-400">Open</span>
-                                            @endif
-                                        </button>
-                                    </div>
-                                @endforeach
-                            </div>
-                        @endforeach
-                    </div>
+                    @include('livewire.admin.partials.court-client-edit-closure-grid', [
+                        'closureMonthWeeks' => $closureMonthWeeks,
+                        'closureMonthClosedLookup' => $closureMonthClosedLookup,
+                        'closureCalendarTz' => $closureCalendarTz,
+                        'availabilityCalendarDate' => $availabilityCalendarDate,
+                    ])
                 </div>
                 <p class="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-zinc-200 px-4 py-2 text-[11px] text-zinc-500 dark:border-zinc-800 dark:text-zinc-400 sm:px-5">
                     <span class="inline-flex items-center gap-1.5">
@@ -850,29 +784,18 @@
                                             {{ $this->slotHourLabel($hour) }}
                                         </td>
                                         @foreach ($slotGridCourts as $court)
-                                            @php
-                                                $cell = \App\Services\CourtSlotPricing::resolveForSlot(
-                                                    $court,
-                                                    $slotPricingDay,
-                                                    $hour,
-                                                );
-                                                $cellStyle = match ($cell['mode']) {
-                                                    \App\Models\CourtTimeSlotSetting::MODE_PEAK => 'border-amber-200 bg-amber-50/90 dark:border-amber-900/50 dark:bg-amber-950/25',
-                                                    \App\Models\CourtTimeSlotSetting::MODE_MANUAL => 'border-violet-200 bg-violet-50/90 dark:border-violet-900/50 dark:bg-violet-950/25',
-                                                    default => 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900/60',
-                                                };
-                                            @endphp
+                                            @php($slotCell = $this->slotPricingGridCell($court, $hour))
                                             <td class="p-1.5 align-middle">
                                                 <button
                                                     type="button"
                                                     wire:click="openSlotEditor('{{ $court->id }}', {{ $hour }})"
-                                                    class="flex w-full flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs transition-colors hover:border-emerald-500/60 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 {{ $cellStyle }}"
+                                                    class="flex w-full flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs transition-colors hover:border-emerald-500/60 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 {{ $slotCell['cellStyle'] }}"
                                                 >
                                                     <span class="font-display text-[10px] font-bold text-zinc-400">
-                                                        {{ $cell['short_label'] }}
+                                                        {{ $slotCell['cell']['short_label'] }}
                                                     </span>
                                                     <span class="mt-0.5 font-semibold text-zinc-800 dark:text-zinc-100">
-                                                        {{ \App\Support\Money::formatMinor($cell['cents'], $currency) }}
+                                                        {{ \App\Support\Money::formatMinor($slotCell['cell']['cents'], $currency) }}
                                                     </span>
                                                 </button>
                                             </td>
@@ -974,33 +897,14 @@
                                                 {{ $this->slotHourLabel($hour) }}
                                             </td>
                                             @foreach ($slotGridCourts as $court)
-                                                @php
-                                                    $weeklyBlocked = $court->isWeeklySlotBlocked($availabilityDow, $hour);
-                                                    $dateBlocked = isset($dateBlockLookup[$court->id.'-'.$hour]);
-                                                    $blocked = $weeklyBlocked || $dateBlocked;
-                                                    if ($blocked) {
-                                                        $availStyle =
-                                                            'border-red-200 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25';
-                                                    } else {
-                                                        $availStyle =
-                                                            'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20';
-                                                    }
-                                                    $cellLabel = 'Open';
-                                                    if ($weeklyBlocked && $dateBlocked) {
-                                                        $cellLabel = 'Blocked';
-                                                    } elseif ($dateBlocked) {
-                                                        $cellLabel = 'Date block';
-                                                    } elseif ($weeklyBlocked) {
-                                                        $cellLabel = 'Weekly block';
-                                                    }
-                                                @endphp
+                                                @php($availCell = $this->availabilityGridCell($court, $hour))
                                                 <td class="p-1.5 align-middle">
                                                     <button
                                                         type="button"
                                                         wire:click="openAvailabilityEditor('{{ $court->id }}', {{ $hour }})"
-                                                        class="flex w-full flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-emerald-500/60 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 {{ $availStyle }}"
+                                                        class="flex w-full flex-col items-center justify-center rounded-lg border px-2 py-2 text-center text-xs font-semibold transition-colors hover:border-emerald-500/60 hover:bg-emerald-50/80 dark:hover:bg-emerald-950/30 {{ $availCell['availStyle'] }}"
                                                     >
-                                                        {{ $cellLabel }}
+                                                        {{ $availCell['cellLabel'] }}
                                                     </button>
                                                 </td>
                                             @endforeach

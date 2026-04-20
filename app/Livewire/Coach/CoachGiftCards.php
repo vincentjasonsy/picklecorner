@@ -87,7 +87,7 @@ class CoachGiftCards extends Component
 
         return CourtClient::query()
             ->whereIn('id', $ids)
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->orderBy('name')
             ->get(['id', 'name', 'city']);
     }

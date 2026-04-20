@@ -80,7 +80,7 @@ class CoachCourtsManage extends Component
     public function render(): View
     {
         $venues = CourtClient::query()
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->whereHas('courts', fn ($q) => $q->where('is_available', true))
             ->withCount([
                 'courts as bookable_courts_count' => fn ($q) => $q->where('is_available', true),

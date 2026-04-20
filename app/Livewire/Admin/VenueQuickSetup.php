@@ -45,7 +45,7 @@ class VenueQuickSetup extends Component
 
     public string $notes = '';
 
-    public bool $is_active = true;
+    public string $venue_status = CourtClient::VENUE_STATUS_ACTIVE;
 
     public string $hourly_rate_pesos = '';
 
@@ -89,13 +89,13 @@ class VenueQuickSetup extends Component
         $this->createdDeskPasswordPlain = '';
         $this->createdDeskAccount = false;
         $this->reset([
-            'name', 'slug', 'city', 'notes', 'is_active',
+            'name', 'slug', 'city', 'notes', 'venue_status',
             'hourly_rate_pesos', 'peak_hourly_rate_pesos', 'currency', 'desk_booking_policy',
             'admin_name', 'admin_email', 'admin_password', 'admin_password_confirmation',
             'desk_name', 'desk_email', 'desk_password', 'desk_password_confirmation',
         ]);
         $this->create_desk_account = true;
-        $this->is_active = true;
+        $this->venue_status = CourtClient::VENUE_STATUS_ACTIVE;
         $this->currency = 'PHP';
         $this->desk_booking_policy = CourtClient::DESK_BOOKING_POLICY_MANUAL;
     }
@@ -113,7 +113,7 @@ class VenueQuickSetup extends Component
             'slug' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'is_active' => ['boolean'],
+            'venue_status' => ['required', 'string', Rule::in(CourtClient::venueStatusValues())],
             'hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
             'peak_hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
             'currency' => ['required', 'string', 'size:3'],
@@ -197,7 +197,7 @@ class VenueQuickSetup extends Component
                 'slug' => $slug,
                 'city' => $validated['city'],
                 'notes' => $validated['notes'],
-                'is_active' => $validated['is_active'],
+                'venue_status' => $validated['venue_status'],
                 'hourly_rate_cents' => $hourlyCents,
                 'peak_hourly_rate_cents' => $peakCents,
                 'currency' => $validated['currency'],
@@ -269,13 +269,13 @@ class VenueQuickSetup extends Component
         }
 
         $this->reset([
-            'name', 'slug', 'city', 'notes', 'is_active',
+            'name', 'slug', 'city', 'notes', 'venue_status',
             'hourly_rate_pesos', 'peak_hourly_rate_pesos', 'currency', 'desk_booking_policy',
             'admin_name', 'admin_email', 'admin_password', 'admin_password_confirmation',
             'desk_name', 'desk_email', 'desk_password', 'desk_password_confirmation',
         ]);
         $this->create_desk_account = true;
-        $this->is_active = true;
+        $this->venue_status = CourtClient::VENUE_STATUS_ACTIVE;
         $this->currency = 'PHP';
         $this->desk_booking_policy = CourtClient::DESK_BOOKING_POLICY_MANUAL;
     }

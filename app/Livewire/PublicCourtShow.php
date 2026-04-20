@@ -14,12 +14,17 @@ class PublicCourtShow extends Component
 
     public bool $courtIsFavorite = false;
 
+    /** Venue is upcoming — page is view-only; booking opens when the venue goes active. */
+    public bool $venueComingSoon = false;
+
     public function mount(Court $court): void
     {
         $court->load(['courtClient', 'approvedGalleryImages']);
-        if (! $court->is_available || ! $court->courtClient || ! $court->courtClient->is_active) {
+        if (! $court->is_available || ! $court->courtClient || ! $court->courtClient->isListedOnBookNow()) {
             abort(404);
         }
+
+        $this->venueComingSoon = $court->courtClient->isOpeningSoonVenue();
 
         $ids = session('book_now_recent_courts', []);
         $ids = array_values(array_unique(array_merge([(string) $court->id], $ids)));

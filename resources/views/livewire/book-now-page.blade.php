@@ -343,18 +343,42 @@
             <ul class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3" role="list">
                 @foreach ($allVenueRows as $row)
                     @php($venue = $row['venue'])
+                    @php($venueOpeningSoon = $venue->isOpeningSoonVenue())
                     <li
                         wire:key="all-venues-{{ $venue->id }}"
-                        class="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200/90 bg-white shadow-md shadow-zinc-900/5 ring-1 ring-black/[0.03] transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-900/10 dark:border-zinc-700 dark:bg-zinc-900 dark:ring-white/[0.04] dark:hover:border-emerald-700"
+                        @class([
+                            'group relative flex flex-col overflow-hidden rounded-2xl border bg-white shadow-md shadow-zinc-900/5 ring-1 ring-black/[0.03] transition dark:bg-zinc-900',
+                            'border-zinc-300/95 bg-zinc-100 shadow-xl shadow-zinc-900/25 ring-zinc-900/[0.08] saturate-[0.92] dark:border-zinc-600 dark:bg-zinc-950 dark:shadow-black/45 dark:ring-white/[0.06]' => $venueOpeningSoon,
+                            'border-zinc-200/90 shadow-zinc-900/5 ring-black/[0.03] hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-900/10 dark:border-zinc-700 dark:ring-white/[0.04] dark:hover:border-emerald-700' => ! $venueOpeningSoon,
+                        ])
                     >
-                        <a
-                            href="{{ $this->venueBookUrl($venue) }}"
-                            wire:navigate
-                            class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:ring-offset-zinc-900"
-                            aria-label="Book {{ $venue->name }}"
-                        ></a>
+                        @if ($venueOpeningSoon)
+                            <span
+                                class="pointer-events-none absolute inset-0 z-[4] rounded-2xl bg-gradient-to-b from-zinc-950/15 to-zinc-950/30 dark:from-black/35 dark:to-black/50"
+                                aria-hidden="true"
+                            ></span>
+                            <span
+                                class="absolute inset-0 z-[1] cursor-not-allowed rounded-2xl ring-1 ring-inset ring-zinc-900/[0.12] dark:ring-white/[0.08]"
+                                role="presentation"
+                                aria-hidden="true"
+                            ></span>
+                        @else
+                            <a
+                                href="{{ $this->venueBookUrl($venue) }}"
+                                wire:navigate
+                                class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:ring-offset-zinc-900"
+                                aria-label="Book {{ $venue->name }}"
+                            ></a>
+                        @endif
                         <div class="relative z-[2] flex flex-col pointer-events-none">
                             <div class="relative bg-zinc-100 dark:bg-zinc-800">
+                                @if ($venueOpeningSoon)
+                                    <div
+                                        class="pointer-events-none absolute right-3 top-3 z-[6] rounded-full bg-zinc-950 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg shadow-black/40 ring-1 ring-white/15 backdrop-blur-sm"
+                                    >
+                                        Coming soon
+                                    </div>
+                                @endif
                                 <x-image-carousel
                                     :slides="$venue->carouselSlides()"
                                     :interval="6000"
@@ -385,7 +409,11 @@
                                 <p class="mt-3 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
                                     {{ $row['court_count'] }} {{ \Illuminate\Support\Str::plural('court', $row['court_count']) }}
                                     match filters
-                                    <span class="font-normal text-zinc-500 dark:text-zinc-400">· Tap card to book</span>
+                                    @if ($venueOpeningSoon)
+                                        <span class="font-normal text-zinc-500 dark:text-zinc-400">· Coming soon</span>
+                                    @else
+                                        <span class="font-normal text-zinc-500 dark:text-zinc-400">· Tap card to book</span>
+                                    @endif
                                 </p>
                             </div>
                         </div>

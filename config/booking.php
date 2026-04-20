@@ -96,4 +96,19 @@ return [
 
     'court_opening_emails' => (bool) env('BOOKING_COURT_OPENING_EMAILS', true),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Gift subscription controls (Basic / Premium) — super admin only
+    |--------------------------------------------------------------------------
+    |
+    | When true, Subscription tier fields that mention gift cards / CRM are
+    | shown only to super admins on admin venue edit and admin user edit.
+    |
+    */
+
+    'gift_subscription_controls_super_admin_only' => (bool) env(
+        'BOOKING_GIFT_SUBSCRIPTION_CONTROLS_SUPER_ADMIN_ONLY',
+        false,
+    ),
+
 ];

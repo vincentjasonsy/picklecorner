@@ -22,7 +22,6 @@ class FeaturedVenuesTest extends TestCase
 
         $city = 'FeatCity';
         $venues = collect(range(1, 6))->map(fn (int $n) => CourtClient::factory()->create([
-            'is_active' => true,
             'city' => $city,
             'name' => "Venue {$n}",
         ]));
@@ -45,7 +44,6 @@ class FeaturedVenuesTest extends TestCase
 
         $city = 'FeatCity';
         $venues = collect(range(1, 5))->map(fn (int $n) => CourtClient::factory()->create([
-            'is_active' => true,
             'city' => $city,
             'name' => "Venue {$n}",
         ]));
@@ -69,7 +67,6 @@ class FeaturedVenuesTest extends TestCase
         $ids = [];
         foreach ($names as $name) {
             $ids[] = CourtClient::factory()->create([
-                'is_active' => true,
                 'city' => $city,
                 'name' => $name,
             ])->id;

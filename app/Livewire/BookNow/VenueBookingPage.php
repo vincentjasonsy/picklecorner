@@ -87,7 +87,7 @@ class VenueBookingPage extends Component
 
     public function mount(CourtClient $courtClient): void
     {
-        abort_unless($courtClient->is_active, 404);
+        abort_unless($courtClient->isListedOnBookNow(), 404);
 
         $this->courtClient = $courtClient->load(['courts', 'approvedGalleryImages', 'weeklyHours']);
         $this->ensureDefaultWeeklyHours();
@@ -95,6 +95,11 @@ class VenueBookingPage extends Component
         $this->courtClient->load(['courts.approvedGalleryImages', 'approvedGalleryImages', 'weeklyHours']);
         $this->syncScheduleRowsFromDatabase();
         $this->bookingCalendarDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
+
+        if ($this->venueIsOpeningSoon()) {
+            $this->step = 'times';
+            $this->selectedSlots = [];
+        }
 
         if (session()->pull(self::AFTER_LOGIN_SESSION_KEY, false)) {
             $draft = session()->get(self::DRAFT_SESSION_KEY);
@@ -485,6 +490,10 @@ class VenueBookingPage extends Component
 
     public function shiftBookingDate(int $days): void
     {
+        if ($this->venueIsOpeningSoon()) {
+            return;
+        }
+
         try {
             $d = Carbon::parse($this->bookingCalendarDate, config('app.timezone', 'UTC'))->addDays($days);
         } catch (\Throwable) {
@@ -699,8 +708,17 @@ class VenueBookingPage extends Component
         return false;
     }
 
+    public function venueIsOpeningSoon(): bool
+    {
+        return $this->courtClient->isOpeningSoonVenue();
+    }
+
     public function toggleSlot(string $courtId, int $hour): void
     {
+        if ($this->venueIsOpeningSoon()) {
+            return;
+        }
+
         $allowedHours = $this->slotHoursForSelectedDate();
         if (! in_array($hour, $allowedHours, true)) {
             return;
@@ -761,6 +779,10 @@ class VenueBookingPage extends Component
      */
     public function removeReviewSpecSlots(string $courtId, array $hours): void
     {
+        if ($this->venueIsOpeningSoon()) {
+            return;
+        }
+
         if ($this->step !== 'review') {
             return;
         }
@@ -938,6 +960,10 @@ class VenueBookingPage extends Component
     /** Disable Continue / Submit until slots are valid and any convenience fee is acknowledged. */
     public function reviewSubmitActionDisabled(): bool
     {
+        if ($this->venueIsOpeningSoon()) {
+            return true;
+        }
+
         if (! $this->reviewStepHasSpecs()) {
             return true;
         }
@@ -952,6 +978,10 @@ class VenueBookingPage extends Component
 
     public function goToReview(): void
     {
+        if ($this->venueIsOpeningSoon()) {
+            return;
+        }
+
         $this->resetErrorBag('selectedSlots');
         $date = $this->normalizedBookingCalendarDate();
         if ($date !== null && $this->courtClient->isClosedOnDate($date)) {
@@ -997,6 +1027,7 @@ class VenueBookingPage extends Component
      */
     public function downloadReviewCalendar()
     {
+        abort_if($this->venueIsOpeningSoon(), 404);
         abort_unless($this->step === 'review', 404);
 
         $specs = $this->buildSpecsForSubmit();
@@ -1197,6 +1228,12 @@ class VenueBookingPage extends Component
 
     public function submitRequest()
     {
+        if ($this->venueIsOpeningSoon()) {
+            $this->addError('submit', 'This venue is not accepting bookings yet.');
+
+            return;
+        }
+
         if (! auth()->check()) {
             $this->addError('submit', 'Please sign in to complete your request.');
 

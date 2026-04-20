@@ -102,7 +102,21 @@
                         </p>
                     @endif
                     <div class="mt-8 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-                        @if ($venuePickTimeUrl)
+                        @if ($this->venueComingSoon)
+                            <div
+                                class="relative rounded-xl border border-zinc-400/70 bg-zinc-200/90 px-4 py-10 text-center shadow-inner shadow-zinc-950/15 ring-1 ring-zinc-950/10 dark:border-zinc-500 dark:bg-zinc-950 dark:shadow-[inset_0_2px_12px_rgba(0,0,0,0.45)] dark:ring-white/10"
+                            >
+                                <span
+                                    class="pointer-events-none absolute left-1/2 top-6 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-zinc-950 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-xl shadow-black/40 ring-1 ring-white/15"
+                                >
+                                    Coming soon
+                                </span>
+                                <p class="relative z-0 mx-auto mt-14 max-w-sm text-sm leading-relaxed text-zinc-700 dark:text-zinc-400">
+                                    Online booking isn’t open yet. Explore other venues on Book now, or check back when this club
+                                    goes live.
+                                </p>
+                            </div>
+                        @elseif ($venuePickTimeUrl)
                             <a
                                 href="{{ $venuePickTimeUrl }}"
                                 wire:navigate

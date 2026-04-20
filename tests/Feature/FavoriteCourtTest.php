@@ -18,7 +18,6 @@ class FavoriteCourtTest extends TestCase
     protected function createBrowseableCourt(): Court
     {
         $client = CourtClient::factory()->create([
-            'is_active' => true,
             'city' => 'Testville',
         ]);
 

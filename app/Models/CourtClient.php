@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Support\PublicStorageUrl;
 use Database\Factories\CourtClientFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -32,6 +33,12 @@ class CourtClient extends Model
     /** Gift cards + customer CRM (and anything else marked Premium-only) */
     public const TIER_PREMIUM = 'premium';
 
+    public const VENUE_STATUS_UPCOMING = 'upcoming';
+
+    public const VENUE_STATUS_ACTIVE = 'active';
+
+    public const VENUE_STATUS_INACTIVE = 'inactive';
+
     protected $fillable = [
         'name',
         'slug',
@@ -45,7 +52,7 @@ class CourtClient extends Model
         'notes',
         'admin_user_id',
         'subscription_tier',
-        'is_active',
+        'venue_status',
         'hourly_rate_cents',
         'peak_hourly_rate_cents',
         'currency',
@@ -61,7 +68,6 @@ class CourtClient extends Model
     protected function casts(): array
     {
         return [
-            'is_active' => 'boolean',
             'hourly_rate_cents' => 'integer',
             'peak_hourly_rate_cents' => 'integer',
             'public_rating_average' => 'decimal:1',
@@ -260,6 +266,61 @@ class CourtClient extends Model
     public function hasPremiumSubscription(): bool
     {
         return $this->subscriptionTierNormalized() === self::TIER_PREMIUM;
+    }
+
+    /** @return list<string> */
+    public static function venueStatusValues(): array
+    {
+        return [
+            self::VENUE_STATUS_UPCOMING,
+            self::VENUE_STATUS_ACTIVE,
+            self::VENUE_STATUS_INACTIVE,
+        ];
+    }
+
+    public function venueStatusNormalized(): string
+    {
+        $v = (string) ($this->venue_status ?? '');
+
+        return in_array($v, self::venueStatusValues(), true)
+            ? $v
+            : self::VENUE_STATUS_ACTIVE;
+    }
+
+    /** Members can browse and book; excludes upcoming (opening soon) and inactive. */
+    public function isPubliclyBookable(): bool
+    {
+        return $this->venueStatusNormalized() === self::VENUE_STATUS_ACTIVE;
+    }
+
+    /** Shown on Book now lists (active + upcoming). Inactive venues stay hidden there. */
+    public function isListedOnBookNow(): bool
+    {
+        return in_array($this->venueStatusNormalized(), [
+            self::VENUE_STATUS_ACTIVE,
+            self::VENUE_STATUS_UPCOMING,
+        ], true);
+    }
+
+    /** Opening soon — listed on Book now but booking is disabled until status is active. */
+    public function isOpeningSoonVenue(): bool
+    {
+        return $this->venueStatusNormalized() === self::VENUE_STATUS_UPCOMING;
+    }
+
+    /** @param  Builder<static>  $query */
+    public function scopeWherePubliclyBookable(Builder $query): Builder
+    {
+        return $query->where('venue_status', self::VENUE_STATUS_ACTIVE);
+    }
+
+    /** @param  Builder<static>  $query */
+    public function scopeWhereListedOnBookNow(Builder $query): Builder
+    {
+        return $query->whereIn('venue_status', [
+            self::VENUE_STATUS_ACTIVE,
+            self::VENUE_STATUS_UPCOMING,
+        ]);
     }
 
     /**

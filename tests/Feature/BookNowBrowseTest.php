@@ -29,7 +29,6 @@ class BookNowBrowseTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $client = CourtClient::factory()->create([
-            'is_active' => true,
             'city' => 'Testville',
             'public_rating_average' => 4.5,
             'public_rating_count' => 40,
@@ -78,7 +77,6 @@ class BookNowBrowseTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
 
         $client = CourtClient::factory()->create([
-            'is_active' => true,
             'city' => 'SlotCity',
             'name' => 'Schedule Club',
         ]);
@@ -126,7 +124,7 @@ class BookNowBrowseTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => false]);
+        $client = CourtClient::factory()->inactive()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Hidden',
@@ -139,6 +137,29 @@ class BookNowBrowseTest extends TestCase
         $this->get(route('book-now.court', $court))->assertNotFound();
     }
 
+    public function test_upcoming_venue_listed_disabled_with_coming_soon_public_pages(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->upcoming()->create([
+            'name' => 'Upcoming Arena',
+            'city' => 'Soonville',
+        ]);
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Soon Court',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $this->get(route('book-now'))->assertOk()->assertSee('Upcoming Arena', false)->assertSee('Coming soon', false);
+
+        $this->get(route('book-now.court', $court))->assertOk()->assertSee('Coming soon', false);
+
+        $this->get(route('book-now.venue.book', $client))->assertOk()->assertSee('Coming soon', false);
+    }
+
     public function test_book_now_prioritizes_venues_matching_member_home_city(): void
     {
         $this->seed(UserTypeSeeder::class);
@@ -147,14 +168,12 @@ class BookNowBrowseTest extends TestCase
         $betaCity = 'BetaCity';
 
         $clientAlpha = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'A Club',
             'city' => $alphaCity,
             'public_rating_average' => 5.0,
             'public_rating_count' => 200,
         ]);
         $clientBeta = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'B Club',
             'city' => $betaCity,
             'public_rating_average' => 3.0,
@@ -189,11 +208,9 @@ class BookNowBrowseTest extends TestCase
         $betaCity = 'BetaCity';
 
         $clientAlpha = CourtClient::factory()->create([
-            'is_active' => true,
             'city' => $alphaCity,
         ]);
         $clientBeta = CourtClient::factory()->create([
-            'is_active' => true,
             'city' => $betaCity,
         ]);
 
@@ -240,14 +257,12 @@ class BookNowBrowseTest extends TestCase
         $city = 'SharedCity';
 
         $lowerRated = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'Zebra Club',
             'city' => $city,
             'public_rating_average' => 3.2,
             'public_rating_count' => 5,
         ]);
         $higherRated = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'Acme Club',
             'city' => $city,
             'public_rating_average' => 4.9,
@@ -278,12 +293,10 @@ class BookNowBrowseTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $oak = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'Oakbrook Pickle Hub',
             'city' => 'Metro North',
         ]);
         $pine = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'Pine Courts',
             'city' => 'Metro South',
         ]);

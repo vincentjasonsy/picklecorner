@@ -105,7 +105,12 @@
                         </div>
                     @endif
 
-                    @if ($isEdit && $courtAdminTypeId !== '' && (string) $user_type_id === (string) $courtAdminTypeId)
+                    @if (
+                        $giftSubscriptionControlsVisible
+                        && $isEdit
+                        && $courtAdminTypeId !== ''
+                        && (string) $user_type_id === (string) $courtAdminTypeId
+                    )
                         @if ($user?->administeredCourtClient)
                             <div class="sm:col-span-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
                                 <h3 class="font-display text-sm font-bold text-zinc-900 dark:text-white">

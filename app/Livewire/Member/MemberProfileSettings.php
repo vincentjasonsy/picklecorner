@@ -41,7 +41,7 @@ class MemberProfileSettings extends Component
         $user = auth()->user();
 
         $cityOptions = CourtClient::query()
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')
@@ -89,7 +89,7 @@ class MemberProfileSettings extends Component
     public function render(): View
     {
         $homeCityOptions = CourtClient::query()
-            ->where('is_active', true)
+            ->wherePubliclyBookable()
             ->whereNotNull('city')
             ->distinct()
             ->orderBy('city')

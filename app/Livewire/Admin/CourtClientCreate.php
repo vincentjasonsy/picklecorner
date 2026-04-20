@@ -27,7 +27,7 @@ class CourtClientCreate extends Component
 
     public string $notes = '';
 
-    public bool $is_active = true;
+    public string $venue_status = CourtClient::VENUE_STATUS_ACTIVE;
 
     public string $hourly_rate_pesos = '';
 
@@ -50,7 +50,7 @@ class CourtClientCreate extends Component
             'slug' => ['nullable', 'string', 'max:255'],
             'city' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'is_active' => ['boolean'],
+            'venue_status' => ['required', 'string', Rule::in(CourtClient::venueStatusValues())],
             'hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
             'peak_hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
             'currency' => ['required', 'string', 'size:3'],
@@ -95,7 +95,7 @@ class CourtClientCreate extends Component
             'slug' => $slug,
             'city' => $validated['city'],
             'notes' => $validated['notes'],
-            'is_active' => $validated['is_active'],
+            'venue_status' => $validated['venue_status'],
             'hourly_rate_cents' => $hourlyCents,
             'peak_hourly_rate_cents' => $peakCents,
             'currency' => $validated['currency'],

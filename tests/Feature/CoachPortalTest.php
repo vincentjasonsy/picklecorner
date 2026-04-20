@@ -54,7 +54,7 @@ class CoachPortalTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $coach = User::factory()->coach()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $card = GiftCard::query()->create([
             'court_client_id' => $client->id,
             'code' => 'TST'.Str::upper(Str::random(8)),
@@ -73,7 +73,7 @@ class CoachPortalTest extends TestCase
 
         $coach = User::factory()->coach()->create();
         $other = User::factory()->coach()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $card = GiftCard::query()->create([
             'court_client_id' => $client->id,
             'code' => 'OTH'.Str::upper(Str::random(8)),
@@ -91,7 +91,7 @@ class CoachPortalTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $coach = User::factory()->coach()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',
@@ -116,7 +116,7 @@ class CoachPortalTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $coach = User::factory()->coach()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         for ($d = 0; $d < 7; $d++) {
             VenueWeeklyHour::query()->create([
                 'court_client_id' => $client->id,

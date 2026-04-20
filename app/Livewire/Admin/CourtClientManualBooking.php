@@ -12,6 +12,7 @@ use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\ActivityLogger;
 use App\Services\BookingCheckoutSnapshot;
+use App\Services\BookingFeeService;
 use App\Services\CourtBookingConcurrency;
 use App\Services\CourtSlotPricing;
 use App\Services\GiftCardService;
@@ -530,6 +531,191 @@ class CourtClientManualBooking extends Component
         return Carbon::createFromTime($hour, 0, 0)->format('g:i A');
     }
 
+    /**
+     * Per-hour court rate for a grid cell (same basis as member checkout slot pricing).
+     */
+    public function slotHourPriceLabel(Court $court, int $hour): string
+    {
+        $resolved = CourtSlotPricing::resolveForSlot($court, $this->bookingDayOfWeek(), $hour);
+        $cents = $resolved['cents'];
+
+        if ($cents === null || $cents <= 0) {
+            return '';
+        }
+
+        return Money::formatMinor((int) $cents, $this->courtClient->currency ?? 'PHP');
+    }
+
+    /**
+     * Builds line specs from the current grid selection (same economics as {@see saveManualBooking()}).
+     *
+     * @return array{specs: list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents: int, hours: list<int>}>, error: ?string}
+     */
+    protected function compileManualBookingLineSpecs(): array
+    {
+        $desk = $this->isDeskSubmission();
+
+        $byCourt = $this->selectedSlotsGroupedByCourt();
+        if ($byCourt === []) {
+            return ['specs' => [], 'error' => 'Select at least one court and time slot on the grid.'];
+        }
+
+        $allowed = $this->slotHoursForSelectedDate();
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date === null) {
+            return ['specs' => [], 'error' => 'Invalid date.'];
+        }
+
+        $tz = config('app.timezone', 'UTC');
+
+        /** @var list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents: int, hours: list<int>}> */
+        $specs = [];
+
+        foreach ($byCourt as $courtId => $hours) {
+            $court = Court::query()
+                ->with(['courtClient', 'timeSlotSettings'])
+                ->where('id', $courtId)
+                ->where('court_client_id', $this->courtClient->id)
+                ->first();
+            if (! $court) {
+                return ['specs' => [], 'error' => 'One or more selected courts are invalid.'];
+            }
+
+            foreach ($hours as $h) {
+                if (! in_array($h, $allowed, true)) {
+                    return ['specs' => [], 'error' => 'One or more slots are outside venue hours for this day.'];
+                }
+            }
+
+            if ($desk) {
+                foreach ($hours as $h) {
+                    if ($this->isManualGridCellBlocked($courtId, $h, $court)) {
+                        return ['specs' => [], 'error' => 'Desk requests cannot include blocked time slots. Pick open hours only.'];
+                    }
+                }
+            }
+
+            foreach ($this->contiguousHourRuns($hours) as $run) {
+                if ($run === []) {
+                    continue;
+                }
+                $firstHour = $run[0];
+                $lastHour = $run[count($run) - 1];
+                $starts = Carbon::parse($date.' '.sprintf('%02d:00:00', $firstHour), $tz);
+                $ends = Carbon::parse($date.' '.sprintf('%02d:00:00', $lastHour), $tz)->addHour();
+
+                if ($this->bookingOverlapsCourt($court->id, $starts, $ends)) {
+                    return ['specs' => [], 'error' => 'A selected court already has a booking that overlaps one of the chosen times.'];
+                }
+
+                $grossCents = 0;
+                foreach ($run as $h) {
+                    $slotStart = Carbon::parse($date.' '.sprintf('%02d:00:00', $h), $tz);
+                    $hourly = CourtSlotPricing::estimatedHourlyCentsAtStart($court, $slotStart)
+                        ?? $court->courtClient?->hourly_rate_cents
+                        ?? 0;
+                    $grossCents += $hourly;
+                }
+                $grossCents = (int) round($grossCents);
+
+                $specs[] = [
+                    'court' => $court,
+                    'starts' => $starts,
+                    'ends' => $ends,
+                    'gross_cents' => $grossCents,
+                    'court_gross_cents' => $grossCents,
+                    'hours' => $run,
+                ];
+            }
+        }
+
+        if ($specs === []) {
+            return ['specs' => [], 'error' => 'Select at least one time slot on the grid.'];
+        }
+
+        return ['specs' => $specs, 'error' => null];
+    }
+
+    /**
+     * @return array{specs: list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents: int, hours: list<int>}>, error: ?string}
+     */
+    #[Computed]
+    public function manualBookingPricingDraft(): array
+    {
+        return $this->compileManualBookingLineSpecs();
+    }
+
+    #[Computed]
+    public function manualBookingCourtSubtotalCents(): int
+    {
+        $draft = $this->manualBookingPricingDraft;
+        if ($draft['error'] !== null || $draft['specs'] === []) {
+            return 0;
+        }
+
+        return (int) array_sum(array_column($draft['specs'], 'gross_cents'));
+    }
+
+    /** Platform convenience fee preview (same basis as member book-now checkout). */
+    #[Computed]
+    public function manualBookingBookingFeePreviewCents(): int
+    {
+        $draft = $this->manualBookingPricingDraft;
+        if ($draft['error'] !== null || $draft['specs'] === []) {
+            return 0;
+        }
+
+        return BookingFeeService::calculateCentsForSpecs($draft['specs']);
+    }
+
+    /**
+     * Court subtotal plus platform fee — matches member checkout total before gift ({@see VenueBookingPage::reviewCheckoutTotalCents()}).
+     * Persisted manual bookings remain court-only ({@see BookingCheckoutSnapshot::manualCheckout()}).
+     */
+    #[Computed]
+    public function manualBookingCheckoutTotalBeforeGiftCents(): int
+    {
+        return $this->manualBookingCourtSubtotalCents + $this->manualBookingBookingFeePreviewCents;
+    }
+
+    #[Computed]
+    public function manualBookingGiftEstimateCents(): int
+    {
+        if ($this->manualBookingPortal() === 'desk') {
+            return 0;
+        }
+
+        $raw = trim($this->manualBookingGiftCardCode);
+        if ($raw === '') {
+            return 0;
+        }
+
+        $draft = $this->manualBookingPricingDraft;
+        if ($draft['error'] !== null || $draft['specs'] === []) {
+            return 0;
+        }
+
+        $normalized = GiftCardService::normalizeCode($raw);
+        $card = GiftCard::query()
+            ->where('code', $normalized)
+            ->where(function ($q): void {
+                $q->where('court_client_id', $this->courtClient->id)
+                    ->orWhereNull('court_client_id');
+            })
+            ->first();
+        if ($card === null || ! $card->redeemableNow()) {
+            return 0;
+        }
+
+        return GiftCardService::computeAppliedCents($card, $this->manualBookingCheckoutTotalBeforeGiftCents);
+    }
+
+    #[Computed]
+    public function manualBookingBalanceAfterGiftCents(): int
+    {
+        return max(0, $this->manualBookingCheckoutTotalBeforeGiftCents - $this->manualBookingGiftEstimateCents);
+    }
+
     #[Computed]
     public function manualBookingUserResults(): Collection
     {
@@ -628,102 +814,18 @@ class CourtClientManualBooking extends Component
             'manualBookingPaymentReference' => 'transaction number',
         ]);
 
-        $byCourt = $this->selectedSlotsGroupedByCourt();
-        if ($byCourt === []) {
-            $this->addError('selectedManualSlots', 'Select at least one court and time slot on the grid.');
+        $compiled = $this->compileManualBookingLineSpecs();
+        if ($compiled['error'] !== null) {
+            $this->addError(
+                $compiled['error'] === 'Invalid date.' ? 'bookingCalendarDate' : 'selectedManualSlots',
+                $compiled['error'],
+            );
 
             return;
         }
 
-        $allowed = $this->slotHoursForSelectedDate();
-        $date = $this->normalizedBookingCalendarDate();
-        if ($date === null) {
-            $this->addError('bookingCalendarDate', 'Invalid date.');
-
-            return;
-        }
-
-        $tz = config('app.timezone', 'UTC');
-
-        /** @var list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, hours: list<int>}> */
-        $specs = [];
-
-        foreach ($byCourt as $courtId => $hours) {
-            $court = Court::query()
-                ->with(['courtClient', 'timeSlotSettings'])
-                ->where('id', $courtId)
-                ->where('court_client_id', $this->courtClient->id)
-                ->first();
-            if (! $court) {
-                $this->addError('selectedManualSlots', 'One or more selected courts are invalid.');
-
-                return;
-            }
-
-            foreach ($hours as $h) {
-                if (! in_array($h, $allowed, true)) {
-                    $this->addError('selectedManualSlots', 'One or more slots are outside venue hours for this day.');
-
-                    return;
-                }
-            }
-
-            if ($desk) {
-                foreach ($hours as $h) {
-                    if ($this->isManualGridCellBlocked($courtId, $h, $court)) {
-                        $this->addError(
-                            'selectedManualSlots',
-                            'Desk requests cannot include blocked time slots. Pick open hours only.',
-                        );
-
-                        return;
-                    }
-                }
-            }
-
-            foreach ($this->contiguousHourRuns($hours) as $run) {
-                if ($run === []) {
-                    continue;
-                }
-                $firstHour = $run[0];
-                $lastHour = $run[count($run) - 1];
-                $starts = Carbon::parse($date.' '.sprintf('%02d:00:00', $firstHour), $tz);
-                $ends = Carbon::parse($date.' '.sprintf('%02d:00:00', $lastHour), $tz)->addHour();
-
-                if ($this->bookingOverlapsCourt($court->id, $starts, $ends)) {
-                    $this->addError(
-                        'selectedManualSlots',
-                        'A selected court already has a booking that overlaps one of the chosen times.',
-                    );
-
-                    return;
-                }
-
-                $grossCents = 0;
-                foreach ($run as $h) {
-                    $slotStart = Carbon::parse($date.' '.sprintf('%02d:00:00', $h), $tz);
-                    $hourly = CourtSlotPricing::estimatedHourlyCentsAtStart($court, $slotStart)
-                        ?? $court->courtClient?->hourly_rate_cents
-                        ?? 0;
-                    $grossCents += $hourly;
-                }
-                $grossCents = (int) round($grossCents);
-
-                $specs[] = [
-                    'court' => $court,
-                    'starts' => $starts,
-                    'ends' => $ends,
-                    'gross_cents' => $grossCents,
-                    'hours' => $run,
-                ];
-            }
-        }
-
-        if ($specs === []) {
-            $this->addError('selectedManualSlots', 'Select at least one time slot on the grid.');
-
-            return;
-        }
+        /** @var list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents: int, hours: list<int>}> */
+        $specs = $compiled['specs'];
 
         $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
         $giftCodeRaw = $desk ? '' : trim($this->manualBookingGiftCardCode);

@@ -30,7 +30,7 @@ class MemberBookAgainControllerTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
 
         $player = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true]);
+        $client = CourtClient::factory()->create();
         for ($d = 0; $d < 7; $d++) {
             VenueWeeklyHour::query()->create([
                 'court_client_id' => $client->id,

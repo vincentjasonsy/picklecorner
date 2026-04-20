@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\UserType;
 use App\Models\VenueWeeklyHour;
 use App\Services\ActivityLogger;
+use App\Services\CourtSlotPricing;
 use App\Support\BookingCalendarGrid;
 use App\Support\PesosMoneyForm;
 use App\Support\VenueScheduleHours;
@@ -41,7 +42,7 @@ class CourtClientEdit extends Component
 
     public string $notes = '';
 
-    public bool $is_active = true;
+    public string $venue_status = CourtClient::VENUE_STATUS_ACTIVE;
 
     public string $hourly_rate_pesos = '';
 
@@ -134,7 +135,10 @@ class CourtClientEdit extends Component
         $this->slug = $c->slug;
         $this->city = (string) ($c->city ?? '');
         $this->notes = (string) ($c->notes ?? '');
-        $this->is_active = (bool) $c->is_active;
+        $vs = (string) ($c->venue_status ?? '');
+        $this->venue_status = in_array($vs, CourtClient::venueStatusValues(), true)
+            ? $vs
+            : CourtClient::VENUE_STATUS_ACTIVE;
         $this->hourly_rate_pesos = PesosMoneyForm::centsToPesoField($c->hourly_rate_cents);
         $this->peak_hourly_rate_pesos = PesosMoneyForm::centsToPesoField($c->peak_hourly_rate_cents);
         $this->currency = $c->currency ?? 'PHP';
@@ -786,6 +790,46 @@ class CourtClientEdit extends Component
         return Carbon::createFromTime($hour, 0, 0)->format('g:i A');
     }
 
+    /**
+     * @return array{cell: array, cellStyle: string}
+     */
+    public function slotPricingGridCell(Court $court, int $hour): array
+    {
+        $cell = CourtSlotPricing::resolveForSlot($court, $this->slotPricingDay, $hour);
+        $cellStyle = match ($cell['mode']) {
+            CourtTimeSlotSetting::MODE_PEAK => 'border-amber-200 bg-amber-50/90 dark:border-amber-900/50 dark:bg-amber-950/25',
+            CourtTimeSlotSetting::MODE_MANUAL => 'border-violet-200 bg-violet-50/90 dark:border-violet-900/50 dark:bg-violet-950/25',
+            default => 'border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900/60',
+        };
+
+        return ['cell' => $cell, 'cellStyle' => $cellStyle];
+    }
+
+    /**
+     * @return array{availStyle: string, cellLabel: string}
+     */
+    public function availabilityGridCell(Court $court, int $hour): array
+    {
+        $dow = $this->availabilityDayOfWeek();
+        $lookup = $this->availabilityDateBlockLookup;
+        $weeklyBlocked = $court->isWeeklySlotBlocked($dow, $hour);
+        $dateBlocked = isset($lookup[$court->id.'-'.$hour]);
+        $blocked = $weeklyBlocked || $dateBlocked;
+        $availStyle = $blocked
+            ? 'border-red-200 bg-red-50/90 dark:border-red-900/50 dark:bg-red-950/25'
+            : 'border-emerald-200 bg-emerald-50/50 dark:border-emerald-900/40 dark:bg-emerald-950/20';
+        $cellLabel = 'Open';
+        if ($weeklyBlocked && $dateBlocked) {
+            $cellLabel = 'Blocked';
+        } elseif ($dateBlocked) {
+            $cellLabel = 'Date block';
+        } elseif ($weeklyBlocked) {
+            $cellLabel = 'Weekly block';
+        }
+
+        return ['availStyle' => $availStyle, 'cellLabel' => $cellLabel];
+    }
+
     protected function syncScheduleRowsFromDatabase(): void
     {
         $this->scheduleRows = $this->courtClient->weeklyHours->map(fn (VenueWeeklyHour $r) => [
@@ -825,7 +869,7 @@ class CourtClientEdit extends Component
             'longitude' => ['nullable', 'string', 'max:20'],
             'amenitiesText' => ['nullable', 'string', 'max:5000'],
             'notes' => ['nullable', 'string', 'max:5000'],
-            'is_active' => ['boolean'],
+            'venue_status' => ['required', 'string', Rule::in(CourtClient::venueStatusValues())],
             'hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
             'peak_hourly_rate_pesos' => ['nullable', 'string', 'regex:'.$pesoRegex],
             'currency' => ['required', 'string', 'size:3'],
@@ -839,15 +883,18 @@ class CourtClientEdit extends Component
             ]);
         } else {
             $courtAdminTypeId = UserType::query()->where('slug', UserType::SLUG_COURT_ADMIN)->value('id');
-            $validated = $this->validate(array_merge($baseRules, [
-                'subscription_tier' => ['required', 'string', Rule::in(CourtClient::subscriptionTierValues())],
+            $adminRules = [
                 'admin_user_id' => [
                     'required',
                     'uuid',
                     Rule::exists('users', 'id')->where('user_type_id', $courtAdminTypeId),
                     Rule::unique('court_clients', 'admin_user_id')->ignore($this->courtClient->id),
                 ],
-            ]), [
+            ];
+            if (booking_gift_subscription_controls_visible()) {
+                $adminRules['subscription_tier'] = ['required', 'string', Rule::in(CourtClient::subscriptionTierValues())];
+            }
+            $validated = $this->validate(array_merge($baseRules, $adminRules), [
                 'hourly_rate_pesos.regex' => 'Use pesos with up to 2 decimal places (e.g. 350 or 350.50).',
                 'peak_hourly_rate_pesos.regex' => 'Use pesos with up to 2 decimal places (e.g. 350 or 350.50).',
             ]);
@@ -919,7 +966,7 @@ class CourtClientEdit extends Component
             'longitude' => $longitude,
             'amenities' => $amenities === [] ? null : $amenities,
             'notes' => $validated['notes'],
-            'is_active' => $validated['is_active'],
+            'venue_status' => $validated['venue_status'],
             'hourly_rate_cents' => $hourlyCents,
             'peak_hourly_rate_cents' => $peakCents,
             'currency' => $validated['currency'],
@@ -928,7 +975,9 @@ class CourtClientEdit extends Component
 
         if (! $this->isVenuePortal) {
             $payload['admin_user_id'] = $validated['admin_user_id'];
-            $payload['subscription_tier'] = $validated['subscription_tier'];
+            if (booking_gift_subscription_controls_visible()) {
+                $payload['subscription_tier'] = $validated['subscription_tier'];
+            }
         }
 
         $before = $this->courtClient->only(array_keys($payload));
@@ -1120,6 +1169,7 @@ class CourtClientEdit extends Component
         $tz = config('app.timezone', 'UTC');
 
         return view('livewire.admin.court-client-edit', [
+            'giftSubscriptionControlsVisible' => booking_gift_subscription_controls_visible(),
             'courtAdmins' => User::query()
                 ->with('userType')
                 ->whereHas('userType', fn ($q) => $q->where('slug', UserType::SLUG_COURT_ADMIN))
@@ -1137,6 +1187,11 @@ class CourtClientEdit extends Component
             'closureMonthWeeks' => $this->buildClosureMonthWeeks(),
             'closureMonthLabel' => $this->buildClosureMonthLabel(),
             'closureMonthClosedLookup' => $this->buildClosureMonthClosedLookup(),
+            'slotGridCourts' => $this->courtsOrderedForGrid(),
+            'slotGridHours' => $this->slotHoursForGrid(),
+            'availabilityGridHours' => $this->slotHoursForAvailabilityGrid(),
+            'availabilityDow' => $this->availabilityDayOfWeek(),
+            'dateBlockLookup' => $this->availabilityDateBlockLookup,
         ]);
     }
 }

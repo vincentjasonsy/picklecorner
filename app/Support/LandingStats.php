@@ -13,7 +13,7 @@ final class LandingStats
     {
         return Court::query()
             ->where('is_available', true)
-            ->whereHas('courtClient', fn ($q) => $q->where('is_active', true))
+            ->whereHas('courtClient', fn ($q) => $q->wherePubliclyBookable())
             ->count();
     }
 

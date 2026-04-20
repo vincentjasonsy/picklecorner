@@ -29,7 +29,7 @@ class VenueBookingPageTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
 
         $player = User::factory()->player()->create();
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'book-again-review']);
+        $client = CourtClient::factory()->create(['slug' => 'book-again-review']);
         for ($d = 0; $d < 7; $d++) {
             VenueWeeklyHour::query()->create([
                 'court_client_id' => $client->id,
@@ -67,7 +67,7 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'alpha-club']);
+        $client = CourtClient::factory()->create(['slug' => 'alpha-club']);
         Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court 1',
@@ -86,7 +86,7 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'beta-club']);
+        $client = CourtClient::factory()->create(['slug' => 'beta-club']);
         Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court 1',
@@ -108,7 +108,7 @@ class VenueBookingPageTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $admin = User::factory()->courtAdmin()->create();
-        $client = CourtClient::factory()->forAdmin($admin)->create(['is_active' => true, 'slug' => 'managed']);
+        $client = CourtClient::factory()->forAdmin($admin)->create(['slug' => 'managed']);
         Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court A',
@@ -127,7 +127,6 @@ class VenueBookingPageTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $client = CourtClient::factory()->create([
-            'is_active' => true,
             'name' => 'Gamma Pickleball',
             'slug' => 'gamma-pb',
         ]);
@@ -150,7 +149,7 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'closed-day-club']);
+        $client = CourtClient::factory()->create(['slug' => 'closed-day-club']);
         Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court 1',
@@ -179,7 +178,7 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'restore-club']);
+        $client = CourtClient::factory()->create(['slug' => 'restore-club']);
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court 1',
@@ -211,7 +210,7 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
-        $client = CourtClient::factory()->create(['is_active' => true, 'slug' => 'restore-closed']);
+        $client = CourtClient::factory()->create(['slug' => 'restore-closed']);
         $court = Court::query()->create([
             'court_client_id' => $client->id,
             'name' => 'Court 1',
@@ -250,7 +249,6 @@ class VenueBookingPageTest extends TestCase
         $this->seed(UserTypeSeeder::class);
 
         $client = CourtClient::factory()->create([
-            'is_active' => true,
             'slug' => 'gift-venue',
             'hourly_rate_cents' => 10_000,
         ]);
@@ -302,7 +300,6 @@ class VenueBookingPageTest extends TestCase
         Carbon::setTestNow(Carbon::parse('2026-04-17 12:00:00', $tz));
 
         $client = CourtClient::factory()->create([
-            'is_active' => true,
             'slug' => 'remove-review-row',
             'hourly_rate_cents' => 10_000,
         ]);
