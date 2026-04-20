@@ -27,6 +27,7 @@ class ContactInquiryMail extends Mailable
         $subject = '['.config('app.name').'] '.$this->inquiryLabel.' — '.$this->name;
 
         return new Envelope(
+            from: new Address((string) config('mail.from.address'), (string) config('mail.from.name')),
             subject: $subject,
             replyTo: [
                 new Address($this->email, $this->name),

@@ -157,16 +157,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-200 pt-6 dark:border-zinc-800">
-                <p class="text-xs text-zinc-500 dark:text-zinc-400">
-                    Prefer email only?
-                    @php($to = config('contact.recipient'))
-                    @if (is_string($to) && $to !== '')
-                        <a href="mailto:{{ $to }}" class="font-medium text-emerald-700 hover:underline dark:text-emerald-400">
-                            {{ $to }}
-                        </a>
-                    @endif
-                </p>
+            <div class="flex justify-end border-t border-zinc-200 pt-6 dark:border-zinc-800">
                 <button
                     type="submit"
                     class="font-display inline-flex min-w-[12rem] items-center justify-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-md transition hover:from-emerald-500 hover:to-teal-500"
