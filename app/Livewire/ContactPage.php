@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
+use Throwable;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -48,27 +49,43 @@ class ContactPage extends Component
             return;
         }
 
+        $mailFailed = false;
+
         $executed = RateLimiter::attempt(
             'contact-form:'.request()->ip(),
             $maxAttempts = 5,
-            function () use ($validated, $recipient): void {
+            function () use ($validated, $recipient, &$mailFailed): void {
                 $isDemo = $validated['inquiry_type'] === 'demo';
                 $label = $isDemo ? 'Book a demo' : 'General contact';
 
-                Mail::to($recipient)->send(new ContactInquiryMail(
-                    inquiryLabel: $label,
-                    name: $validated['name'],
-                    email: $validated['email'],
-                    messageBody: $validated['message'],
-                    phone: $validated['phone'] !== '' ? $validated['phone'] : null,
-                    clubName: $validated['club_name'] !== '' ? $validated['club_name'] : null,
-                ));
+                try {
+                    Mail::to($recipient)->send(new ContactInquiryMail(
+                        inquiryLabel: $label,
+                        name: $validated['name'],
+                        email: $validated['email'],
+                        messageBody: $validated['message'],
+                        phone: $validated['phone'] !== '' ? $validated['phone'] : null,
+                        clubName: $validated['club_name'] !== '' ? $validated['club_name'] : null,
+                    ));
+                } catch (Throwable $e) {
+                    report($e);
+                    $mailFailed = true;
+                }
             },
             decaySeconds: 60,
         );
 
         if (! $executed) {
             $this->addError('message', 'Too many submissions. Please wait a minute and try again.');
+
+            return;
+        }
+
+        if ($mailFailed) {
+            $this->addError(
+                'message',
+                'We couldn’t send your message right now. Please try again in a few minutes.',
+            );
 
             return;
         }
