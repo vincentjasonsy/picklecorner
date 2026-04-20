@@ -174,7 +174,7 @@
                 @endforeach
             </div>
 
-            <div class="rounded-3xl border border-zinc-200/90 bg-white p-6 shadow-md dark:border-zinc-800 dark:bg-zinc-900/80">
+            <div class="rounded-3xl border border-zinc-200/90 bg-white p-4 shadow-md dark:border-zinc-800 dark:bg-zinc-900/80 sm:p-6">
                 @if ($setupStep === 1)
                     <div class="space-y-5">
                         <h2 class="font-display text-lg font-extrabold text-zinc-900 dark:text-white">Session rules</h2>
@@ -204,9 +204,25 @@
                                 <option value="random">Random</option>
                                 <option value="wins">Fewest wins first</option>
                                 <option value="levels">By skill level</option>
+                                <option value="levels_rotate">Skill level rotation</option>
                                 <option value="teams">Fixed pairs (team on each player)</option>
                             </select>
                         </label>
+                        @if (($state['shuffleMethod'] ?? '') === 'levels')
+                            <p class="hidden text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 md:block">
+                                Same number of games: lower skill numbers are earlier in line and usually play others close to their level.
+                            </p>
+                            <p class="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 md:hidden">
+                                Fewest games first; within ties, lower skill → earlier in line.
+                            </p>
+                        @elseif (($state['shuffleMethod'] ?? '') === 'levels_rotate')
+                            <p class="hidden text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 md:block">
+                                Same number of games: cycles through skill levels so one band doesn’t always wait behind another (still fewest games first overall).
+                            </p>
+                            <p class="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400 md:hidden">
+                                Fewest games first; within ties, rotates through skill bands fairly.
+                            </p>
+                        @endif
                         <div class="grid gap-4 sm:grid-cols-2">
                             <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                 Courts
@@ -269,14 +285,14 @@
                             </p>
                         @endif
                         @if (count($state['players'] ?? []) >= 2)
-                            <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                            <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20 sm:p-4">
                                 <div class="space-y-2 text-xs text-emerald-900/95 dark:text-emerald-100/90">
                                     <p class="font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-200/90">Suggestions</p>
                                     <p class="leading-relaxed">
                                         <span class="font-semibold text-emerald-950 dark:text-emerald-50">Courts:</span>
                                         {{ $eq->setupCourtCountHint() }}
                                     </p>
-                                    <p class="leading-relaxed">
+                                    <p class="leading-relaxed hidden sm:block">
                                         <span class="font-semibold text-emerald-950 dark:text-emerald-50">Time (rough):</span>
                                         @php $estRot = $eq->setupEstimatedRotationMinutes(); @endphp
                                         ~{{ $estRot ?? '—' }}
@@ -288,11 +304,15 @@
                                         @endif
                                         .
                                     </p>
+                                    <p class="leading-relaxed text-[11px] text-emerald-950/95 sm:hidden dark:text-emerald-50/95">
+                                        <span class="font-semibold">~{{ $eq->setupEstimatedRotationMinutes() ?? '—' }} min</span> per wave ·
+                                        {{ (int) ($state['timeLimitMinutes'] ?? 0) > 0 ? (int) $state['timeLimitMinutes'].' min timer' : $eq->setupMinutesPerMatchFallback().' min assumed' }}
+                                    </p>
                                     <p class="leading-relaxed">
                                         <span class="font-semibold text-emerald-950 dark:text-emerald-50">Even counts:</span>
                                         {{ $eq->setupPlayerParityHint() }}
                                     </p>
-                                    <p class="text-[11px] leading-relaxed text-emerald-800/85 dark:text-emerald-300/85">
+                                    <p class="hidden text-[11px] leading-relaxed text-emerald-800/85 md:block dark:text-emerald-300/85">
                                         Heuristic only — real time depends on warm-ups, walkovers, and between games.
                                     </p>
                                 </div>
@@ -309,14 +329,14 @@
                             {{ count($state['players'] ?? []) }} / {{ OpenPlaySession::MAX_PLAYERS_PER_SESSION }} players max
                         </p>
                         @if (count($state['players'] ?? []) >= 2)
-                            <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+                            <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20 sm:p-4">
                                 <div class="space-y-2 text-xs text-emerald-900/95 dark:text-emerald-100/90">
                                     <p class="font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-200/90">Suggestions</p>
                                     <p class="leading-relaxed">
                                         <span class="font-semibold text-emerald-950 dark:text-emerald-50">Courts:</span>
                                         {{ $eq->setupCourtCountHint() }}
                                     </p>
-                                    <p class="leading-relaxed">
+                                    <p class="leading-relaxed hidden sm:block">
                                         <span class="font-semibold text-emerald-950 dark:text-emerald-50">Time (rough):</span>
                                         @php $estRot2 = $eq->setupEstimatedRotationMinutes(); @endphp
                                         ~{{ $estRot2 ?? '—' }}
@@ -328,11 +348,15 @@
                                         @endif
                                         .
                                     </p>
+                                    <p class="leading-relaxed text-[11px] text-emerald-950/95 sm:hidden dark:text-emerald-50/95">
+                                        <span class="font-semibold">~{{ $eq->setupEstimatedRotationMinutes() ?? '—' }} min</span> per wave ·
+                                        {{ (int) ($state['timeLimitMinutes'] ?? 0) > 0 ? (int) $state['timeLimitMinutes'].' min timer' : $eq->setupMinutesPerMatchFallback().' min assumed' }}
+                                    </p>
                                     <p class="leading-relaxed">
                                         <span class="font-semibold text-emerald-950 dark:text-emerald-50">Even counts:</span>
                                         {{ $eq->setupPlayerParityHint() }}
                                     </p>
-                                    <p class="text-[11px] leading-relaxed text-emerald-800/85 dark:text-emerald-300/85">
+                                    <p class="hidden text-[11px] leading-relaxed text-emerald-800/85 md:block dark:text-emerald-300/85">
                                         Heuristic only — real time depends on warm-ups, walkovers, and between games.
                                     </p>
                                 </div>
@@ -481,8 +505,11 @@
                                 <li class="text-zinc-600 dark:text-zinc-400">{{ $eq->setupPlayerParityHint() }}</li>
                             @endif
                         </ul>
-                        <p class="text-sm text-zinc-500 dark:text-zinc-400">
+                        <p class="hidden text-sm text-zinc-500 dark:text-zinc-400 sm:block">
                             Next: use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> in the host bar to add or edit players; open <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings &amp; log</span> anytime for the full leaderboard and match history.
+                        </p>
+                        <p class="text-xs text-zinc-500 sm:hidden dark:text-zinc-400">
+                            Use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> &amp; <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings</span> from the host bar anytime.
                         </p>
                     </div>
                 @endif
@@ -520,7 +547,7 @@
 
     {{-- ========== MINIMAL HOST VIEW ========== --}}
     @if ($uiPhase === 'session')
-        <div class="space-y-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5">
+        <div class="space-y-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5">
             <header class="flex flex-wrap items-center justify-between gap-3 pb-1">
                 <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                     <button
@@ -564,7 +591,8 @@
                         class="touch-manipulation min-h-11 flex-1 rounded-2xl border border-zinc-200/90 bg-emerald-600/10 px-4 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-600/15 active:scale-[0.98] dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/60 sm:flex-none sm:min-w-[9rem]"
                         wire:click="$set('peopleModalOpen', true)"
                     >
-                        Standings &amp; log
+                        <span class="lg:hidden">Standings</span>
+                        <span class="hidden lg:inline">Standings &amp; log</span>
                     </button>
                 </div>
             </header>
@@ -578,27 +606,82 @@
                 </p>
             @endif
 
-            <div class="min-w-0 space-y-4 sm:space-y-5">
-                    <div class="flex flex-wrap gap-2 border-b border-zinc-200 pb-2 dark:border-zinc-800">
+            <div class="min-w-0 space-y-3 sm:space-y-5">
+                    <div class="-mx-1 flex gap-2 overflow-x-auto overflow-y-hidden border-b border-zinc-200 pb-2 dark:border-zinc-800">
                         <button
                             type="button"
-                            class="rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $activeTab === 'play' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
+                            class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $activeTab === 'play' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
                             wire:click="$set('activeTab', 'play')"
                         >
                             Play
                         </button>
                         <button
                             type="button"
-                            class="rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $activeTab === 'tools' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
+                            class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $activeTab === 'tools' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
                             wire:click="$set('activeTab', 'tools')"
                         >
-                            Share &amp; data
+                            <span class="lg:hidden">Share</span>
+                            <span class="hidden lg:inline">Share &amp; data</span>
                         </button>
                     </div>
 
-                    <div class="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/90 to-white p-4 shadow-sm dark:border-emerald-900/40 dark:from-emerald-950/25 dark:to-zinc-950/80">
+                    @if (($activeTab ?? '') === 'play')
+                        <div
+                            class="flex flex-wrap items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/90 px-3 py-2 lg:hidden dark:border-emerald-900/40 dark:bg-emerald-950/30"
+                        >
+                            <span class="text-[11px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Live watch</span>
+                            <div class="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
+                                @if (empty($state['shareUuid'] ?? ''))
+                                    <button
+                                        type="button"
+                                        class="touch-manipulation rounded-xl bg-zinc-800 px-3 py-1.5 text-xs font-semibold text-white dark:bg-zinc-200 dark:text-zinc-900"
+                                        wire:click="startSharing"
+                                        wire:loading.attr="disabled"
+                                        @disabled($shareBusy)
+                                    >
+                                        <span wire:loading.remove wire:target="startSharing">Enable</span>
+                                        <span wire:loading wire:target="startSharing">…</span>
+                                    </button>
+                                @else
+                                    @if (empty($state['shareSecret'] ?? ''))
+                                        <button
+                                            type="button"
+                                            class="touch-manipulation rounded-xl bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white dark:bg-amber-600"
+                                            wire:click="startSharing"
+                                            wire:loading.attr="disabled"
+                                            @disabled($shareBusy)
+                                        >
+                                            <span wire:loading.remove wire:target="startSharing">Reconnect</span>
+                                            <span wire:loading wire:target="startSharing">…</span>
+                                        </button>
+                                    @endif
+                                    <button
+                                        type="button"
+                                        class="touch-manipulation rounded-xl border border-zinc-300 px-3 py-1.5 text-xs font-semibold dark:border-zinc-600"
+                                        wire:click="copyShareLink"
+                                    >
+                                        {{ $shareCopied ? 'Copied' : 'Copy link' }}
+                                    </button>
+                                    @if (! empty($state['shareSecret'] ?? ''))
+                                        @if (! empty($state['shareSyncEnabled']))
+                                            <button type="button" class="text-xs font-semibold text-emerald-700 underline dark:text-emerald-400" wire:click="pauseSharing">Pause sync</button>
+                                        @else
+                                            <button type="button" class="text-xs font-semibold text-zinc-500 underline" wire:click="resumeSharing">Resume sync</button>
+                                        @endif
+                                    @endif
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    <div
+                        @class([
+                            'rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/90 to-white p-3 shadow-sm dark:border-emerald-900/40 dark:from-emerald-950/25 dark:to-zinc-950/80 sm:p-4',
+                            'hidden lg:block' => ($activeTab ?? '') !== 'tools',
+                        ])
+                    >
                         <p class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300/90">Share live</p>
-                        <p class="mt-1 text-xs leading-relaxed text-zinc-600 dark:text-zinc-400">
+                        <p class="mt-1 hidden text-xs leading-relaxed text-zinc-600 md:block dark:text-zinc-400">
                             You have one live watch URL per account. Copy it anytime; reconnect this device to push updates if the host key was cleared.
                         </p>
                         <div class="mt-3 space-y-2">
@@ -643,7 +726,7 @@
                     </div>
 
                     @if ($activeTab === 'tools')
-                        <div class="space-y-4 rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
+                        <div class="space-y-4 rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40 sm:p-4">
                             <div>
                                 <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Export / import</p>
                                 <div class="mt-2 flex flex-wrap gap-2">
@@ -705,8 +788,11 @@
                                     />
                                     <span class="text-xs text-zinc-500">min</span>
                                 </div>
-                                <p class="text-xs leading-snug text-zinc-500 dark:text-zinc-400 sm:max-w-md">
+                                <p class="hidden text-xs leading-snug text-zinc-500 dark:text-zinc-400 sm:max-w-md sm:block">
                                     <span class="font-medium text-zinc-700 dark:text-zinc-300">0</span> = no countdown. Limit and each court clock stay in sync.
+                                </p>
+                                <p class="text-[11px] leading-snug text-zinc-500 sm:hidden dark:text-zinc-400">
+                                    <span class="font-medium text-zinc-700 dark:text-zinc-300">0</span> = no countdown.
                                 </p>
                             </div>
                         </div>
@@ -910,10 +996,13 @@
                                 @endforeach
                             </section>
 
-                            <section class="w-full rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900/60" aria-label="Queue">
+                            <section class="w-full rounded-2xl border border-zinc-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900/60 sm:p-4" aria-label="Queue">
                                 <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Queue</p>
-                                <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                                <p class="mt-1 hidden text-xs leading-relaxed text-zinc-500 md:block dark:text-zinc-400">
                                     <span class="font-medium text-zinc-700 dark:text-zinc-300">Take a break</span> in the queue matches <span class="font-medium text-zinc-700 dark:text-zinc-300">Take a break</span> in the roster — skipped for <span class="font-medium text-zinc-700 dark:text-zinc-300">Fill courts</span> until cleared in the roster.
+                                </p>
+                                <p class="mt-1 text-[11px] leading-snug text-zinc-500 md:hidden dark:text-zinc-400">
+                                    <span class="font-medium text-zinc-700 dark:text-zinc-300">Break</span> matches roster · skipped for Fill until cleared there.
                                 </p>
                                 <ul class="mt-3 max-h-[min(60vh,40rem)] space-y-1 overflow-y-auto text-sm">
                                     @foreach ($state['queue'] ?? [] as $qi => $qid)
@@ -965,7 +1054,7 @@
                             Head-to-head &amp; log
                         </button>
                     </div>
-                    <p class="mb-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                    <p class="mb-4 hidden text-xs leading-relaxed text-zinc-500 sm:block dark:text-zinc-400">
                         Use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> in the host bar to add or edit players. Tap a name in <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings</span> for that player’s full head-to-head page.
                     </p>
                     @if ($modalTab === 'standings')
@@ -1179,6 +1268,7 @@
                                 <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $state['bulkAddFeedback'] }}</p>
                             @endif
                         </div>
+                        <p class="text-xs text-zinc-500 md:hidden dark:text-zinc-400">Swipe the table sideways for all columns.</p>
                         <div class="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-700">
                             <table class="w-full min-w-[40rem] text-left text-sm">
                                 <thead class="border-b border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">

@@ -223,7 +223,6 @@ class OpenPlayShareTest extends TestCase
             ->assertSee('Friday ladder', false)
             ->assertSee('Sam', false)
             ->assertSee('Standings', false)
-            ->assertSee('Playing today', false)
             ->assertSee('wire:poll.1s="refreshWatch"', false);
     }
 

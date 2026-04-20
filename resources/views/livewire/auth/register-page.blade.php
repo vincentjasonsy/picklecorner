@@ -80,14 +80,21 @@
                     Password
                 </label>
                 <input
-                    wire:model="password"
+                    wire:model.blur="password"
                     id="password"
                     type="password"
                     autocomplete="new-password"
                     required
+                    minlength="8"
+                    maxlength="255"
                     class="mt-1.5 block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/40 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400 dark:focus:bg-zinc-950"
-                    placeholder="Min. 8 characters"
+                    placeholder="Enter your password"
                 />
+                <ul class="mt-2 list-inside list-disc space-y-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                    <li>At least 8 characters</li>
+                    <li>Includes uppercase and lowercase letters</li>
+                    <li>Includes at least one number</li>
+                </ul>
                 @error('password')
                     <p class="mt-1.5 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
@@ -101,11 +108,13 @@
                     Confirm password
                 </label>
                 <input
-                    wire:model="password_confirmation"
+                    wire:model.blur="password_confirmation"
                     id="password_confirmation"
                     type="password"
                     autocomplete="new-password"
                     required
+                    minlength="8"
+                    maxlength="255"
                     class="mt-1.5 block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/40 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400 dark:focus:bg-zinc-950"
                     placeholder="Repeat password"
                 />

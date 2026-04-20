@@ -105,4 +105,45 @@ class GameQEngineQueueOrderTest extends TestCase
         $this->assertSame(['x'], array_map('strval', $courts[1]['sideA'] ?? []));
         $this->assertSame(['w'], array_map('strval', $courts[1]['sideB'] ?? []));
     }
+
+    public function test_sync_queue_orders_ties_by_skill_when_shuffle_method_is_levels(): void
+    {
+        $state = Engine::defaultState();
+        $state['shuffleMethod'] = 'levels';
+        $state['mode'] = 'singles';
+        $state['courtsCount'] = 1;
+        $state['players'] = [
+            ['id' => 'hi', 'name' => 'Hi', 'level' => 8, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'lo', 'name' => 'Lo', 'level' => 2, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'mid', 'name' => 'Mid', 'level' => 5, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['hi', 'mid', 'lo'];
+        $state['courts'] = [null];
+
+        $e = new Engine($state);
+        $e->syncQueueFromIdle();
+
+        $this->assertSame(['lo', 'mid', 'hi'], array_map('strval', $e->toArray()['queue']));
+    }
+
+    public function test_sync_queue_levels_rotate_interleaves_skill_bands_within_same_games(): void
+    {
+        $state = Engine::defaultState();
+        $state['shuffleMethod'] = 'levels_rotate';
+        $state['mode'] = 'singles';
+        $state['courtsCount'] = 1;
+        $state['players'] = [
+            ['id' => 'd2', 'name' => 'D', 'level' => 2, 'wins' => 0, 'losses' => 2, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'b3', 'name' => 'B', 'level' => 3, 'wins' => 0, 'losses' => 2, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'c4', 'name' => 'C', 'level' => 4, 'wins' => 0, 'losses' => 2, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'a2', 'name' => 'A', 'level' => 2, 'wins' => 0, 'losses' => 2, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['d2', 'c4', 'b3', 'a2'];
+        $state['courts'] = [null];
+
+        $e = new Engine($state);
+        $e->syncQueueFromIdle();
+
+        $this->assertSame(['a2', 'b3', 'c4', 'd2'], array_map('strval', $e->toArray()['queue']));
+    }
 }

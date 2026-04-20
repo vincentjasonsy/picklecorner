@@ -3,9 +3,7 @@
 namespace App\Livewire;
 
 use App\GameQ\Engine;
-use App\Models\OpenPlaySession;
 use App\Models\OpenPlayShare;
-use App\Services\GameQShareToggleBreakPayload;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
@@ -16,21 +14,12 @@ use Livewire\Component;
 #[Title('GameQ · Live (Beta)')]
 class OpenPlayWatch extends Component
 {
-    private const MAX_PAYLOAD_BYTES = 512000;
-
     public OpenPlayShare $openPlayShare;
 
     /** @var array<string, mixed> */
     public array $game = [];
 
     public bool $loadFailed = false;
-
-    public string $toggleBreakError = '';
-
-    /** Shown after a successful take-a-break toggle (survives wire:poll; cleared on next toggle attempt). */
-    public string $toggleBreakSuccess = '';
-
-    public ?string $toggleBreakBusyId = null;
 
     public ?string $updatedAtIso = null;
 
@@ -52,69 +41,6 @@ class OpenPlayWatch extends Component
         $this->game = (new Engine($raw))->toArray();
         $this->updatedAtIso = $this->openPlayShare->updated_at?->toIso8601String();
         $this->loadFailed = false;
-    }
-
-    public function engine(): Engine
-    {
-        return new Engine($this->game);
-    }
-
-    public function requestTogglePlayerBreak(string $playerId): void
-    {
-        $p = $this->engine()->playerById($playerId);
-        if (! $p) {
-            return;
-        }
-        $wantSkip = empty($p['skipShuffle']);
-        $this->applyToggleBreakPayload($playerId, $wantSkip);
-    }
-
-    protected function applyToggleBreakPayload(string $playerId, bool $wantSkip): void
-    {
-        $this->toggleBreakError = '';
-        $this->toggleBreakSuccess = '';
-        $this->toggleBreakBusyId = $playerId;
-        try {
-            $this->openPlayShare->refresh();
-            $payload = $this->openPlayShare->payload;
-            if (! is_array($payload)) {
-                $this->toggleBreakError = 'Invalid session.';
-
-                return;
-            }
-            [$next, $err] = GameQShareToggleBreakPayload::apply($payload, $playerId, $wantSkip);
-            if ($err !== null) {
-                $this->toggleBreakError = $err;
-
-                return;
-            }
-            $playerCount = is_array($next['players'] ?? null)
-                ? count($next['players'])
-                : 0;
-            if ($playerCount > OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
-                $this->toggleBreakError = sprintf(
-                    'GameQ allows at most %d players per session.',
-                    OpenPlaySession::MAX_PLAYERS_PER_SESSION,
-                );
-
-                return;
-            }
-            $encoded = json_encode($next);
-            if ($encoded === false || strlen($encoded) > self::MAX_PAYLOAD_BYTES) {
-                $this->toggleBreakError = 'Payload too large.';
-
-                return;
-            }
-            $this->openPlayShare->update(['payload' => $next]);
-            $this->refreshWatch();
-            $this->toggleBreakSuccess = $wantSkip
-                ? 'Take a break is on — the host queue is updated.'
-                : 'You’re back in rotation — the host queue is updated.';
-        } catch (\Throwable) {
-            $this->toggleBreakError = 'Could not update. Try again.';
-        } finally {
-            $this->toggleBreakBusyId = null;
-        }
     }
 
     public function syncedRelativeLabel(): string
@@ -144,21 +70,6 @@ class OpenPlayWatch extends Component
         } catch (\Throwable) {
             return '';
         }
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public function rosterPlayers(): array
-    {
-        $out = [];
-        foreach ($this->game['players'] ?? [] as $p) {
-            if (is_array($p) && empty($p['disabled'])) {
-                $out[] = $p;
-            }
-        }
-
-        return $out;
     }
 
     public function render(): View

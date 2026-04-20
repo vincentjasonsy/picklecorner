@@ -276,6 +276,7 @@ class Engine
             'random' => 'Random order',
             'wins' => 'Fewest wins first',
             'levels' => 'By skill level',
+            'levels_rotate' => 'Skill level rotation',
             'teams' => 'Fixed pairs (team codes)',
         ];
         $method = (string) $this->state['shuffleMethod'];
@@ -755,6 +756,42 @@ class Engine
             });
 
             return $arr;
+        }
+        if ($method === 'levels_rotate') {
+            usort($arr, function ($a, $b) {
+                $al = (int) ($a['level'] ?? 0);
+                $bl = (int) ($b['level'] ?? 0);
+                if ($al !== $bl) {
+                    return $al <=> $bl;
+                }
+
+                return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+            });
+            $byLevel = [];
+            foreach ($arr as $p) {
+                $lv = (int) ($p['level'] ?? 0);
+                if (! isset($byLevel[$lv])) {
+                    $byLevel[$lv] = [];
+                }
+                $byLevel[$lv][] = $p;
+            }
+            ksort($byLevel, SORT_NUMERIC);
+            $levelKeys = array_keys($byLevel);
+            $out = [];
+            while (true) {
+                $progress = false;
+                foreach ($levelKeys as $lv) {
+                    if ($byLevel[$lv] !== []) {
+                        $out[] = array_shift($byLevel[$lv]);
+                        $progress = true;
+                    }
+                }
+                if (! $progress) {
+                    break;
+                }
+            }
+
+            return $out;
         }
         if ($method === 'teams') {
             usort($arr, function ($a, $b) {
@@ -1259,15 +1296,40 @@ class Engine
         foreach ($filtered as $i => $id) {
             $prio[(string) $id] = $i;
         }
-        usort($filtered, function ($a, $b) use ($prio) {
-            $cmp = $this->totalGamesForQueueId($a) <=> $this->totalGamesForQueueId($b);
-            if ($cmp !== 0) {
-                return $cmp;
+        $method = (string) $this->state['shuffleMethod'];
+        $buckets = [];
+        foreach ($filtered as $id) {
+            $g = $this->totalGamesForQueueId($id);
+            if (! isset($buckets[$g])) {
+                $buckets[$g] = [];
             }
+            $buckets[$g][] = $id;
+        }
+        ksort($buckets, SORT_NUMERIC);
+        $ordered = [];
+        foreach ($buckets as $ids) {
+            $players = [];
+            foreach ($ids as $qid) {
+                $pl = $this->playerById($qid);
+                if ($pl) {
+                    $players[] = $pl;
+                }
+            }
+            if ($method === 'random') {
+                usort($players, function ($a, $b) use ($prio) {
+                    $aid = (string) ($a['id'] ?? '');
+                    $bid = (string) ($b['id'] ?? '');
 
-            return ($prio[(string) $a] ?? 0) <=> ($prio[(string) $b] ?? 0);
-        });
-        $this->state['queue'] = $filtered;
+                    return ($prio[$aid] ?? 0) <=> ($prio[$bid] ?? 0);
+                });
+            } else {
+                $players = $this->sortPlayersForMethod($players, $method);
+            }
+            foreach ($players as $p) {
+                $ordered[] = $p['id'];
+            }
+        }
+        $this->state['queue'] = $ordered;
     }
 
     public function clearCourt(int $i): void

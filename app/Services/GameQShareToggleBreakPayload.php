@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
-/** Live-watch “take a break” toggle — same queue rules as {@see \App\GameQ\Engine} roster updates. */
+use App\GameQ\Engine;
+
+/** Live-watch “take a break” toggle — same queue rules as {@see Engine} roster updates. */
 final class GameQShareToggleBreakPayload
 {
     /**
@@ -99,6 +101,9 @@ final class GameQShareToggleBreakPayload
         }
 
         $payload['queue'] = $next;
+        $engine = new Engine($payload);
+        $engine->syncQueueFromIdle();
+        $payload['queue'] = $engine->toArray()['queue'];
 
         return [$payload, null];
     }

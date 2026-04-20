@@ -81,7 +81,7 @@
                             <span class="truncate">{{ $t }}</span>
                         @endif
                     </p>
-                    <p class="truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400">
+                    <p class="hidden truncate text-[11px] font-medium text-zinc-500 dark:text-zinc-400 sm:block">
                         Session queue
                     </p>
                 </div>
@@ -90,17 +90,17 @@
                 </div>
             </header>
 
-            <main class="flex min-h-0 flex-1 flex-col px-3 pt-4 sm:px-4 sm:pt-6">
+            <main class="flex min-h-0 flex-1 flex-col px-2 pt-3 sm:px-4 sm:pt-6">
                 <div
-                    class="mx-auto flex w-full max-w-5xl flex-1 flex-col rounded-[1.75rem] border border-zinc-200/90 bg-white/95 shadow-[0_24px_60px_-28px_rgba(0,0,0,0.18)] ring-1 ring-zinc-900/[0.04] dark:border-zinc-800 dark:bg-zinc-900/95 dark:ring-white/[0.06] lg:rounded-[2rem]"
+                    class="mx-auto flex w-full max-w-5xl flex-1 flex-col rounded-2xl border border-zinc-200/90 bg-white/95 shadow-sm ring-1 ring-zinc-900/[0.04] dark:border-zinc-800 dark:bg-zinc-900/95 dark:ring-white/[0.06] sm:rounded-[1.75rem] sm:shadow-[0_24px_60px_-28px_rgba(0,0,0,0.18)] lg:rounded-[2rem]"
                 >
-                    <div class="min-h-0 flex-1 rounded-[inherit] p-4 sm:p-5 lg:p-6">
+                    <div class="min-h-0 flex-1 rounded-[inherit] p-3 sm:p-5 lg:p-6">
                         {{ $slot }}
                     </div>
                 </div>
             </main>
 
-            <footer class="shrink-0 px-4 py-4 text-center">
+            <footer class="hidden shrink-0 px-4 py-3 text-center sm:block">
                 <p class="text-[11px] font-medium text-zinc-500 dark:text-zinc-500">
                     {{ config('app.name') }} · tool mode
                 </p>
