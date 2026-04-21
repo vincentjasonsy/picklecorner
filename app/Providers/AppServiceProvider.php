@@ -52,6 +52,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->ensureSqliteDatabaseFileExists();
+        $this->ensureFilesystemUploadDirectoriesExist();
     }
 
     /**
@@ -77,6 +78,16 @@ class AppServiceProvider extends ServiceProvider
         if (! File::exists($path)) {
             File::ensureDirectoryExists(dirname($path));
             File::put($path, '');
+        }
+    }
+
+    /**
+     * Livewire temp uploads use the local disk (storage/app/private); public gallery images use storage/app/public.
+     */
+    private function ensureFilesystemUploadDirectoriesExist(): void
+    {
+        foreach ([storage_path('app/private'), storage_path('app/public')] as $dir) {
+            File::ensureDirectoryExists($dir);
         }
     }
 }
