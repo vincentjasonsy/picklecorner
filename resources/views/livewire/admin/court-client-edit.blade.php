@@ -129,6 +129,25 @@
                             <label
                                 class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
                             >
+                                Booking notification email
+                            </label>
+                            <input
+                                wire:model="booking_notification_email"
+                                type="email"
+                                class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="bookings@venue.com"
+                            />
+                            <p class="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                                Public and desk booking updates are sent here.
+                            </p>
+                            @error('booking_notification_email')
+                                <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label
+                                class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
+                            >
                                 Facebook or social URL
                             </label>
                             <input

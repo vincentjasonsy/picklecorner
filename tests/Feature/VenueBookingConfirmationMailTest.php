@@ -132,4 +132,67 @@ class VenueBookingConfirmationMailTest extends TestCase
         Notification::assertSentTo($user, MemberVenueBookingSubmittedNotification::class);
         Notification::assertNotSentTo($user, CourtAdminVenueBookingSubmittedNotification::class);
     }
+
+    public function test_venue_booking_notification_email_receives_booking_submission_notification(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        Notification::fake();
+
+        $admin = User::factory()->courtAdmin()->create(['email' => 'venue-admin@example.com']);
+        $player = User::factory()->player()->create(['email' => 'player@example.com']);
+
+        $client = CourtClient::factory()->forAdmin($admin)->create([
+            'slug' => 'mail-venue-recipient',
+            'booking_notification_email' => 'bookings+venue@example.com',
+        ]);
+
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $rid = (string) Str::uuid();
+        $starts = now()->addDay()->setTime(9, 0);
+        $ends = now()->addDay()->setTime(10, 0);
+
+        $booking = Booking::query()->create([
+            'id' => (string) Str::uuid(),
+            'court_client_id' => $client->id,
+            'court_id' => $court->id,
+            'user_id' => $player->id,
+            'booking_request_id' => $rid,
+            'starts_at' => $starts,
+            'ends_at' => $ends,
+            'status' => Booking::STATUS_PENDING_APPROVAL,
+            'currency' => 'PHP',
+            'checkout_snapshot' => BookingCheckoutSnapshot::memberPublicCheckout(
+                'PHP',
+                'test fee',
+                10000,
+                0,
+                1000,
+                11000,
+                null,
+                10000,
+                0,
+                10000,
+                0,
+                10000,
+                0,
+                1000,
+            ),
+        ]);
+
+        VenueBookingConfirmationNotifier::notifyMemberPublicSubmission($client, $player, [$booking]);
+
+        Notification::assertSentOnDemand(CourtAdminVenueBookingSubmittedNotification::class, function ($notification, $channels, $notifiable): bool {
+            return in_array('mail', $channels, true)
+                && isset($notifiable->routes['mail'])
+                && $notifiable->routes['mail'] === 'bookings+venue@example.com';
+        });
+    }
 }

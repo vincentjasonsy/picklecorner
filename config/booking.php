@@ -128,4 +128,16 @@ return [
         true,
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Registration emails
+    |--------------------------------------------------------------------------
+    |
+    | Alert this mailbox when new users register, and send the welcome email
+    | from the app to each new account.
+    |
+    */
+
+    'registration_alert_email' => env('BOOKING_REGISTRATION_ALERT_EMAIL', 'vincent.m.sy@gmail.com'),
+
 ];

@@ -60,6 +60,8 @@ class CourtClientEdit extends Component
 
     public string $phone = '';
 
+    public string $booking_notification_email = '';
+
     public string $facebook_url = '';
 
     public string $latitude = '';
@@ -156,6 +158,7 @@ class CourtClientEdit extends Component
             : CourtClient::TIER_BASIC;
         $this->address = (string) ($c->address ?? '');
         $this->phone = (string) ($c->phone ?? '');
+        $this->booking_notification_email = (string) ($c->booking_notification_email ?? '');
         $this->facebook_url = (string) ($c->facebook_url ?? '');
         $this->latitude = $c->latitude !== null ? (string) $c->latitude : '';
         $this->longitude = $c->longitude !== null ? (string) $c->longitude : '';
@@ -840,6 +843,7 @@ class CourtClientEdit extends Component
             'city' => ['nullable', 'string', 'max:120'],
             'address' => ['nullable', 'string', 'max:2000'],
             'phone' => ['nullable', 'string', 'max:64'],
+            'booking_notification_email' => ['nullable', 'string', 'email:rfc', 'max:255'],
             'facebook_url' => [
                 'nullable',
                 'string',
@@ -950,6 +954,9 @@ class CourtClientEdit extends Component
             'city' => $validated['city'],
             'address' => $validated['address'] !== '' && $validated['address'] !== null ? $validated['address'] : null,
             'phone' => $validated['phone'] !== '' && $validated['phone'] !== null ? $validated['phone'] : null,
+            'booking_notification_email' => $validated['booking_notification_email'] !== '' && $validated['booking_notification_email'] !== null
+                ? trim((string) $validated['booking_notification_email'])
+                : null,
             'facebook_url' => $validated['facebook_url'] !== '' && $validated['facebook_url'] !== null ? $validated['facebook_url'] : null,
             'latitude' => $latitude,
             'longitude' => $longitude,

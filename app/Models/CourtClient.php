@@ -45,6 +45,7 @@ class CourtClient extends Model
         'city',
         'address',
         'phone',
+        'booking_notification_email',
         'facebook_url',
         'latitude',
         'longitude',

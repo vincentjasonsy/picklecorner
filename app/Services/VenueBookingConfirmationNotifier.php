@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\CourtAdminVenueBookingSubmittedNotification;
 use App\Notifications\MemberVenueBookingSubmittedNotification;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Notification;
 
 final class VenueBookingConfirmationNotifier
 {
@@ -89,6 +90,20 @@ final class VenueBookingConfirmationNotifier
         $admin = $courtClient->admin;
         if ($admin !== null && self::hasNonEmptyEmail($admin) && $admin->id !== $booker->id) {
             $admin->notify(new CourtAdminVenueBookingSubmittedNotification(
+                array_merge($memberData, [
+                    'bookerName' => $booker->name,
+                    'bookerEmail' => $booker->email,
+                ]),
+            ));
+        }
+
+        $venueNotificationEmail = trim((string) ($courtClient->booking_notification_email ?? ''));
+        if ($venueNotificationEmail !== ''
+            && filter_var($venueNotificationEmail, FILTER_VALIDATE_EMAIL) !== false
+            && strcasecmp($venueNotificationEmail, trim((string) $booker->email)) !== 0
+            && ($admin === null || strcasecmp($venueNotificationEmail, trim((string) $admin->email)) !== 0)
+        ) {
+            Notification::route('mail', $venueNotificationEmail)->notify(new CourtAdminVenueBookingSubmittedNotification(
                 array_merge($memberData, [
                     'bookerName' => $booker->name,
                     'bookerEmail' => $booker->email,

@@ -5,6 +5,7 @@ namespace App\Livewire\Auth;
 use App\Models\User;
 use App\Models\UserType;
 use App\Services\ActivityLogger;
+use App\Services\RegistrationMailNotifier;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
@@ -123,6 +124,7 @@ class RegisterPage extends Component
         }
 
         event(new Registered($user));
+        RegistrationMailNotifier::notify($user);
 
         Auth::login($user);
 
