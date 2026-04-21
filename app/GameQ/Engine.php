@@ -769,9 +769,9 @@ class Engine
             // Step 2: Sort levels (skill order still respected)
             ksort($byLevel, SORT_NUMERIC);
         
-            // Step 3: Shuffle INSIDE each level
+            // Step 3: Stable order inside each level (player id) so ties are repeatable
             foreach ($byLevel as &$group) {
-                self::shuffleInPlace($group); // <-- important
+                usort($group, fn ($a, $b) => strcmp((string) ($a['id'] ?? ''), (string) ($b['id'] ?? '')));
             }
             unset($group);
         
@@ -861,6 +861,33 @@ class Engine
     }
 
     /**
+     * Order doubles players so sequential groups of four tend to share similar skill.
+     * Primary key is skill level; within the same level we keep the caller's pool order
+     * (queue priority / games-fair ordering from {@see orderedPoolForFill()}).
+     *
+     * @param  list<array<string, mixed>>  $poolPlayers
+     * @return list<array<string, mixed>>
+     */
+    private function orderPoolForDoublesSkillQuartets(array $poolPlayers): array
+    {
+        $indexed = [];
+        foreach (array_values($poolPlayers) as $i => $p) {
+            $indexed[] = ['i' => $i, 'p' => $p];
+        }
+        usort($indexed, function (array $a, array $b): int {
+            $la = (int) ($a['p']['level'] ?? 0);
+            $lb = (int) ($b['p']['level'] ?? 0);
+            if ($la !== $lb) {
+                return $la <=> $lb;
+            }
+
+            return $a['i'] <=> $b['i'];
+        });
+
+        return array_map(fn (array $x) => $x['p'], $indexed);
+    }
+
+    /**
      * @param  list<array<string, mixed>>  $poolPlayers
      * @return list<list<string|int>>
      */
@@ -927,40 +954,20 @@ class Engine
             }
         }
 
-        // ===============================
-        // 🧠 STEP 1: GROUP BY GAMES PLAYED
-        // ===============================
-        $byGames = [];
-        foreach ($arr as $p) {
-            $g = self::totalGamesPlayed($p);
-            $byGames[$g][] = $p;
-        }
+        // Skill-first quartet lines: scan players in ascending level so each block of 4
+        // is usually close in skill (games/queue order preserved within a level).
+        $sortedForGroups = $this->orderPoolForDoublesSkillQuartets($arr);
 
-        ksort($byGames, SORT_NUMERIC);
-
-        // ===============================
-        // 🧠 STEP 2: BUILD GROUPS OF 4
-        // ===============================
         $groups = [];
         $buffer = [];
 
-        foreach ($byGames as $players) {
-            // prioritize same level inside same games
-            usort($players, fn($a, $b) => $a['level'] <=> $b['level']);
+        foreach ($sortedForGroups as $p) {
+            $buffer[] = $p;
 
-            foreach ($players as $p) {
-                $buffer[] = $p;
-
-                if (count($buffer) === 4) {
-                    $groups[] = $buffer;
-                    $buffer = [];
-                }
+            if (count($buffer) === 4) {
+                $groups[] = $buffer;
+                $buffer = [];
             }
-        }
-
-        // leftover players (optional: skip or include)
-        if (count($buffer) === 4) {
-            $groups[] = $buffer;
         }
 
         // ===============================
@@ -974,8 +981,6 @@ class Engine
                 [[$g[0], $g[2]], [$g[1], $g[3]]],
                 [[$g[0], $g[3]], [$g[1], $g[2]]],
             ];
-
-            self::shuffleInPlace($options);
 
             $best = null;
             $bestScore = PHP_INT_MAX;
@@ -1131,12 +1136,6 @@ class Engine
         foreach ($matches as $m) {
             $grouped[$m['bucket']][] = $m;
         }
-
-        // shuffle inside buckets
-        foreach ($grouped as &$g) {
-            self::shuffleInPlace($g);
-        }
-        unset($g);
 
         // 👉 distribute across courts
         $balanced = [];
