@@ -106,7 +106,7 @@
                     Gift card
                 </dt>
                 <dd class="mt-1">
-                    @if ($mine && $b->giftCard->court_client_id === $mine->id)
+                    @if ($mine && $b->giftCard->court_client_id === $mine->id && gift_card_staff_module_visible_to())
                         <a
                             href="{{ route('venue.gift-cards.show', $b->giftCard) }}"
                             wire:navigate
@@ -114,6 +114,8 @@
                         >
                             {{ $b->giftCard->code }}
                         </a>
+                    @elseif ($mine && $b->giftCard->court_client_id === $mine->id)
+                        <span class="font-mono font-medium text-zinc-800 dark:text-zinc-200">{{ $b->giftCard->code }}</span>
                     @else
                         <span class="font-mono font-medium text-zinc-800 dark:text-zinc-200">{{ $b->giftCard->code }}</span>
                         @if ($b->giftCard->isPlatformWide())

@@ -26,6 +26,20 @@ function booking_gift_subscription_controls_visible(?User $user = null): bool
 }
 
 /**
+ * Coach and venue portal gift card UI and routes. Admin /admin/gift-cards is unchanged.
+ */
+function gift_card_staff_module_visible_to(?User $user = null): bool
+{
+    if ((bool) config('booking.gift_card_module_for_non_super_admins', true)) {
+        return true;
+    }
+
+    $user ??= auth()->user();
+
+    return $user instanceof User && $user->isSuperAdmin();
+}
+
+/**
  * Active booking fee row, or an unsaved model using built-in defaults when none exist.
  */
 function currentBookingFeeSetting(): BookingFeeSetting

@@ -111,4 +111,21 @@ return [
         false,
     ),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Gift card coach & venue portals (non–super-admin)
+    |--------------------------------------------------------------------------
+    |
+    | When true, coaches and venue admins can use gift card management routes
+    | and navigation (subject to venue Premium tier for venue routes). When false,
+    | only super_admin users may access those coach and venue gift card pages;
+    | platform admin gift cards under /admin remain available to super admins.
+    |
+    */
+
+    'gift_card_module_for_non_super_admins' => (bool) env(
+        'BOOKING_GIFT_CARD_MODULE_FOR_NON_SUPER_ADMINS',
+        true,
+    ),
+
 ];

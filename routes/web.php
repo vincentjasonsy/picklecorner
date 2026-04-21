@@ -197,8 +197,10 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/bookings/{booking}', CoachBookingShow::class)->name('bookings.show');
         Route::livewire('/courts', CoachCourtsManage::class)->name('courts');
         Route::livewire('/availability', CoachAvailability::class)->name('availability');
-        Route::livewire('/gift-cards', CoachGiftCards::class)->name('gift-cards.index');
-        Route::livewire('/gift-cards/{giftCard}', CoachGiftCardShow::class)->name('gift-cards.show');
+        Route::middleware('gift_card_staff_module')->group(function (): void {
+            Route::livewire('/gift-cards', CoachGiftCards::class)->name('gift-cards.index');
+            Route::livewire('/gift-cards/{giftCard}', CoachGiftCardShow::class)->name('gift-cards.show');
+        });
         Route::livewire('/profile', CoachProfileEdit::class)->name('profile');
     });
 
@@ -220,8 +222,10 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
 
         Route::middleware('venue_premium')->group(function (): void {
             Route::livewire('/customers/{contact}', VenueCrmContact::class)->name('crm.contacts.show');
-            Route::livewire('/gift-cards', 'venue-gift-cards-index')->name('gift-cards.index');
-            Route::livewire('/gift-cards/{giftCard}', VenueGiftCardShow::class)->name('gift-cards.show');
+            Route::middleware('gift_card_staff_module')->group(function (): void {
+                Route::livewire('/gift-cards', 'venue-gift-cards-index')->name('gift-cards.index');
+                Route::livewire('/gift-cards/{giftCard}', VenueGiftCardShow::class)->name('gift-cards.show');
+            });
         });
     });
 

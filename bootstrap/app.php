@@ -4,6 +4,7 @@ use App\Http\Middleware\BlockAdminWhileImpersonating;
 use App\Http\Middleware\EnsureCourtAdmin;
 use App\Http\Middleware\EnsureCourtClientDesk;
 use App\Http\Middleware\EnsureDemoAccountValid;
+use App\Http\Middleware\EnsureGiftCardStaffModuleEnabled;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\EnsureUserIsCoach;
 use App\Http\Middleware\EnsureVenuePremiumSubscription;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'demo.valid' => EnsureDemoAccountValid::class,
             'coach' => EnsureUserIsCoach::class,
             'venue_premium' => EnsureVenuePremiumSubscription::class,
+            'gift_card_staff_module' => EnsureGiftCardStaffModuleEnabled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
