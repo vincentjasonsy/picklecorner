@@ -8,6 +8,7 @@ use App\Services\ActivityLogger;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 
@@ -36,17 +37,71 @@ class RegisterPage extends Component
         }
     }
 
-    public function register(): void
+    /**
+     * @return array<string, array<int, mixed|\Illuminate\Contracts\Validation\ValidationRule|string>>
+     */
+    protected function rules(): array
     {
-        $validated = $this->validate([
+        return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
             'accept_privacy' => ['accepted'],
             'subscribe_marketing_emails' => ['boolean'],
-        ], [
+        ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function messages(): array
+    {
+        return [
             'accept_privacy.accepted' => 'You must accept the Privacy Policy to create an account.',
+        ];
+    }
+
+    public function updatedName(): void
+    {
+        $this->validateOnly('name');
+    }
+
+    public function updatedEmail(): void
+    {
+        $this->validateOnly('email', [
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255'],
         ]);
+    }
+
+    public function updatedPassword(): void
+    {
+        $this->validatePasswordFieldsLive();
+    }
+
+    public function updatedPasswordConfirmation(): void
+    {
+        $this->validatePasswordFieldsLive();
+    }
+
+    public function updatedAcceptPrivacy(): void
+    {
+        $this->validateOnly('accept_privacy');
+    }
+
+    private function validatePasswordFieldsLive(): void
+    {
+        if ($this->password === '' && $this->password_confirmation === '') {
+            $this->resetValidation(['password', 'password_confirmation']);
+
+            return;
+        }
+
+        $this->validateOnly('password');
+    }
+
+    public function register(): void
+    {
+        $validated = $this->validate();
 
         $userTypeId = UserType::query()->where('slug', UserType::SLUG_USER)->value('id');
 

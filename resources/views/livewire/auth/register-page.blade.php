@@ -41,7 +41,7 @@
                     Full name
                 </label>
                 <input
-                    wire:model="name"
+                    wire:model.live.debounce.400ms="name"
                     id="name"
                     type="text"
                     autocomplete="name"
@@ -59,7 +59,7 @@
                     Email
                 </label>
                 <input
-                    wire:model="email"
+                    wire:model.live.debounce.400ms="email"
                     id="email"
                     type="email"
                     autocomplete="email"
@@ -80,7 +80,7 @@
                     Password
                 </label>
                 <input
-                    wire:model.blur="password"
+                    wire:model.live.debounce.400ms="password"
                     id="password"
                     type="password"
                     autocomplete="new-password"
@@ -108,7 +108,7 @@
                     Confirm password
                 </label>
                 <input
-                    wire:model.blur="password_confirmation"
+                    wire:model.live.debounce.400ms="password_confirmation"
                     id="password_confirmation"
                     type="password"
                     autocomplete="new-password"
@@ -118,6 +118,9 @@
                     class="mt-1.5 block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/40 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400 dark:focus:bg-zinc-950"
                     placeholder="Repeat password"
                 />
+                @error('password_confirmation')
+                    <p class="mt-1.5 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
@@ -130,7 +133,7 @@
                 </p>
                 <label class="mt-4 flex cursor-pointer gap-3">
                     <input
-                        wire:model="accept_privacy"
+                        wire:model.live="accept_privacy"
                         type="checkbox"
                         class="mt-0.5 h-4 w-4 shrink-0 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500/40 dark:border-zinc-600 dark:bg-zinc-900"
                     />
