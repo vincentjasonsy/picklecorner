@@ -1,40 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" fill="none" aria-hidden="true">
   <defs>
-    <linearGradient id="oa-sky" x1="400" y1="0" x2="400" y2="280" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="55%" stop-color="#bae6fd"/>
-      <stop offset="100%" stop-color="#f0f9ff"/>
-    </linearGradient>
-    <linearGradient id="oa-grass" x1="400" y1="320" x2="400" y2="500" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4ade80"/>
-      <stop offset="100%" stop-color="#15803d"/>
-    </linearGradient>
-    <linearGradient id="oa-court" x1="300" y1="55" x2="500" y2="455" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#86efac"/>
-      <stop offset="100%" stop-color="#22c55e"/>
+    <linearGradient id="oa1" x1="0" y1="0" x2="800" y2="500" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="45%" stop-color="#d1fae5"/>
+      <stop offset="100%" stop-color="#a7f3d0"/>
     </linearGradient>
   </defs>
-  <rect width="800" height="500" fill="url(#oa-sky)"/>
-  <ellipse cx="620" cy="95" rx="52" ry="52" fill="#fde047" opacity="0.95"/>
-  <ellipse cx="620" cy="95" rx="64" ry="64" fill="#fef08a" opacity="0.35"/>
-  <path fill="#ffffff" opacity="0.92" d="M120 78c18-12 48-10 62 8 14-22 52-28 72-10 20-24 58-28 78-4 16-18 48-22 68-6-8-26-38-34-58-18-14-42-12-58 4-22-20-58-16-72 8-20-14-48-8-60 12z"/>
-  <path fill="#ffffff" opacity="0.75" d="M480 52c14-10 38-8 48 6 12-16 42-20 56-4 14-16 40-18 54-2 10-12 32-14 46-4-6-18-28-24-44-12-10-30-8-42 2-16-14-42-10-52 8-14-10-34-6-42 6z"/>
-  <rect width="800" height="220" y="280" fill="url(#oa-grass)"/>
-  <g opacity="0.25">
-    <line x1="40" y1="300" x2="40" y2="480" stroke="#14532d" stroke-width="3"/>
-    <line x1="760" y1="300" x2="760" y2="480" stroke="#14532d" stroke-width="3"/>
-    <line x1="120" y1="290" x2="120" y2="490" stroke="#14532d" stroke-width="2"/>
-    <line x1="680" y1="290" x2="680" y2="490" stroke="#14532d" stroke-width="2"/>
-  </g>
-  <rect x="300" y="55" width="200" height="400" rx="3" fill="url(#oa-court)"/>
-  <rect x="300" y="55" width="200" height="400" rx="3" fill="none" stroke="#f7fee7" stroke-width="5" opacity="0.95"/>
-  <line x1="300" y1="255" x2="500" y2="255" stroke="#fefce8" stroke-width="10" opacity="0.92"/>
-  <line x1="300" y1="255" x2="500" y2="255" stroke="#86efac" stroke-width="3" opacity="0.5"/>
-  <line x1="300" y1="167" x2="500" y2="167" stroke="#ecfccb" stroke-width="4" opacity="0.95"/>
-  <line x1="300" y1="343" x2="500" y2="343" stroke="#ecfccb" stroke-width="4" opacity="0.95"/>
-  <line x1="400" y1="55" x2="400" y2="167" stroke="#ecfccb" stroke-width="4" opacity="0.95"/>
-  <line x1="400" y1="343" x2="400" y2="455" stroke="#ecfccb" stroke-width="4" opacity="0.95"/>
-  <circle cx="400" cy="255" r="42" stroke="#ecfccb" stroke-width="4" fill="none" opacity="0.9"/>
-  <rect x="298" y="248" width="4" height="14" fill="#fefce8" opacity="0.9"/>
-  <rect x="498" y="248" width="4" height="14" fill="#fefce8" opacity="0.9"/>
+  <rect width="800" height="500" fill="url(#oa1)"/>
 </svg>

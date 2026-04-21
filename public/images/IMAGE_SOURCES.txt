@@ -1,18 +1,5 @@
-Stock photos used locally under this folder. Licenses allow free use; see links below.
+Placeholder artwork (public/images/courts/)
+- outdoor-a.svg, outdoor-b.svg — soft mint/teal gradients (local, app-generated)
+- indoor-a.svg, indoor-b.svg — neutral slate gradients (local, app-generated)
 
-Courts (public/images/courts/)
-- outdoor-a.jpg — Unsplash (Unsplash License): https://unsplash.com/photos/zpy9Lh5aRgg — eedgar ivann
-- outdoor-b.jpg — Pexels (Pexels License): https://www.pexels.com/photo/concrete-ground-for-playing-tennis-and-badminton-5282863/
-- indoor-a.jpg — Pexels: https://www.pexels.com/photo/basketball-hoop-in-basketball-court-1752757/
-- indoor-b.jpg — Pexels: https://www.pexels.com/photo/young-athletes-preparing-for-running-in-training-hall-3764014/
-
-Home hero slider (public/images/slider/)
-- slide-1.jpg — Pexels: https://www.pexels.com/photo/white-tennis-net-on-a-ground-102970/
-- slide-2.jpg — Pexels: https://www.pexels.com/photo/photo-of-gym-1262799/
-- slide-3.jpg — Pexels: https://www.pexels.com/photo/female-tennis-player-in-action-on-outdoor-court-30125786/
-
-Licenses
-- Unsplash: https://unsplash.com/license
-- Pexels: https://www.pexels.com/license/
-
-Images were downloaded and resized (max long edge 1920px where needed) for web use.
+Home hero slider (public/images/slider/) — see filenames on disk; stock sources may be listed in git history.
