@@ -13,6 +13,7 @@ class Engine
 {
     /** @var array<string, mixed> */
     private array $state;
+    
 
     /**
      * @param  array<string, mixed>  $state
@@ -866,82 +867,176 @@ class Engine
     public function buildSides(array $poolPlayers): array
     {
         $method = (string) $this->state['shuffleMethod'];
-        if ($this->state['mode'] === 'singles') {
-            $sides = [];
-            foreach ($poolPlayers as $p) {
-                $sides[] = [$p['id']];
-            }
 
-            return $sides;
+        // --- SINGLES ---
+        if ($this->state['mode'] === 'singles') {
+            return array_map(fn($p) => [$p['id']], $poolPlayers);
         }
+
+        // --- TEAMS MODE (unchanged) ---
         if ($method === 'teams') {
             $byTeam = [];
             foreach ($poolPlayers as $p) {
                 $t = trim((string) ($p['teamId'] ?? '')) ?: ('_none_'.$p['id']);
-                if (! isset($byTeam[$t])) {
-                    $byTeam[$t] = [];
-                }
                 $byTeam[$t][] = $p;
             }
-            $teamKeys = array_keys($byTeam);
-            sort($teamKeys, SORT_STRING);
+
+            ksort($byTeam);
+
             $sides = [];
-            foreach ($teamKeys as $t) {
-                $g = $this->sortPlayersForMethod($byTeam[$t], 'levels');
-                for ($i = 0; $i + 1 < count($g); $i += 2) {
-                    $sides[] = [$g[$i]['id'], $g[$i + 1]['id']];
+            foreach ($byTeam as $group) {
+                usort($group, fn($a, $b) => $a['level'] <=> $b['level']);
+
+                for ($i = 0; $i + 1 < count($group); $i += 2) {
+                    $sides[] = [$group[$i]['id'], $group[$i + 1]['id']];
                 }
             }
 
             return $sides;
         }
-        /*
-         * Non-team doubles: $poolPlayers order already comes from orderedPoolForFill() —
-         * queue members first (fewest games first, stable ties), then idle-not-in-queue sorted by
-         * games played then shuffleMethod. Pair consecutively; do not shuffle/sort again or Fill courts ignores the queue.
-         */
+
+        // ===============================
+        // 🔥 NON-TEAM DOUBLES (FINAL)
+        // ===============================
+
         $arr = array_values($poolPlayers);
-
-        // randomize first
-        self::shuffleInPlace($arr);
-
-        // sort by level
-        usort($arr, fn($a, $b) => $a['level'] <=> $b['level']);
-
-        // check spread
-        $levels = array_map(fn($p) => (int)$p['level'], $arr);
-        $min = min($levels);
-        $max = max($levels);
-
-        $THRESHOLD = 1; // tweak this (1 or 2 is good)
-
-        // 👉 CASE 1: similar skill → keep natural grouping
-        if (($max - $min) <= $THRESHOLD) {
-            $sides = [];
-            for ($i = 0; $i + 1 < count($arr); $i += 2) {
-                $sides[] = [$arr[$i]['id'], $arr[$i + 1]['id']];
-            }
-            return $sides;
-        }
-
-        // 👉 CASE 2: mixed skill → balance teams
-        $half = intdiv(count($arr), 2);
-        $low = array_slice($arr, 0, $half);
-        $high = array_slice($arr, $half);
-
-        // reverse high so strongest pairs with weakest
-        $high = array_reverse($high);
-
-        $flat = [];
-        for ($i = 0; $i < min(count($low), count($high)); $i++) {
-            $flat[] = $low[$i];
-            $flat[] = $high[$i];
-        }
-
-        // build sides
         $sides = [];
-        for ($i = 0; $i + 1 < count($flat); $i += 2) {
-            $sides[] = [$flat[$i]['id'], $flat[$i + 1]['id']];
+
+        // 👉 recent teammate + opponent memory
+        $recentPairs = [];
+        $recentOpponents = [];
+
+        foreach (array_slice($this->state['completedMatches'], -10) as $m) {
+            $sideA = $m['sideA'] ?? [];
+            $sideB = $m['sideB'] ?? [];
+
+            foreach ([$sideA, $sideB] as $side) {
+                if (count($side) === 2) {
+                    $a = (string)$side[0];
+                    $b = (string)$side[1];
+                    $recentPairs[$a][$b] = true;
+                    $recentPairs[$b][$a] = true;
+                }
+            }
+
+            foreach ($sideA as $a) {
+                foreach ($sideB as $b) {
+                    $recentOpponents[(string)$a][(string)$b] = true;
+                    $recentOpponents[(string)$b][(string)$a] = true;
+                }
+            }
+        }
+
+        // ===============================
+        // 🧠 STEP 1: GROUP BY GAMES PLAYED
+        // ===============================
+        $byGames = [];
+        foreach ($arr as $p) {
+            $g = self::totalGamesPlayed($p);
+            $byGames[$g][] = $p;
+        }
+
+        ksort($byGames, SORT_NUMERIC);
+
+        // ===============================
+        // 🧠 STEP 2: BUILD GROUPS OF 4
+        // ===============================
+        $groups = [];
+        $buffer = [];
+
+        foreach ($byGames as $players) {
+            // prioritize same level inside same games
+            usort($players, fn($a, $b) => $a['level'] <=> $b['level']);
+
+            foreach ($players as $p) {
+                $buffer[] = $p;
+
+                if (count($buffer) === 4) {
+                    $groups[] = $buffer;
+                    $buffer = [];
+                }
+            }
+        }
+
+        // leftover players (optional: skip or include)
+        if (count($buffer) === 4) {
+            $groups[] = $buffer;
+        }
+
+        // ===============================
+        // 🧠 STEP 3: PAIR WITH SCORING
+        // ===============================
+        foreach ($groups as $g) {
+            if (count($g) < 4) continue;
+
+            $options = [
+                [[$g[0], $g[1]], [$g[2], $g[3]]],
+                [[$g[0], $g[2]], [$g[1], $g[3]]],
+                [[$g[0], $g[3]], [$g[1], $g[2]]],
+            ];
+
+            self::shuffleInPlace($options);
+
+            $best = null;
+            $bestScore = PHP_INT_MAX;
+
+            foreach ($options as $opt) {
+                [$teamA, $teamB] = $opt;
+
+                $sumA = $teamA[0]['level'] + $teamA[1]['level'];
+                $sumB = $teamB[0]['level'] + $teamB[1]['level'];
+
+                // 🔥 HARD RULE: prevent bad matches
+                if (abs($sumA - $sumB) >= 3) {
+                    continue;
+                }
+
+                $score = 0;
+
+                // ✅ same level priority
+                $gapA = abs($teamA[0]['level'] - $teamA[1]['level']);
+                $gapB = abs($teamB[0]['level'] - $teamB[1]['level']);
+                $score += ($gapA + $gapB) * 20;
+
+                // ✅ balance
+                $score += abs($sumA - $sumB) * 10;
+
+                // ✅ avoid repeat teammates
+                foreach ([[$teamA[0], $teamA[1]], [$teamB[0], $teamB[1]]] as [$p1, $p2]) {
+                    $id1 = (string)$p1['id'];
+                    $id2 = (string)$p2['id'];
+
+                    if (!empty($recentPairs[$id1][$id2])) {
+                        $score += 50;
+                    }
+                }
+
+                // ✅ avoid repeat opponents
+                foreach ($teamA as $a) {
+                    foreach ($teamB as $b) {
+                        $idA = (string)$a['id'];
+                        $idB = (string)$b['id'];
+
+                        if (!empty($recentOpponents[$idA][$idB])) {
+                            $score += 20;
+                        }
+                    }
+                }
+
+                if ($score < $bestScore) {
+                    $bestScore = $score;
+                    $best = $opt;
+                }
+            }
+
+            if ($best === null) {
+                $best = $options[0]; // fallback
+            }
+
+            [$teamA, $teamB] = $best;
+
+            $sides[] = [$teamA[0]['id'], $teamA[1]['id']];
+            $sides[] = [$teamB[0]['id'], $teamB[1]['id']];
         }
 
         return $sides;
@@ -990,29 +1085,96 @@ class Engine
         $this->syncQueueFromIdle();
         $pool = $this->orderedPoolForFill();
         $sides = $this->buildSides($pool);
+
+        // 👉 build matches
+        $matches = [];
+
+        $allLevels = array_map(fn($p) => (int)$p['level'], $this->state['players']);
+        $globalMin = min($allLevels);
+        $globalMax = max($allLevels);
+        $mid = ($globalMin + $globalMax) / 2;
+
+        for ($i = 0; $i + 1 < count($sides); $i += 2) {
+            $teamA = $sides[$i];
+            $teamB = $sides[$i + 1];
+
+            $players = array_merge($teamA, $teamB);
+
+            $levels = array_map(function ($id) {
+                $p = $this->playerById($id);
+                return (int) ($p['level'] ?? 0);
+            }, $players);
+
+            $avg = array_sum($levels) / count($levels);
+
+            if ($avg <= $mid - 0.5) {
+                $bucket = 'low';
+            } elseif ($avg >= $mid + 0.5) {
+                $bucket = 'high';
+            } else {
+                $bucket = 'mid';
+            }
+
+            $matches[] = [
+                'teams' => [$teamA, $teamB],
+                'bucket' => $bucket,
+            ];
+        }
+
+        // 👉 group by bucket
+        $grouped = [
+            'low' => [],
+            'mid' => [],
+            'high' => [],
+        ];
+
+        foreach ($matches as $m) {
+            $grouped[$m['bucket']][] = $m;
+        }
+
+        // shuffle inside buckets
+        foreach ($grouped as &$g) {
+            self::shuffleInPlace($g);
+        }
+        unset($g);
+
+        // 👉 distribute across courts
+        $balanced = [];
+
+        while (!empty($grouped['low']) || !empty($grouped['mid']) || !empty($grouped['high'])) {
+            foreach (['low', 'mid', 'high'] as $b) {
+                if (!empty($grouped[$b])) {
+                    $balanced[] = array_shift($grouped[$b]);
+                }
+            }
+        }
+
+        // 👉 assign to courts
         $emptyIdx = [];
         foreach ($this->state['courts'] as $i => $c) {
-            if (! $c) {
+            if (!$c) {
                 $emptyIdx[] = $i;
             }
         }
-        $si = 0;
-        foreach ($emptyIdx as $idx) {
-            if ($si + 1 >= count($sides)) {
-                break;
-            }
-            $sideA = $sides[$si++];
-            $sideB = $sides[$si++];
-            $this->state['courts'][$idx] = [
-                'courtIndex' => $idx,
-                'sideA' => $sideA,
-                'sideB' => $sideB,
+
+        $mi = 0;
+
+        foreach ($emptyIdx as $courtIndex) {
+            if (!isset($balanced[$mi])) break;
+
+            [$teamA, $teamB] = $balanced[$mi]['teams'];
+
+            $this->state['courts'][$courtIndex] = [
+                'courtIndex' => $courtIndex,
+                'sideA' => $teamA,
+                'sideB' => $teamB,
                 'timerRunState' => 'stopped',
                 'totalPausedMs' => 0,
                 'pausedAt' => null,
             ];
+
+            $mi++;
         }
-        $this->syncQueueFromIdle();
     }
 
     /**
