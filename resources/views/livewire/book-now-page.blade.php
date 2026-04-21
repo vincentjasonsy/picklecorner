@@ -363,15 +363,9 @@
                                 role="presentation"
                                 aria-hidden="true"
                             ></span>
-                        @else
-                            <a
-                                href="{{ $this->venueBookUrl($venue) }}"
-                                wire:navigate
-                                class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:ring-offset-zinc-900"
-                                aria-label="Book {{ $venue->name }}"
-                            ></a>
                         @endif
-                        <div class="relative z-[2] flex flex-col pointer-events-none">
+                        {{-- Carousel above booking link so Splide arrows / swipe receive clicks first --}}
+                        <div class="relative z-[10] shrink-0 isolate pointer-events-auto">
                             <div class="relative bg-zinc-100 dark:bg-zinc-800">
                                 @if ($venueOpeningSoon)
                                     <div
@@ -397,7 +391,17 @@
                                     </div>
                                 </x-image-carousel>
                             </div>
-                            <div class="flex flex-1 flex-col p-5">
+                        </div>
+                        <div class="relative flex min-h-0 flex-1 flex-col">
+                            @if (! $venueOpeningSoon)
+                                <a
+                                    href="{{ $this->venueBookUrl($venue) }}"
+                                    wire:navigate
+                                    class="absolute inset-0 z-[1] rounded-b-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:focus-visible:ring-emerald-400 dark:ring-offset-zinc-900"
+                                    aria-label="Book {{ $venue->name }}"
+                                ></a>
+                            @endif
+                            <div class="relative z-[2] flex flex-1 flex-col p-5 pointer-events-none">
                                 <p class="text-xs font-bold uppercase tracking-wider text-emerald-700/90 dark:text-emerald-400/90">
                                     Venue
                                 </p>
@@ -460,13 +464,7 @@
                                         <article
                                             class="relative flex h-full flex-col overflow-hidden rounded-2xl border border-amber-200/90 bg-gradient-to-b from-amber-50/90 to-white shadow-md shadow-amber-900/10 dark:border-amber-900/40 dark:from-amber-950/40 dark:to-zinc-900 dark:shadow-none"
                                         >
-                                            <a
-                                                href="{{ $this->venueBookUrl($venue) }}"
-                                                wire:navigate
-                                                class="absolute inset-0 z-[1] rounded-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-amber-400 dark:ring-offset-zinc-900"
-                                                aria-label="Book featured venue {{ $venue->name }}"
-                                            ></a>
-                                            <div class="relative z-[2] flex flex-1 flex-col pointer-events-none">
+                                            <div class="relative z-[10] shrink-0 isolate pointer-events-auto">
                                                 <div class="bg-zinc-100 dark:bg-zinc-800">
                                                     <x-image-carousel
                                                         :slides="$venue->carouselSlides()"
@@ -485,7 +483,15 @@
                                                         </div>
                                                     </x-image-carousel>
                                                 </div>
-                                                <div class="flex flex-1 flex-col p-4">
+                                            </div>
+                                            <div class="relative flex min-h-0 flex-1 flex-col">
+                                                <a
+                                                    href="{{ $this->venueBookUrl($venue) }}"
+                                                    wire:navigate
+                                                    class="absolute inset-0 z-[1] rounded-b-2xl focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 dark:focus-visible:ring-amber-400 dark:ring-offset-zinc-900"
+                                                    aria-label="Book featured venue {{ $venue->name }}"
+                                                ></a>
+                                                <div class="relative z-[2] flex flex-1 flex-col p-4 pointer-events-none">
                                                     <p class="text-[11px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300/90">
                                                         Featured venue
                                                     </p>
