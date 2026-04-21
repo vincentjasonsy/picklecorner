@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public registration visibility
+    |--------------------------------------------------------------------------
+    |
+    | Controls whether guest-facing pages show Register links / buttons.
+    | This does not disable the /register route by itself.
+    |
+    */
+
+    'public_registration_enabled' => (bool) env('BOOKING_PUBLIC_REGISTRATION_ENABLED', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Public review window (after booking ends)
     |--------------------------------------------------------------------------
     |

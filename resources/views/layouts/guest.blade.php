@@ -213,13 +213,15 @@
                                 >
                                     Log in
                                 </a>
-                                <a
-                                    href="{{ route('register') }}"
-                                    wire:navigate
-                                    class="rounded-lg border border-emerald-600/30 bg-emerald-50/80 px-3 py-2 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
-                                >
-                                    Register
-                                </a>
+                                @if (public_registration_enabled())
+                                    <a
+                                        href="{{ route('register') }}"
+                                        wire:navigate
+                                        class="rounded-lg border border-emerald-600/30 bg-emerald-50/80 px-3 py-2 text-sm font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
+                                    >
+                                        Register
+                                    </a>
+                                @endif
                             @endauth
                         </nav>
                         {{-- Mobile menu toggle --}}
@@ -409,14 +411,16 @@
                             >
                                 Log in
                             </a>
-                            <a
-                                href="{{ route('register') }}"
-                                wire:navigate
-                                @click="mobileNavOpen = false"
-                                class="rounded-lg border border-emerald-600/30 bg-emerald-50/80 px-3 py-3 text-center font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
-                            >
-                                Register
-                            </a>
+                            @if (public_registration_enabled())
+                                <a
+                                    href="{{ route('register') }}"
+                                    wire:navigate
+                                    @click="mobileNavOpen = false"
+                                    class="rounded-lg border border-emerald-600/30 bg-emerald-50/80 px-3 py-3 text-center font-semibold text-emerald-800 transition-colors hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/70"
+                                >
+                                    Register
+                                </a>
+                            @endif
                         @endauth
                     </nav>
                 </div>

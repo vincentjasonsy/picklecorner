@@ -12,6 +12,14 @@ function public_reviews_enabled(): bool
 }
 
 /**
+ * Guest-facing registration links/buttons visibility toggle.
+ */
+function public_registration_enabled(): bool
+{
+    return (bool) config('booking.public_registration_enabled', false);
+}
+
+/**
  * Admin UI for venue subscription tier (gift cards / CRM tier). Super-admin-only when configured.
  */
 function booking_gift_subscription_controls_visible(?User $user = null): bool

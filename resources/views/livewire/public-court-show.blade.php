@@ -136,6 +136,7 @@
                             </p>
                         @endif
                         @guest
+                            @if (public_registration_enabled())
                             <p class="mt-4 text-sm text-zinc-600 dark:text-zinc-400">
                                 <a
                                     href="{{ route('register') }}"
@@ -146,6 +147,7 @@
                                 </a>
                                 to track bookings under My Corner.
                             </p>
+                            @endif
                         @endguest
                     </div>
                 </div>

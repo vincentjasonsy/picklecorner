@@ -51,10 +51,12 @@
 </nav>
 <p class="mt-6 text-center text-xs text-zinc-500 dark:text-zinc-500">
     @guest
-        <a href="{{ route('register') }}" wire:navigate class="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
-            Register
-        </a>
-        <span class="mx-2 text-zinc-400" aria-hidden="true">·</span>
+        @if (public_registration_enabled())
+            <a href="{{ route('register') }}" wire:navigate class="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
+                Register
+            </a>
+            <span class="mx-2 text-zinc-400" aria-hidden="true">·</span>
+        @endif
     @endguest
     <a href="{{ route('home') }}" wire:navigate class="font-semibold text-emerald-700 hover:underline dark:text-emerald-400">
         Home

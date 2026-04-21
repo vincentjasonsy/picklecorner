@@ -237,13 +237,23 @@
                         Your locker room: booking history, profile, venue booking flows, optional coach add-ons where
                         venues enable them, and open-play tools when your club runs sessions.
                     </p>
-                    <a
-                        href="{{ route('register') }}"
-                        wire:navigate
-                        class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-teal-700 hover:underline dark:text-teal-400"
-                    >
-                        Create free account →
-                    </a>
+                    @if (public_registration_enabled())
+                        <a
+                            href="{{ route('register') }}"
+                            wire:navigate
+                            class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-teal-700 hover:underline dark:text-teal-400"
+                        >
+                            Create free account →
+                        </a>
+                    @else
+                        <a
+                            href="{{ route('login') }}"
+                            wire:navigate
+                            class="font-display mt-5 inline-flex text-sm font-bold uppercase tracking-wide text-teal-700 hover:underline dark:text-teal-400"
+                        >
+                            Member sign-in →
+                        </a>
+                    @endif
                 </li>
                 <li
                     class="flex flex-col rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
@@ -605,16 +615,18 @@
                     Ready when you are
                 </h2>
                 <p class="mx-auto mt-3 max-w-md text-sm text-zinc-600 dark:text-zinc-400">
-                    Create a free account to save venues, track bookings, and move faster next time.
+                    {{ public_registration_enabled() ? 'Create a free account to save venues, track bookings, and move faster next time.' : 'Sign in to save venues, track bookings, and move faster next time.' }}
                 </p>
                 <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-                    <a
-                        href="{{ route('register') }}"
-                        wire:navigate
-                        class="font-display inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg transition hover:from-emerald-500 hover:to-teal-500"
-                    >
-                        Register
-                    </a>
+                    @if (public_registration_enabled())
+                        <a
+                            href="{{ route('register') }}"
+                            wire:navigate
+                            class="font-display inline-flex items-center rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-3 text-sm font-bold uppercase tracking-wide text-white shadow-lg transition hover:from-emerald-500 hover:to-teal-500"
+                        >
+                            Register
+                        </a>
+                    @endif
                     <a
                         href="{{ route('login') }}"
                         wire:navigate

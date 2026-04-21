@@ -152,15 +152,17 @@ new #[Layout('layouts::auth'), Title('Sign in')] class extends Component
             </button>
         </form>
 
-        <p class="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
-            New here?
-            <a
-                href="{{ route('register') }}"
-                wire:navigate
-                class="font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
-            >
-                Create an account
-            </a>
-        </p>
+        @if (public_registration_enabled())
+            <p class="mt-8 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                New here?
+                <a
+                    href="{{ route('register') }}"
+                    wire:navigate
+                    class="font-semibold text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300"
+                >
+                    Create an account
+                </a>
+            </p>
+        @endif
     </div>
 </div>

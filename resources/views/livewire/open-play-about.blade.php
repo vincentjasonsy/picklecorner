@@ -39,13 +39,15 @@
                     >
                         Log in to use GameQ
                     </a>
-                    <a
-                        href="{{ route('register') }}"
-                        wire:navigate
-                        class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-300 px-8 py-3.5 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800/50 sm:w-auto"
-                    >
-                        Create an account
-                    </a>
+                    @if (public_registration_enabled())
+                        <a
+                            href="{{ route('register') }}"
+                            wire:navigate
+                            class="inline-flex w-full items-center justify-center rounded-xl border border-zinc-300 px-8 py-3.5 text-sm font-semibold text-zinc-800 transition hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-200 dark:hover:bg-zinc-800/50 sm:w-auto"
+                        >
+                            Create an account
+                        </a>
+                    @endif
                 @endauth
             </div>
 
