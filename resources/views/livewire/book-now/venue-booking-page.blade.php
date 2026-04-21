@@ -227,6 +227,7 @@
                                 <input
                                     type="date"
                                     wire:model.live="bookingCalendarDate"
+                                    min="{{ $this->minBookableCalendarDate() }}"
                                     class="rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
                                 />
                                 <button

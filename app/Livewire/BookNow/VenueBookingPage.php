@@ -111,6 +111,7 @@ class VenueBookingPage extends Component
 
         $this->applyBookAgainQueryParameters();
         $this->hydrateFromPaymongoCheckoutFlash();
+        $this->enforceEarliestBookingCalendarDate();
         $this->clearInvalidPrefilledSlotsIfNeeded();
         $this->maybeAdvanceBookAgainToReviewFromQuery();
         $this->maybeRestoreReviewStepAfterPaymongoReturn();
@@ -482,6 +483,7 @@ class VenueBookingPage extends Component
         } catch (\Throwable) {
             $this->bookingCalendarDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
         }
+        $this->enforceEarliestBookingCalendarDate();
         $this->selectedSlots = [];
         $this->coachUserId = '';
         $this->coachPaidHours = 0;
@@ -500,6 +502,7 @@ class VenueBookingPage extends Component
             $d = Carbon::now(config('app.timezone', 'UTC'))->addDays($days);
         }
         $this->bookingCalendarDate = $d->format('Y-m-d');
+        $this->enforceEarliestBookingCalendarDate();
         $this->selectedSlots = [];
         $this->coachUserId = '';
         $this->coachPaidHours = 0;
@@ -520,12 +523,37 @@ class VenueBookingPage extends Component
      */
     public function slotHoursForSelectedDate(): array
     {
-        $date = $this->normalizedBookingCalendarDate();
-        if ($date !== null && $this->courtClient->isClosedOnDate($date)) {
-            return [];
+        return VenueBookingSpecsBuilder::slotHoursForSelectedDate(
+            $this->courtClient,
+            $this->scheduleRows,
+            $this->bookingCalendarDate,
+        );
+    }
+
+    /** Earliest bookable calendar day in app timezone (today). */
+    public function minBookableCalendarDate(): string
+    {
+        return Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
+    }
+
+    /**
+     * Reset date to today when it would land in the past (e.g. prev-day from today).
+     */
+    protected function enforceEarliestBookingCalendarDate(): void
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $picked = Carbon::parse($this->bookingCalendarDate, $tz)->startOfDay();
+            $today = Carbon::now($tz)->startOfDay();
+        } catch (\Throwable) {
+            $this->bookingCalendarDate = Carbon::now($tz)->format('Y-m-d');
+
+            return;
         }
 
-        return VenueScheduleHours::slotStartHoursForDay($this->scheduleRows, $this->bookingDayOfWeek());
+        if ($picked->lt($today)) {
+            $this->bookingCalendarDate = $today->format('Y-m-d');
+        }
     }
 
     public function isBookingDateVenueClosure(): bool

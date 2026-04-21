@@ -148,6 +148,7 @@
                                 <input
                                     type="date"
                                     wire:model.live="filterDate"
+                                    min="{{ $this->minBookableFilterDate() }}"
                                     class="mt-2 w-full rounded-xl border-2 border-dashed border-teal-300/80 bg-white px-3 py-2.5 text-sm font-semibold text-zinc-900 transition hover:border-teal-400 focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 dark:border-teal-700 dark:bg-zinc-950 dark:text-white dark:focus:border-emerald-400"
                                 />
                             </div>

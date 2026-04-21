@@ -86,6 +86,9 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2035-06-04 08:00:00', $tz));
+
         $client = CourtClient::factory()->create(['slug' => 'beta-club']);
         Court::query()->create([
             'court_client_id' => $client->id,
@@ -101,6 +104,8 @@ class VenueBookingPageTest extends TestCase
             ->get(route('book-now.venue.book', $client))
             ->assertOk()
             ->assertSee('Availability', false);
+
+        Carbon::setTestNow();
     }
 
     public function test_court_admin_can_view_public_venue_booking_page(): void
@@ -172,6 +177,85 @@ class VenueBookingPageTest extends TestCase
                 $this->assertTrue($c->instance()->isBookingDateVenueClosure());
             })
             ->assertSee('This venue is closed on this date', false);
+    }
+
+    public function test_today_grid_omits_hour_slots_at_or_before_current_time(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2035-06-04 14:30:00', $tz));
+
+        $client = CourtClient::factory()->create(['slug' => 'past-hour-club']);
+        Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        Livewire::test(VenueBookingPage::class, ['courtClient' => $client])
+            ->assertSet('bookingCalendarDate', '2035-06-04')
+            ->tap(function ($c): void {
+                $hours = $c->instance()->slotHoursForSelectedDate();
+                $this->assertNotContains(14, $hours);
+                $this->assertNotContains(7, $hours);
+                $this->assertContains(15, $hours);
+            });
+
+        Carbon::setTestNow();
+    }
+
+    public function test_past_calendar_date_is_clamped_to_today_and_slots_respect_current_hour(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2035-06-05 10:00:00', $tz));
+
+        $client = CourtClient::factory()->create(['slug' => 'past-day-club']);
+        Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        Livewire::test(VenueBookingPage::class, ['courtClient' => $client])
+            ->set('bookingCalendarDate', '2035-06-04')
+            ->assertSet('bookingCalendarDate', '2035-06-05')
+            ->tap(function ($c): void {
+                $hours = $c->instance()->slotHoursForSelectedDate();
+                $this->assertNotContains(10, $hours);
+                $this->assertContains(11, $hours);
+            });
+
+        Carbon::setTestNow();
+    }
+
+    public function test_previous_day_button_from_today_clamps_to_today(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2035-08-10 11:00:00', $tz));
+
+        $client = CourtClient::factory()->create(['slug' => 'clamp-day-club']);
+        Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court 1',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        Livewire::test(VenueBookingPage::class, ['courtClient' => $client])
+            ->call('shiftBookingDate', -1)
+            ->assertSet('bookingCalendarDate', '2035-08-10');
+
+        Carbon::setTestNow();
     }
 
     public function test_draft_restores_after_login_flag_session(): void
@@ -248,6 +332,9 @@ class VenueBookingPageTest extends TestCase
     {
         $this->seed(UserTypeSeeder::class);
 
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2035-06-04 08:00:00', $tz));
+
         $client = CourtClient::factory()->create([
             'slug' => 'gift-venue',
             'hourly_rate_cents' => 10_000,
@@ -290,6 +377,8 @@ class VenueBookingPageTest extends TestCase
         $this->assertNotNull($booking->gift_card_id);
         $this->assertGreaterThan(0, (int) $booking->gift_card_redeemed_cents);
         $this->assertTrue($booking->amount_cents === null || (int) $booking->amount_cents === 0);
+
+        Carbon::setTestNow();
     }
 
     public function test_removing_last_review_row_returns_to_pick_times_step(): void

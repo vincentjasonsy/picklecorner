@@ -24,6 +24,18 @@ class BookNowBrowseTest extends TestCase
         parent::tearDown();
     }
 
+    public function test_slot_filter_date_clamps_past_days_to_today(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2035-06-05 12:00:00', $tz));
+
+        Livewire::test(BookNowPage::class)
+            ->set('filterDate', '2035-06-03')
+            ->assertSet('filterDate', '2035-06-05');
+    }
+
     public function test_guest_can_open_book_now_and_court_detail(): void
     {
         $this->seed(UserTypeSeeder::class);

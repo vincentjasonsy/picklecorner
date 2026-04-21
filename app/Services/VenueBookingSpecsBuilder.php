@@ -240,7 +240,43 @@ final class VenueBookingSpecsBuilder
             return [];
         }
 
-        return VenueScheduleHours::slotStartHoursForDay($scheduleRows, $dow);
+        $hours = VenueScheduleHours::slotStartHoursForDay($scheduleRows, $dow);
+
+        return self::filterPastSlotHoursForCalendarDate($date ?? '', $hours);
+    }
+
+    /**
+     * Public venue booking: no past calendar days; on today, omit slot rows at or before the current hour (app TZ).
+     *
+     * @param  list<int>  $hours
+     * @return list<int>
+     */
+    public static function filterPastSlotHoursForCalendarDate(string $dateYmd, array $hours): array
+    {
+        if ($dateYmd === '' || ! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateYmd)) {
+            return [];
+        }
+
+        $tz = config('app.timezone', 'UTC');
+
+        try {
+            $picked = Carbon::parse($dateYmd.' 12:00:00', $tz)->startOfDay();
+            $today = Carbon::now($tz)->startOfDay();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        if ($picked->lt($today)) {
+            return [];
+        }
+
+        if ($picked->greaterThan($today)) {
+            return array_values($hours);
+        }
+
+        $currentHour = (int) Carbon::now($tz)->hour;
+
+        return array_values(array_filter($hours, static fn (int $h): bool => $h > $currentHour));
     }
 
     public static function normalizedBookingCalendarDate(string $bookingCalendarDate): ?string

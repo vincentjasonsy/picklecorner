@@ -54,13 +54,54 @@ class BookNowPage extends Component
         }
     }
 
+    /** Earliest day for slot filtering (today, app timezone). */
+    public function minBookableFilterDate(): string
+    {
+        return Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
+    }
+
+    protected function enforceEarliestFilterDate(): void
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $picked = Carbon::parse(trim($this->filterDate), $tz)->startOfDay();
+            $today = Carbon::now($tz)->startOfDay();
+        } catch (\Throwable) {
+            $this->filterDate = Carbon::now($tz)->format('Y-m-d');
+
+            return;
+        }
+
+        if ($picked->lt($today)) {
+            $this->filterDate = $today->format('Y-m-d');
+        }
+    }
+
+    public function updatedFilterDate(): void
+    {
+        try {
+            $this->filterDate = Carbon::parse(trim($this->filterDate), config('app.timezone', 'UTC'))->format('Y-m-d');
+        } catch (\Throwable) {
+            $this->filterDate = Carbon::now(config('app.timezone', 'UTC'))->format('Y-m-d');
+
+            return;
+        }
+        $this->enforceEarliestFilterDate();
+    }
+
     protected function normalizedFilterDate(): string
     {
         $tz = config('app.timezone', 'UTC');
         $raw = trim($this->filterDate);
         if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $raw)) {
             try {
-                return Carbon::parse($raw, $tz)->format('Y-m-d');
+                $picked = Carbon::parse($raw, $tz)->startOfDay();
+                $today = Carbon::now($tz)->startOfDay();
+                if ($picked->lt($today)) {
+                    return $today->format('Y-m-d');
+                }
+
+                return $picked->format('Y-m-d');
             } catch (\Throwable) {
                 // fall through
             }

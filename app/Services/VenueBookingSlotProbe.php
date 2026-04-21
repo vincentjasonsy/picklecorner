@@ -49,12 +49,13 @@ final class VenueBookingSlotProbe
 
         $scheduleRows = self::scheduleRowsFromClient($courtClient);
 
-        $tz = config('app.timezone', 'UTC');
-        $dow = (int) Carbon::parse($dateYmd.' 12:00:00', $tz)->format('w');
-        $allowed = VenueScheduleHours::slotStartHoursForDay($scheduleRows, $dow);
+        $allowed = VenueBookingSpecsBuilder::slotHoursForSelectedDate($courtClient, $scheduleRows, $dateYmd);
         if ($allowed === []) {
             return false;
         }
+
+        $tz = config('app.timezone', 'UTC');
+        $dow = (int) Carbon::parse($dateYmd.' 12:00:00', $tz)->format('w');
 
         foreach ($sortedUniqueHours as $h) {
             if (! in_array($h, $allowed, true)) {
