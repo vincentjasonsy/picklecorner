@@ -327,43 +327,6 @@
                             @enderror
                         </div>
                     </div>
-
-                    @if ($giftSubscriptionControlsVisible)
-                        <div
-                            class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900"
-                        >
-                            <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">
-                                Subscription tier
-                            </h2>
-                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                Basic includes core operations. Premium unlocks gift cards and the customer CRM in the venue
-                                portal.
-                            </p>
-                            <div class="mt-4">
-                                <label
-                                    class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400"
-                                    for="subscription_tier"
-                                >
-                                    Tier
-                                </label>
-                                <select
-                                    wire:model="subscription_tier"
-                                    id="subscription_tier"
-                                    class="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-                                >
-                                    <option value="{{ \App\Models\CourtClient::TIER_BASIC }}">
-                                        Basic — operations only (no gift cards or CRM)
-                                    </option>
-                                    <option value="{{ \App\Models\CourtClient::TIER_PREMIUM }}">
-                                        Premium — gift cards &amp; customer CRM
-                                    </option>
-                                </select>
-                                @error('subscription_tier')
-                                    <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ $message }}</p>
-                                @enderror
-                            </div>
-                        </div>
-                    @endif
                 @endunless
             </div>
 

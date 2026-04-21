@@ -1165,7 +1165,6 @@ class CourtClientEdit extends Component
         $tz = config('app.timezone', 'UTC');
 
         return view('livewire.admin.court-client-edit', [
-            'giftSubscriptionControlsVisible' => booking_gift_subscription_controls_visible(),
             'courtAdmins' => User::query()
                 ->with('userType')
                 ->whereHas('userType', fn ($q) => $q->where('slug', UserType::SLUG_COURT_ADMIN))
