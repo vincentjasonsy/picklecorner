@@ -19,6 +19,8 @@ new #[Layout('layouts::auth'), Title('Sign in')] class extends Component
 
     public bool $remember = false;
 
+    public bool $passwordVisible = false;
+
     public function login(): void
     {
         $this->validate([
@@ -118,15 +120,30 @@ new #[Layout('layouts::auth'), Title('Sign in')] class extends Component
                         Password
                     </label>
                 </div>
-                <input
-                    wire:model="password"
-                    id="password"
-                    type="password"
-                    autocomplete="current-password"
-                    required
-                    class="mt-1.5 block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 px-4 py-3 text-sm text-zinc-900 outline-none ring-emerald-500/40 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400 dark:focus:bg-zinc-950"
-                    placeholder="••••••••"
-                />
+                <div class="relative mt-1.5">
+                    <input
+                        wire:model="password"
+                        id="password"
+                        type="{{ $passwordVisible ? 'text' : 'password' }}"
+                        autocomplete="current-password"
+                        required
+                        class="block w-full rounded-xl border border-zinc-200 bg-zinc-50/80 py-3 pl-4 pr-12 text-sm text-zinc-900 outline-none ring-emerald-500/40 transition placeholder:text-zinc-400 focus:border-emerald-500 focus:bg-white focus:ring-4 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-100 dark:focus:border-emerald-400 dark:focus:bg-zinc-950"
+                        placeholder="••••••••"
+                    />
+                    <button
+                        type="button"
+                        wire:click="$toggle('passwordVisible')"
+                        class="absolute inset-y-0 right-0 flex items-center rounded-r-xl px-3 text-zinc-500 outline-none transition hover:text-zinc-800 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 dark:text-zinc-400 dark:hover:text-zinc-200 dark:focus-visible:ring-emerald-400 dark:focus-visible:ring-offset-zinc-900"
+                        aria-label="{{ $passwordVisible ? 'Hide password' : 'Show password' }}"
+                        aria-pressed="{{ $passwordVisible ? 'true' : 'false' }}"
+                    >
+                        @if ($passwordVisible)
+                            <x-app-icon name="eye-slash" class="size-5" />
+                        @else
+                            <x-app-icon name="eye" class="size-5" />
+                        @endif
+                    </button>
+                </div>
                 @error('password')
                     <p class="mt-1.5 text-sm font-medium text-red-600 dark:text-red-400">{{ $message }}</p>
                 @enderror
