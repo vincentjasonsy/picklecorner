@@ -14,15 +14,11 @@ use Illuminate\Support\Str;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
-use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
-use Livewire\WithFileUploads;
 
 #[Layout('layouts::tool-focus')]
 #[Title('GameQ (Beta)')]
 class OpenPlayOrganizer extends Component
 {
-    use WithFileUploads;
-
     /** @var array<string, mixed> */
     public array $state = [];
 
@@ -53,8 +49,6 @@ class OpenPlayOrganizer extends Component
 
     /** Shown after take-a-break changes from the roster or queue (cleared on next toggle). */
     public string $takeBreakNotice = '';
-
-    public $importFile = null;
 
     public function mount(): void
     {
@@ -834,6 +828,7 @@ class OpenPlayOrganizer extends Component
 
                 return;
             }
+            $this->state['importError'] = '';
             $this->withEngine(fn (Engine $e) => $e->applyImportedPayload($payload, ['clearShare' => true]));
             $this->state['linkedOpenPlaySessionId'] = $id;
             $this->state['sessionTitle'] = mb_substr(trim((string) $session->title), 0, 120);
@@ -846,7 +841,6 @@ class OpenPlayOrganizer extends Component
             if ($live) {
                 $this->state['shareUuid'] = $live->uuid;
             }
-            $this->state['importError'] = '';
             $this->activeTab = 'play';
             $this->state['uiPhase'] = 'session';
             $this->persist();
@@ -879,41 +873,6 @@ class OpenPlayOrganizer extends Component
         } catch (\Throwable) {
             $this->historyError = 'Could not remove that session.';
         }
-    }
-
-    public function exportJson()
-    {
-        $e = new Engine($this->state);
-
-        return response()->streamDownload(function () use ($e) {
-            echo json_encode($e->sharePayload(), JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR);
-        }, 'gameq-'.now()->format('Y-m-d').'.json', ['Content-Type' => 'application/json']);
-    }
-
-    public function importJson(): void
-    {
-        $this->validate([
-            'importFile' => 'required|file|max:512|mimes:json,txt',
-        ]);
-        /** @var TemporaryUploadedFile $file */
-        $file = $this->importFile;
-        try {
-            $raw = $file->get();
-            $data = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
-            if (! is_array($data)) {
-                $this->state['importError'] = 'Invalid JSON file.';
-                $this->persist();
-
-                return;
-            }
-            $this->withEngine(fn (Engine $e) => $e->applyImportedPayload($data, ['clearShare' => true]));
-            $this->state['importError'] = '';
-            $this->persist();
-        } catch (\Throwable) {
-            $this->state['importError'] = 'Invalid JSON file.';
-            $this->persist();
-        }
-        $this->importFile = null;
     }
 
     public function engine(): Engine

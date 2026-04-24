@@ -12,9 +12,13 @@
     <div class="pointer-events-none absolute -left-24 top-20 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl dark:bg-emerald-500/10" aria-hidden="true"></div>
     <div class="pointer-events-none absolute -right-16 bottom-32 h-64 w-64 rounded-full bg-sky-400/15 blur-3xl dark:bg-sky-500/10" aria-hidden="true"></div>
 
-    <div class="relative mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+    <div
+        class="relative mx-auto w-full max-w-screen-2xl px-3 pb-1 pt-1 sm:px-5 md:px-6 lg:px-8 xl:px-10"
+    >
         {{-- Hero --}}
-        <header class="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-6 shadow-2xl shadow-emerald-950/20 ring-1 ring-white/10 sm:p-8">
+        <header
+            class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 p-5 shadow-2xl shadow-emerald-950/20 ring-1 ring-white/10 sm:rounded-[1.75rem] sm:p-7 md:p-8 landscape:rounded-2xl landscape:p-4 landscape:shadow-xl landscape:sm:p-5"
+        >
             <div class="absolute right-0 top-0 h-40 w-40 translate-x-1/3 -translate-y-1/3 rounded-full bg-emerald-500/20 blur-3xl" aria-hidden="true"></div>
             <div class="relative">
                 <div class="flex flex-wrap items-center gap-3">
@@ -27,16 +31,18 @@
                     </span>
                     <span class="text-[10px] font-medium uppercase tracking-wider text-emerald-200/80">GameQ</span>
                 </div>
-                <h1 class="font-display mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+                <h1
+                    class="font-display mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl landscape:mt-2 landscape:text-2xl landscape:sm:text-3xl"
+                >
                     <x-gameq-mark class="text-white [&>span:first-child]:text-white" />
                 </h1>
                 @if (! $loadFailed && trim((string) ($game['sessionTitle'] ?? '')) !== '')
-                    <p class="mt-3 text-lg font-semibold leading-snug text-white sm:text-xl">
+                    <p class="mt-3 text-lg font-semibold leading-snug text-white sm:text-xl landscape:mt-2 landscape:text-base landscape:sm:text-lg">
                         {{ trim((string) $game['sessionTitle']) }}
                     </p>
                 @endif
                 @if (! $loadFailed)
-                    <p class="mt-3 text-sm leading-relaxed text-slate-300">
+                    <p class="mt-3 text-sm leading-relaxed text-slate-300 landscape:mt-2 landscape:text-xs landscape:sm:text-sm">
                         {{ ($game['mode'] ?? '') === 'doubles' ? 'Doubles' : 'Singles' }}
                         @if ((int) ($game['timeLimitMinutes'] ?? 0) > 0)
                             <span class="mx-2 text-slate-500">·</span>
@@ -58,21 +64,30 @@
         </header>
 
         @if (! $loadFailed)
-            <div class="mt-8 space-y-10 sm:mt-10">
-
-
-            {{-- Courts --}}
-                <section class="space-y-4">
+            {{-- Mobile-first: courts first, standings below; wider on md+ --}}
+            <div class="mt-6 flex w-full min-w-0 flex-col gap-8 sm:mt-8 sm:gap-10 md:mt-10">
+                {{-- Courts --}}
+                <section class="order-1 min-w-0 space-y-4" aria-labelledby="gq-live-courts-heading">
                     <div class="flex items-end justify-between gap-4">
-                        <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Courts</h2>
+                        <h2
+                            id="gq-live-courts-heading"
+                            class="font-display text-base font-bold uppercase tracking-wide text-slate-800 sm:text-lg dark:text-slate-100"
+                        >
+                            Courts
+                        </h2>
                     </div>
-                    <div class="space-y-4">
+                    <div class="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                         @foreach (($game['courts'] ?? []) as $i => $court)
                             <div wire:key="court-{{ $openPlayShare->uuid }}-{{ $i }}">
                                 @if ($court)
                                     <div class="overflow-hidden rounded-2xl border border-white/60 bg-white shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/80 dark:border-slate-700/80 dark:bg-slate-900/90 dark:ring-slate-700/60">
                                         <div class="flex flex-col gap-4 bg-gradient-to-r from-emerald-600 to-teal-700 px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-5">
-                                            <span class="font-display text-base font-bold tracking-wide sm:text-lg">{{ $eq->courtDisplayLabel((int) $i) }}</span>
+                                            <span class="flex flex-wrap items-center gap-2 font-display text-base font-bold tracking-wide sm:text-lg">
+                                                {{ $eq->courtDisplayLabel((int) $i) }}
+                                                @if ($eq->courtSkillLock((int) $i) > 0)
+                                                    <span class="rounded-full bg-white/20 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ring-1 ring-white/30">Lvl {{ $eq->courtSkillLock((int) $i) }}</span>
+                                                @endif
+                                            </span>
                                             <div class="flex w-full flex-wrap items-stretch justify-end gap-4 sm:w-auto sm:gap-8">
                                                 @if ((int) ($game['timeLimitMinutes'] ?? 0) > 0)
                                                     @php
@@ -92,24 +107,30 @@
                                         <div class="grid gap-px bg-slate-200/80 dark:bg-slate-700/80 sm:grid-cols-[1fr_auto_1fr]">
                                             <div class="bg-gradient-to-br from-emerald-50/90 to-white p-4 sm:p-5 dark:from-emerald-950/40 dark:to-slate-900">
                                                 <p class="text-[10px] font-bold uppercase tracking-widest text-emerald-700 dark:text-emerald-400/90">Side A</p>
-                                                <p class="mt-2 font-display text-xl font-bold leading-tight tracking-tight text-slate-900 sm:text-2xl dark:text-slate-50">
-                                                    {{ $eq->sideLabelsWithStandings($court['sideA'] ?? []) }}
-                                                </p>
+                                                <div class="mt-2 min-w-0 text-slate-900 dark:text-slate-50">
+                                                    @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideA'] ?? []])
+                                                </div>
                                             </div>
                                             <div class="flex items-center justify-center bg-slate-50 px-2 py-6 dark:bg-slate-900/80">
                                                 <span class="rounded-full bg-slate-200/90 px-3 py-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-600 dark:bg-slate-800 dark:text-slate-300">vs</span>
                                             </div>
                                             <div class="bg-gradient-to-br from-violet-50/90 to-white p-4 sm:p-5 dark:from-violet-950/35 dark:to-slate-900">
                                                 <p class="text-[10px] font-bold uppercase tracking-widest text-violet-700 dark:text-violet-400/90">Side B</p>
-                                                <p class="mt-2 font-display text-xl font-bold leading-tight tracking-tight text-slate-900 sm:text-2xl dark:text-slate-50">
-                                                    {{ $eq->sideLabelsWithStandings($court['sideB'] ?? []) }}
-                                                </p>
+                                                <div class="mt-2 min-w-0 text-slate-900 dark:text-slate-50">
+                                                    @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideB'] ?? []])
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 @else
                                     <div class="rounded-2xl border-2 border-dashed border-slate-300/80 bg-slate-50/50 px-5 py-8 text-center dark:border-slate-600 dark:bg-slate-900/30">
-                                        <p class="font-display text-sm font-semibold text-slate-500 dark:text-slate-400">{{ $eq->courtDisplayLabel((int) $i) }} — open</p>
+                                        <p class="font-display text-sm font-semibold text-slate-500 dark:text-slate-400">
+                                            {{ $eq->courtDisplayLabel((int) $i) }}
+                                            @if ($eq->courtSkillLock((int) $i) > 0)
+                                                <span class="mt-1 block text-[10px] font-bold uppercase tracking-wide text-violet-600 dark:text-violet-300">Level {{ $eq->courtSkillLock((int) $i) }} only</span>
+                                            @endif
+                                            <span class="mt-1 block text-slate-400">— open</span>
+                                        </p>
                                         <p class="mt-1 text-xs text-slate-400">Waiting for the host</p>
                                     </div>
                                 @endif
@@ -121,10 +142,20 @@
                     @endif
                 </section>
             
-                {{-- Standings (same order as host modal) --}}
-                <section class="rounded-2xl border border-slate-200/90 bg-white/90 p-5 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 backdrop-blur dark:border-slate-700 dark:bg-slate-900/80 dark:ring-slate-700/50">
-                    <h2 class="font-display text-lg font-bold uppercase tracking-wide text-slate-800 dark:text-slate-100">Standings</h2>
-                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">Win–loss from the host session (updates as matches finish)</p>
+                {{-- Standings / rankings (below courts on all breakpoints) --}}
+                <section
+                    class="order-2 min-w-0 w-full rounded-2xl border border-slate-200/90 bg-white/90 p-4 shadow-lg shadow-slate-900/5 ring-1 ring-slate-100 backdrop-blur sm:p-5 md:p-6 dark:border-slate-700 dark:bg-slate-900/80 dark:ring-slate-700/50"
+                    aria-labelledby="gq-live-standings-heading"
+                >
+                    <h2
+                        id="gq-live-standings-heading"
+                        class="font-display text-base font-bold uppercase tracking-wide text-slate-800 sm:text-lg dark:text-slate-100"
+                    >
+                        Standings
+                    </h2>
+                    <p class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                        Win–loss from the host session (updates as matches finish)
+                    </p>
                     @php $rankRows = $eq->rankings(); @endphp
                     @if (count($rankRows) === 0)
                         <p class="mt-4 text-center text-sm text-slate-500 dark:text-slate-400">No active players yet</p>

@@ -77,4 +77,16 @@ class GameQEngineRankingsTest extends TestCase
         ]);
         $this->assertSame(['New', 'Rough'], $names);
     }
+
+    public function test_skill_level_maps_to_five_star_display(): void
+    {
+        $e = new Engine(Engine::defaultState());
+        $this->assertSame(1, $e->skillStarsFilledFive(1));
+        $this->assertSame(3, $e->skillStarsFilledFive(3));
+        $this->assertSame(5, $e->skillStarsFilledFive(5));
+        $this->assertSame(5, $e->skillStarsFilledFive(6));
+        $this->assertSame(5, $e->skillStarsFilledFive(10));
+        $this->assertSame(1, $e->skillStarsFilledFive(0));
+        $this->assertSame(5, $e->skillStarsFilledFive(99));
+    }
 }

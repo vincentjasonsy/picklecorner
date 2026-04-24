@@ -11,9 +11,22 @@ use App\Models\OpenPlaySession;
  */
 class Engine
 {
+    public const SKILL_LEVEL_MIN = 1;
+
+    public const SKILL_LEVEL_MAX = 5;
+
+    /** @param  mixed  $v */
+    public static function clampSkillLevel($v, int $fallback = 3): int
+    {
+        if (! is_numeric($v)) {
+            return max(self::SKILL_LEVEL_MIN, min(self::SKILL_LEVEL_MAX, $fallback));
+        }
+
+        return max(self::SKILL_LEVEL_MIN, min(self::SKILL_LEVEL_MAX, (int) $v));
+    }
+
     /** @var array<string, mixed> */
     private array $state;
-    
 
     /**
      * @param  array<string, mixed>  $state
@@ -70,6 +83,8 @@ class Engine
             'sessionTitle' => '',
             /** @var list<string> Per-court labels (e.g. #3, Court 5); empty string = default "Court N". */
             'courtLabels' => [],
+            /** @var list<int> Per-court skill filter: 0 = any level, 1–5 = only matches where every player is exactly that level. */
+            'courtSkillLocks' => [],
         ];
     }
 
@@ -121,10 +136,18 @@ class Engine
         }
         $merged['sessionTitle'] = mb_substr(trim($merged['sessionTitle']), 0, 120);
         $nl = $merged['newLevel'] ?? 3;
-        $merged['newLevel'] = is_numeric($nl) ? (int) $nl : 3;
+        $merged['newLevel'] = self::clampSkillLevel(is_numeric($nl) ? (int) $nl : 3, 3);
+
+        foreach ($merged['players'] as $pi => $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            $merged['players'][$pi]['level'] = self::clampSkillLevel($p['level'] ?? 3, 3);
+        }
 
         $cc = max(1, min(8, (int) (($merged['courtsCount'] ?? 1) ?: 1)));
         $merged['courtLabels'] = self::normalizeCourtLabelsArray($cc, $merged['courtLabels'] ?? []);
+        $merged['courtSkillLocks'] = self::normalizeCourtSkillLocksArray($cc, $merged['courtSkillLocks'] ?? []);
 
         return self::cloneState($merged);
     }
@@ -151,6 +174,9 @@ class Engine
         $this->state['sessionTitle'] = is_string($st) ? mb_substr(trim($st), 0, 120) : '';
         $this->state['courtLabels'] = isset($merged['courtLabels']) && is_array($merged['courtLabels'])
             ? array_values($merged['courtLabels'])
+            : [];
+        $this->state['courtSkillLocks'] = isset($merged['courtSkillLocks']) && is_array($merged['courtSkillLocks'])
+            ? array_values($merged['courtSkillLocks'])
             : [];
         if ($clearShare) {
             $this->state['shareUuid'] = '';
@@ -179,6 +205,7 @@ class Engine
             'timeLimitMinutes' => $this->state['timeLimitMinutes'],
             'sessionTitle' => mb_substr(trim((string) ($this->state['sessionTitle'] ?? '')), 0, 120),
             'courtLabels' => $this->cloneState($this->state['courtLabels'] ?? []),
+            'courtSkillLocks' => $this->cloneState($this->state['courtSkillLocks'] ?? []),
             'players' => $this->cloneState($this->state['players']),
             'queue' => $this->cloneState($this->state['queue']),
             'courts' => $this->cloneState($this->state['courts']),
@@ -407,6 +434,37 @@ class Engine
         return $s !== '' ? $s : 'Court '.($index + 1);
     }
 
+    /** Skill filter for a court slot: 0 = any, 1–5 = all players on that court must match. */
+    public function courtSkillLock(int $index): int
+    {
+        $locks = $this->state['courtSkillLocks'] ?? [];
+        if (! isset($locks[$index])) {
+            return 0;
+        }
+        $v = is_numeric($locks[$index]) ? (int) $locks[$index] : 0;
+
+        return max(0, min(self::SKILL_LEVEL_MAX, $v));
+    }
+
+    /**
+     * @param  list<string|int>  $sideA
+     * @param  list<string|int>  $sideB
+     */
+    public function matchSatisfiesCourtSkillLock(array $sideA, array $sideB, int $requiredLevel): bool
+    {
+        if ($requiredLevel <= 0) {
+            return true;
+        }
+        foreach (array_merge($sideA, $sideB) as $id) {
+            $p = $this->playerById($id);
+            if (! $p || (int) ($p['level'] ?? 0) !== $requiredLevel) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /**
      * @param  mixed  $labels
      * @return list<string>
@@ -419,6 +477,24 @@ class Engine
         for ($i = 0; $i < $n; $i++) {
             $raw = isset($arr[$i]) ? trim((string) $arr[$i]) : '';
             $out[] = $raw === '' ? '' : mb_substr($raw, 0, 48);
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  mixed  $locks
+     * @return list<int>
+     */
+    private static function normalizeCourtSkillLocksArray(int $courtsCount, $locks): array
+    {
+        $n = max(1, min(8, $courtsCount));
+        $arr = is_array($locks) ? array_values($locks) : [];
+        $out = [];
+        for ($i = 0; $i < $n; $i++) {
+            $raw = $arr[$i] ?? 0;
+            $v = is_numeric($raw) ? (int) $raw : 0;
+            $out[] = max(0, min(self::SKILL_LEVEL_MAX, $v));
         }
 
         return $out;
@@ -669,6 +745,14 @@ class Engine
         return "{$name} ({$w}–{$l})";
     }
 
+    /**
+     * Map host skill level (1–5) to a 1–5 star fill count for compact displays (e.g. live watch).
+     */
+    public function skillStarsFilledFive(int $level): int
+    {
+        return self::clampSkillLevel($level, 3);
+    }
+
     public function isOnCourt(string|int|null $playerId): bool
     {
         foreach ($this->state['courts'] as $c) {
@@ -765,32 +849,32 @@ class Engine
                 $lv = (int) ($p['level'] ?? 0);
                 $byLevel[$lv][] = $p;
             }
-        
+
             // Step 2: Sort levels (skill order still respected)
             ksort($byLevel, SORT_NUMERIC);
-        
+
             // Step 3: Stable order inside each level (player id) so ties are repeatable
             foreach ($byLevel as &$group) {
                 usort($group, fn ($a, $b) => strcmp((string) ($a['id'] ?? ''), (string) ($b['id'] ?? '')));
             }
             unset($group);
-        
+
             // Step 4: Round-robin across levels
             $out = [];
-        
-            while (!empty($byLevel)) {
+
+            while (! empty($byLevel)) {
                 foreach ($byLevel as $lv => &$group) {
-                    if (!empty($group)) {
+                    if (! empty($group)) {
                         $out[] = array_shift($group);
                     }
-        
+
                     if (empty($group)) {
                         unset($byLevel[$lv]);
                     }
                 }
                 unset($group);
             }
-        
+
             return $out;
         }
         if ($method === 'teams') {
@@ -861,9 +945,22 @@ class Engine
     }
 
     /**
-     * Order doubles players so sequential groups of four tend to share similar skill.
-     * Primary key is skill level; within the same level we keep the caller's pool order
-     * (queue priority / games-fair ordering from {@see orderedPoolForFill()}).
+     * @param  list<string|int>  $teamA
+     * @param  list<string|int>  $teamB
+     */
+    private function minGamesAmongTeams(array $teamA, array $teamB): int
+    {
+        $m = PHP_INT_MAX;
+        foreach (array_merge($teamA, $teamB) as $id) {
+            $m = min($m, $this->totalGamesForQueueId($id));
+        }
+
+        return $m;
+    }
+
+    /**
+     * Order doubles players for quartet building: fewest completed games first, then skill level,
+     * then stable pool index so {@see orderedPoolForFill()} priority is preserved within ties.
      *
      * @param  list<array<string, mixed>>  $poolPlayers
      * @return list<array<string, mixed>>
@@ -875,6 +972,11 @@ class Engine
             $indexed[] = ['i' => $i, 'p' => $p];
         }
         usort($indexed, function (array $a, array $b): int {
+            $ga = self::totalGamesPlayed($a['p']);
+            $gb = self::totalGamesPlayed($b['p']);
+            if ($ga !== $gb) {
+                return $ga <=> $gb;
+            }
             $la = (int) ($a['p']['level'] ?? 0);
             $lb = (int) ($b['p']['level'] ?? 0);
             if ($la !== $lb) {
@@ -897,7 +999,7 @@ class Engine
 
         // --- SINGLES ---
         if ($this->state['mode'] === 'singles') {
-            return array_map(fn($p) => [$p['id']], $poolPlayers);
+            return array_map(fn ($p) => [$p['id']], $poolPlayers);
         }
 
         // --- TEAMS MODE (unchanged) ---
@@ -912,7 +1014,7 @@ class Engine
 
             $sides = [];
             foreach ($byTeam as $group) {
-                usort($group, fn($a, $b) => $a['level'] <=> $b['level']);
+                usort($group, fn ($a, $b) => $a['level'] <=> $b['level']);
 
                 for ($i = 0; $i + 1 < count($group); $i += 2) {
                     $sides[] = [$group[$i]['id'], $group[$i + 1]['id']];
@@ -939,8 +1041,8 @@ class Engine
 
             foreach ([$sideA, $sideB] as $side) {
                 if (count($side) === 2) {
-                    $a = (string)$side[0];
-                    $b = (string)$side[1];
+                    $a = (string) $side[0];
+                    $b = (string) $side[1];
                     $recentPairs[$a][$b] = true;
                     $recentPairs[$b][$a] = true;
                 }
@@ -948,8 +1050,8 @@ class Engine
 
             foreach ($sideA as $a) {
                 foreach ($sideB as $b) {
-                    $recentOpponents[(string)$a][(string)$b] = true;
-                    $recentOpponents[(string)$b][(string)$a] = true;
+                    $recentOpponents[(string) $a][(string) $b] = true;
+                    $recentOpponents[(string) $b][(string) $a] = true;
                 }
             }
         }
@@ -974,7 +1076,9 @@ class Engine
         // 🧠 STEP 3: PAIR WITH SCORING
         // ===============================
         foreach ($groups as $g) {
-            if (count($g) < 4) continue;
+            if (count($g) < 4) {
+                continue;
+            }
 
             $options = [
                 [[$g[0], $g[1]], [$g[2], $g[3]]],
@@ -1008,10 +1112,10 @@ class Engine
 
                 // ✅ avoid repeat teammates
                 foreach ([[$teamA[0], $teamA[1]], [$teamB[0], $teamB[1]]] as [$p1, $p2]) {
-                    $id1 = (string)$p1['id'];
-                    $id2 = (string)$p2['id'];
+                    $id1 = (string) $p1['id'];
+                    $id2 = (string) $p2['id'];
 
-                    if (!empty($recentPairs[$id1][$id2])) {
+                    if (! empty($recentPairs[$id1][$id2])) {
                         $score += 50;
                     }
                 }
@@ -1019,10 +1123,10 @@ class Engine
                 // ✅ avoid repeat opponents
                 foreach ($teamA as $a) {
                     foreach ($teamB as $b) {
-                        $idA = (string)$a['id'];
-                        $idB = (string)$b['id'];
+                        $idA = (string) $a['id'];
+                        $idB = (string) $b['id'];
 
-                        if (!empty($recentOpponents[$idA][$idB])) {
+                        if (! empty($recentOpponents[$idA][$idB])) {
                             $score += 20;
                         }
                     }
@@ -1048,40 +1152,105 @@ class Engine
     }
 
     /**
+     * Idle players in queue order after {@see syncQueueFromIdle()} (fewest games first, then shuffle method).
+     * Uses the queue as source of truth so high-game players are not pulled ahead of those waiting with fewer games.
+     *
      * @return list<array<string, mixed>>
      */
     public function orderedPoolForFill(): array
     {
-        $idle = $this->idleEligibleIds();
-        $inQueue = array_values(array_filter(
-            $this->state['queue'],
-            fn ($id) => $this->someIdEqual($idle, $id)
-        ));
-        $rest = array_values(array_filter(
-            $idle,
-            fn ($id) => ! $this->queueHas($id)
-        ));
-        $restPlayers = [];
-        foreach ($rest as $id) {
+        $out = [];
+        foreach ($this->state['queue'] as $id) {
+            if ($this->isOnCourt($id)) {
+                continue;
+            }
+            $pl = $this->playerById($id);
+            if (! $pl || ! empty($pl['disabled']) || ! empty($pl['skipShuffle'])) {
+                continue;
+            }
+            $out[] = $pl;
+        }
+        $seen = [];
+        foreach ($out as $p) {
+            $seen[(string) ($p['id'] ?? '')] = true;
+        }
+        $missing = [];
+        foreach ($this->idleEligibleIds() as $id) {
+            if (isset($seen[(string) $id])) {
+                continue;
+            }
             $pl = $this->playerById($id);
             if ($pl) {
-                $restPlayers[] = $pl;
+                $missing[] = $pl;
             }
         }
-        $sortedRest = array_map(
-            fn ($p) => $p['id'],
-            $this->sortIdlePlayersForFillByGamesThenMethod($restPlayers, (string) $this->state['shuffleMethod'])
-        );
-        $orderedIds = array_merge($inQueue, $sortedRest);
-        $out = [];
-        foreach ($orderedIds as $id) {
-            $pl = $this->playerById($id);
-            if ($pl) {
-                $out[] = $pl;
+        if ($missing !== []) {
+            foreach ($this->sortIdlePlayersForFillByGamesThenMethod($missing, (string) $this->state['shuffleMethod']) as $p) {
+                $out[] = $p;
             }
         }
 
         return $out;
+    }
+
+    /**
+     * Next full match (singles: 2 players, doubles: 4) at exactly $requiredLevel, in $pool order, excluding consumed ids.
+     * Uses {@see buildSides()} on the picked subset so doubles pairings stay consistent with the rest of GameQ.
+     *
+     * @param  list<array<string, mixed>>  $pool
+     * @param  array<string, true>  $consumed
+     * @return array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}|null
+     */
+    private function allocateHomogeneousSkillMatchFromPool(array $pool, array &$consumed, int $requiredLevel): ?array
+    {
+        if ($requiredLevel <= 0) {
+            return null;
+        }
+        $need = $this->state['mode'] === 'singles' ? 2 : 4;
+        $picked = [];
+        foreach ($pool as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            $id = (string) ($p['id'] ?? '');
+            if ($id === '' || isset($consumed[$id])) {
+                continue;
+            }
+            if ((int) ($p['level'] ?? 0) !== $requiredLevel) {
+                continue;
+            }
+            $picked[] = $p;
+            if (count($picked) >= $need) {
+                break;
+            }
+        }
+        if (count($picked) < $need) {
+            return null;
+        }
+
+        if ($this->state['mode'] === 'singles') {
+            foreach ($picked as $pp) {
+                $consumed[(string) ($pp['id'] ?? '')] = true;
+            }
+
+            return [
+                'teams' => [[$picked[0]['id']], [$picked[1]['id']]],
+                'bucket' => 'mid',
+            ];
+        }
+
+        $sides = $this->buildSides($picked);
+        if (count($sides) < 2) {
+            return null;
+        }
+        foreach ($picked as $pp) {
+            $consumed[(string) ($pp['id'] ?? '')] = true;
+        }
+
+        return [
+            'teams' => [$sides[0], $sides[1]],
+            'bucket' => 'mid',
+        ];
     }
 
     public function fillCourts(): void
@@ -1089,12 +1258,58 @@ class Engine
         $this->ensureCourtSlots();
         $this->syncQueueFromIdle();
         $pool = $this->orderedPoolForFill();
-        $sides = $this->buildSides($pool);
 
-        // 👉 build matches
+        $emptyIdx = [];
+        foreach ($this->state['courts'] as $i => $c) {
+            if (! $c) {
+                $emptyIdx[] = $i;
+            }
+        }
+
+        $restricted = [];
+        $open = [];
+        foreach ($emptyIdx as $idx) {
+            if ($this->courtSkillLock($idx) > 0) {
+                $restricted[] = $idx;
+            } else {
+                $open[] = $idx;
+            }
+        }
+        sort($restricted, SORT_NUMERIC);
+        sort($open, SORT_NUMERIC);
+
+        /** @var array<int, array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}> */
+        $lockedCourtMatches = [];
+        $consumed = [];
+        foreach ($restricted as $courtIndex) {
+            $req = $this->courtSkillLock($courtIndex);
+            if ($req <= 0) {
+                continue;
+            }
+            $m = $this->allocateHomogeneousSkillMatchFromPool($pool, $consumed, $req);
+            if ($m !== null) {
+                $lockedCourtMatches[$courtIndex] = $m;
+            }
+        }
+
+        $remaining = [];
+        foreach ($pool as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            $id = (string) ($p['id'] ?? '');
+            if ($id === '' || isset($consumed[$id])) {
+                continue;
+            }
+            $remaining[] = $p;
+        }
+
+        $sides = $this->buildSides($remaining);
+
+        // 👉 build matches (open courts + any locked slot we did not pre-fill)
         $matches = [];
 
-        $allLevels = array_map(fn($p) => (int)$p['level'], $this->state['players']);
+        $allLevels = array_map(fn ($p) => (int) $p['level'], $this->state['players']);
         $globalMin = min($allLevels);
         $globalMax = max($allLevels);
         $mid = ($globalMin + $globalMax) / 2;
@@ -1107,6 +1322,7 @@ class Engine
 
             $levels = array_map(function ($id) {
                 $p = $this->playerById($id);
+
                 return (int) ($p['level'] ?? 0);
             }, $players);
 
@@ -1126,42 +1342,71 @@ class Engine
             ];
         }
 
-        // 👉 group by bucket
-        $grouped = [
-            'low' => [],
-            'mid' => [],
-            'high' => [],
-        ];
-
-        foreach ($matches as $m) {
-            $grouped[$m['bucket']][] = $m;
+        // Order matches for assignment: fewest games among the four players first, then skill bucket
+        // (low / mid / high) so we do not send a "high skill / many games" pod to court 1 while zeros wait.
+        foreach ($matches as $i => &$m) {
+            $m['_fillOrder'] = $i;
         }
+        unset($m);
+        $bucketRank = ['low' => 0, 'mid' => 1, 'high' => 2];
+        usort($matches, function (array $a, array $b) use ($bucketRank): int {
+            $ma = $this->minGamesAmongTeams($a['teams'][0] ?? [], $a['teams'][1] ?? []);
+            $mb = $this->minGamesAmongTeams($b['teams'][0] ?? [], $b['teams'][1] ?? []);
+            if ($ma !== $mb) {
+                return $ma <=> $mb;
+            }
+            $ra = $bucketRank[$a['bucket'] ?? 'mid'] ?? 1;
+            $rb = $bucketRank[$b['bucket'] ?? 'mid'] ?? 1;
+            if ($ra !== $rb) {
+                return $ra <=> $rb;
+            }
 
-        // 👉 distribute across courts
-        $balanced = [];
+            return ($a['_fillOrder'] ?? 0) <=> ($b['_fillOrder'] ?? 0);
+        });
+        foreach ($matches as &$m) {
+            unset($m['_fillOrder']);
+        }
+        unset($m);
 
-        while (!empty($grouped['low']) || !empty($grouped['mid']) || !empty($grouped['high'])) {
-            foreach (['low', 'mid', 'high'] as $b) {
-                if (!empty($grouped[$b])) {
-                    $balanced[] = array_shift($grouped[$b]);
+        $balanced = $matches;
+
+        $sortedEmpty = array_merge($restricted, $open);
+
+        $usedMatchIdx = [];
+        foreach ($sortedEmpty as $courtIndex) {
+            if (isset($lockedCourtMatches[$courtIndex])) {
+                [$teamA, $teamB] = $lockedCourtMatches[$courtIndex]['teams'];
+                $this->state['courts'][$courtIndex] = [
+                    'courtIndex' => $courtIndex,
+                    'sideA' => $teamA,
+                    'sideB' => $teamB,
+                    'timerRunState' => 'stopped',
+                    'totalPausedMs' => 0,
+                    'pausedAt' => null,
+                ];
+
+                continue;
+            }
+
+            $req = $this->courtSkillLock($courtIndex);
+            $picked = null;
+            for ($k = 0; $k < count($balanced); $k++) {
+                if (isset($usedMatchIdx[$k])) {
+                    continue;
+                }
+                $teams = $balanced[$k]['teams'] ?? [[], []];
+                $ta = $teams[0] ?? [];
+                $tb = $teams[1] ?? [];
+                if ($this->matchSatisfiesCourtSkillLock($ta, $tb, $req)) {
+                    $picked = $k;
+                    break;
                 }
             }
-        }
-
-        // 👉 assign to courts
-        $emptyIdx = [];
-        foreach ($this->state['courts'] as $i => $c) {
-            if (!$c) {
-                $emptyIdx[] = $i;
+            if ($picked === null) {
+                continue;
             }
-        }
-
-        $mi = 0;
-
-        foreach ($emptyIdx as $courtIndex) {
-            if (!isset($balanced[$mi])) break;
-
-            [$teamA, $teamB] = $balanced[$mi]['teams'];
+            $usedMatchIdx[$picked] = true;
+            [$teamA, $teamB] = $balanced[$picked]['teams'];
 
             $this->state['courts'][$courtIndex] = [
                 'courtIndex' => $courtIndex,
@@ -1171,8 +1416,6 @@ class Engine
                 'totalPausedMs' => 0,
                 'pausedAt' => null,
             ];
-
-            $mi++;
         }
     }
 
@@ -1277,6 +1520,17 @@ class Engine
                 $this->state['lineupEditError'] = 'Pick active roster players only.';
 
                 return;
+            }
+        }
+        $reqLevel = $this->courtSkillLock($courtIndex);
+        if ($reqLevel > 0) {
+            foreach ($allNew as $id) {
+                $pl = $this->playerById($id);
+                if ((int) ($pl['level'] ?? 0) !== $reqLevel) {
+                    $this->state['lineupEditError'] = 'This court is limited to skill level '.$reqLevel.' only (every player on court).';
+
+                    return;
+                }
             }
         }
 
@@ -2168,7 +2422,7 @@ class Engine
         $this->state['players'][] = [
             'id' => self::newId(),
             'name' => $name,
-            'level' => max(1, min(10, $nl ?: 3)),
+            'level' => self::clampSkillLevel($nl ?: 3, 3),
             'wins' => 0,
             'losses' => 0,
             'disabled' => false,
@@ -2182,19 +2436,27 @@ class Engine
 
     public function cleanupBulkPlayerList(): void
     {
-        $names = self::parseBulkPlayerNames((string) ($this->state['bulkPlayerList'] ?? ''));
-        $this->state['bulkPlayerList'] = implode("\n", $names);
-        $this->state['bulkAddFeedback'] = count($names) > 0
-            ? 'Ready: '.count($names).' name'.(count($names) === 1 ? '' : 's').' (duplicates and empty lines removed).'
+        $defaultLevel = self::clampSkillLevel((int) ($this->state['newLevel'] ?? 3) ?: 3, 3);
+        $entries = self::parseBulkPlayerEntries((string) ($this->state['bulkPlayerList'] ?? ''), $defaultLevel);
+        $this->state['bulkPlayerList'] = implode("\n", array_map(
+            fn (array $e) => $e['name'].' - '.$e['level'],
+            $entries
+        ));
+        $this->state['bulkAddFeedback'] = count($entries) > 0
+            ? 'Ready: '.count($entries).' line'.(count($entries) === 1 ? '' : 's').' (duplicates and empty lines removed; skill is the number after the dash, 1–5).'
             : '';
     }
 
     public function addPlayersFromBulk(): void
     {
         $this->state['bulkAddFeedback'] = '';
-        $names = self::parseBulkPlayerNames((string) ($this->state['bulkPlayerList'] ?? ''));
-        $this->state['bulkPlayerList'] = implode("\n", $names);
-        if ($names === []) {
+        $defaultLevel = self::clampSkillLevel((int) ($this->state['newLevel'] ?? 3) ?: 3, 3);
+        $entries = self::parseBulkPlayerEntries((string) ($this->state['bulkPlayerList'] ?? ''), $defaultLevel);
+        $this->state['bulkPlayerList'] = implode("\n", array_map(
+            fn (array $e) => $e['name'].' - '.$e['level'],
+            $entries
+        ));
+        if ($entries === []) {
             $this->state['bulkAddFeedback'] = 'Paste at least one name.';
 
             return;
@@ -2205,16 +2467,16 @@ class Engine
                 $existingLower[strtolower(trim((string) $p['name']))] = true;
             }
         }
-        $defaultLevel = max(1, min(10, (int) ($this->state['newLevel'] ?? 3) ?: 3));
         $defaultTeam = trim((string) ($this->state['newTeamId'] ?? ''));
         $added = 0;
         $skippedDup = 0;
         $i = 0;
-        for (; $i < count($names); $i++) {
+        for (; $i < count($entries); $i++) {
             if (count($this->state['players']) >= OpenPlaySession::MAX_PLAYERS_PER_SESSION) {
                 break;
             }
-            $name = $names[$i];
+            $name = $entries[$i]['name'];
+            $level = $entries[$i]['level'];
             $k = strtolower($name);
             if (isset($existingLower[$k])) {
                 $skippedDup++;
@@ -2225,7 +2487,7 @@ class Engine
             $this->state['players'][] = [
                 'id' => self::newId(),
                 'name' => $name,
-                'level' => $defaultLevel,
+                'level' => $level,
                 'wins' => 0,
                 'losses' => 0,
                 'disabled' => false,
@@ -2234,7 +2496,7 @@ class Engine
             ];
             $added++;
         }
-        $notAddedDueToCap = count($names) - $i;
+        $notAddedDueToCap = count($entries) - $i;
         $this->state['bulkPlayerList'] = '';
         $parts = [];
         if ($added > 0) {
@@ -2436,6 +2698,7 @@ class Engine
         }
         $this->state['courts'] = array_values($courts);
         $this->state['courtLabels'] = self::normalizeCourtLabelsArray($n, $this->state['courtLabels'] ?? []);
+        $this->state['courtSkillLocks'] = self::normalizeCourtSkillLocksArray($n, $this->state['courtSkillLocks'] ?? []);
     }
 
     public static function newId(): string
@@ -2506,24 +2769,65 @@ class Engine
     /**
      * @return list<string>
      */
-    public static function parseBulkPlayerNames(string $raw): array
+    public static function parseBulkPlayerNames(string $raw, int $defaultLevel = 3): array
     {
+        return array_map(
+            fn (array $e) => $e['name'],
+            self::parseBulkPlayerEntries($raw, $defaultLevel)
+        );
+    }
+
+    /**
+     * One line per player. Optional trailing skill: "Name - 5" (spaces around ASCII/en/em dash).
+     * Lines without a trailing number use $defaultLevel (1–5). Leading list markers are stripped.
+     *
+     * @return list<array{name: string, level: int}>
+     */
+    public static function parseBulkPlayerEntries(string $raw, int $defaultLevel = 3): array
+    {
+        $defaultLevel = self::clampSkillLevel($defaultLevel ?: 3, 3);
         $seen = [];
         $out = [];
         foreach (preg_split('/\r\n|\r|\n/', $raw) as $line) {
-            $name = self::cleanBulkPlayerLine((string) $line);
-            if ($name === '') {
+            $entry = self::parseBulkPlayerLineWithLevel((string) $line, $defaultLevel);
+            if ($entry === null) {
                 continue;
             }
-            $key = strtolower($name);
+            $key = strtolower($entry['name']);
             if (isset($seen[$key])) {
                 continue;
             }
             $seen[$key] = true;
-            $out[] = $name;
+            $out[] = $entry;
         }
 
         return $out;
+    }
+
+    /**
+     * @return array{name: string, level: int}|null
+     */
+    private static function parseBulkPlayerLineWithLevel(string $line, int $defaultLevel): ?array
+    {
+        $s = self::cleanBulkPlayerLine($line);
+        if ($s === '') {
+            return null;
+        }
+        $level = $defaultLevel;
+        $name = $s;
+        if (preg_match('/^(.*)\s+[-–—]\s+(\d{1,2})\s*$/u', $s, $m)) {
+            $candidate = trim((string) ($m[1] ?? ''));
+            if ($candidate !== '') {
+                $name = $candidate;
+                $level = self::clampSkillLevel($m[2] ?? $defaultLevel, $defaultLevel);
+            }
+        }
+        $name = trim($name);
+        if ($name === '') {
+            return null;
+        }
+
+        return ['name' => $name, 'level' => $level];
     }
 
     private static function idEqual(mixed $a, mixed $b): bool

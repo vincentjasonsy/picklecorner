@@ -113,9 +113,9 @@ class GameQEngineQueueOrderTest extends TestCase
         $state['mode'] = 'singles';
         $state['courtsCount'] = 1;
         $state['players'] = [
-            ['id' => 'hi', 'name' => 'Hi', 'level' => 8, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'hi', 'name' => 'Hi', 'level' => 4, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
             ['id' => 'lo', 'name' => 'Lo', 'level' => 2, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
-            ['id' => 'mid', 'name' => 'Mid', 'level' => 5, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'mid', 'name' => 'Mid', 'level' => 3, 'wins' => 1, 'losses' => 1, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
         ];
         $state['queue'] = ['hi', 'mid', 'lo'];
         $state['courts'] = [null];
@@ -124,6 +124,38 @@ class GameQEngineQueueOrderTest extends TestCase
         $e->syncQueueFromIdle();
 
         $this->assertSame(['lo', 'mid', 'hi'], array_map('strval', $e->toArray()['queue']));
+    }
+
+    public function test_fill_courts_doubles_keeps_fewest_games_ahead_of_skill_when_forming_quartets(): void
+    {
+        $state = Engine::defaultState();
+        $state['mode'] = 'doubles';
+        $state['shuffleMethod'] = 'levels';
+        $state['courtsCount'] = 1;
+        $state['players'] = [
+            ['id' => 'z1', 'name' => 'Z1', 'level' => 4, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'z2', 'name' => 'Z2', 'level' => 4, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'z3', 'name' => 'Z3', 'level' => 4, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'z4', 'name' => 'Z4', 'level' => 4, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'g1', 'name' => 'G1', 'level' => 2, 'wins' => 3, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'g2', 'name' => 'G2', 'level' => 2, 'wins' => 3, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'g3', 'name' => 'G3', 'level' => 2, 'wins' => 3, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'g4', 'name' => 'G4', 'level' => 2, 'wins' => 3, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['g1', 'g2', 'g3', 'g4', 'z1', 'z2', 'z3', 'z4'];
+        $state['courts'] = [null];
+
+        $e = new Engine($state);
+        $e->fillCourts();
+
+        $court = $e->toArray()['courts'][0];
+        $this->assertIsArray($court);
+        $on = array_merge(
+            array_map('strval', $court['sideA'] ?? []),
+            array_map('strval', $court['sideB'] ?? [])
+        );
+        sort($on);
+        $this->assertSame(['z1', 'z2', 'z3', 'z4'], $on, 'First fill should use the four 0-game players, not the lower-level 3-game group');
     }
 
     public function test_sync_queue_levels_rotate_interleaves_skill_bands_within_same_games(): void

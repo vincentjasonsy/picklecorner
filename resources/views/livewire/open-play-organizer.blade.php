@@ -18,7 +18,7 @@
     @endif
     {{-- ========== LIST: history table + create ========== --}}
     @if ($uiPhase === 'list')
-        <div class="space-y-6">
+        <div class="mx-auto w-full max-w-screen-2xl space-y-6 px-3 sm:px-5 lg:px-8">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <h2 class="font-display text-lg font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -159,7 +159,7 @@
 
     {{-- ========== SETUP WIZARD ========== --}}
     @if ($uiPhase === 'setup')
-        <div class="mx-auto max-w-lg space-y-8 pb-8">
+        <div class="mx-auto max-w-lg space-y-8 px-3 pb-8 sm:px-4">
             <div class="flex justify-end">
                 <span class="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                     Step {{ $setupStep }} / 3
@@ -259,18 +259,37 @@
                             </div>
                             <div class="grid gap-3 sm:grid-cols-2">
                                 @for ($li = 0; $li < $setupCourtN; $li++)
-                                    <label class="block text-xs font-medium text-zinc-600 dark:text-zinc-400" for="gq-setup-court-label-{{ $li }}">
-                                        Slot {{ $li + 1 }}
-                                        <input
-                                            id="gq-setup-court-label-{{ $li }}"
-                                            type="text"
-                                            maxlength="48"
-                                            wire:model.live="state.courtLabels.{{ $li }}"
-                                            class="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
-                                            placeholder="e.g. #3"
-                                            autocomplete="off"
-                                        />
-                                    </label>
+                                    <div class="rounded-xl border border-zinc-200/90 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-950/40">
+                                        <p class="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Court {{ $li + 1 }}</p>
+                                        <label class="mt-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400" for="gq-setup-court-label-{{ $li }}">
+                                            Name (optional)
+                                            <input
+                                                id="gq-setup-court-label-{{ $li }}"
+                                                type="text"
+                                                maxlength="48"
+                                                wire:model.live="state.courtLabels.{{ $li }}"
+                                                class="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                                placeholder="e.g. #3"
+                                                autocomplete="off"
+                                            />
+                                        </label>
+                                        <label class="mt-2 block text-xs font-medium text-zinc-600 dark:text-zinc-400" for="gq-setup-court-skill-{{ $li }}">
+                                            Skill slot
+                                            <select
+                                                id="gq-setup-court-skill-{{ $li }}"
+                                                wire:model.live="state.courtSkillLocks.{{ $li }}"
+                                                class="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                            >
+                                                <option value="0">Any level</option>
+                                                @for ($lv = 1; $lv <= 5; $lv++)
+                                                    <option value="{{ $lv }}">Level {{ $lv }} only</option>
+                                                @endfor
+                                            </select>
+                                        </label>
+                                        <p class="mt-2 text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                                            When set, <span class="font-medium text-zinc-600 dark:text-zinc-300">Fill courts</span> and manual lineups only allow players at that level on this slot.
+                                        </p>
+                                    </div>
                                 @endfor
                             </div>
                         </div>
@@ -377,7 +396,7 @@
                                 <input
                                     type="number"
                                     min="1"
-                                    max="10"
+                                    max="5"
                                     wire:model.live="state.newLevel"
                                     class="mt-1.5 w-full rounded-xl border border-zinc-200 px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
                                 />
@@ -403,14 +422,14 @@
                         <div class="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
                             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Add a list</p>
                             <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                One name per line. Numbered lines like <span class="font-mono">1. Sam</span> or <span class="font-mono">2) Alex</span> are cleaned automatically. Duplicates in the box are merged before adding.
+                                One player per line. Optional skill (1–5): <span class="font-mono">Name - 3</span> (spaces around the dash). Numbered lines like <span class="font-mono">1. Sam</span> are cleaned. Lines without a number use the <span class="font-semibold">Lvl</span> field above. Duplicates are merged before adding.
                             </p>
                             <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 Paste names
                                     <textarea
                                         wire:model.live="state.bulkPlayerList"
                                         rows="5"
-                                        placeholder="Sam&#10;2. Jordan&#10;3) Casey"
+                                        placeholder="Sam&#10;Jordan - 5&#10;3) Casey - 4"
                                         class="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
                                     ></textarea>
                             </label>
@@ -433,6 +452,9 @@
                             </div>
                             @if (! empty($state['bulkAddFeedback'] ?? ''))
                                 <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $state['bulkAddFeedback'] }}</p>
+                            @endif
+                            @if (! empty($state['importError'] ?? ''))
+                                <p class="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">{{ $state['importError'] }}</p>
                             @endif
                         </div>
                         @if (count($state['players'] ?? []) > 0)
@@ -547,8 +569,8 @@
 
     {{-- ========== MINIMAL HOST VIEW ========== --}}
     @if ($uiPhase === 'session')
-        <div class="space-y-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5">
-            <header class="flex flex-wrap items-center justify-between gap-3 pb-1">
+        <div class="mx-auto w-full max-w-screen-2xl space-y-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5 sm:px-5 lg:px-8 xl:px-10">
+            <header class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
                 <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                     <button
                         type="button"
@@ -573,9 +595,6 @@
                                 Hosting
                             @endif
                         </h1>
-                        @if (trim($state['sessionTitle'] ?? '') !== '')
-                            <p class="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Hosting</p>
-                        @endif
                     </div>
                 </div>
                 <div class="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:w-auto">
@@ -607,17 +626,17 @@
             @endif
 
             <div class="min-w-0 space-y-3 sm:space-y-5">
-                    <div class="-mx-1 flex gap-2 overflow-x-auto overflow-y-hidden border-b border-zinc-200 pb-2 dark:border-zinc-800">
+                    <div class="-mx-1 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-zinc-200/80 dark:border-zinc-800">
                         <button
                             type="button"
-                            class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $activeTab === 'play' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
+                            class="shrink-0 border-b-2 px-3 py-2 text-sm font-medium transition {{ $activeTab === 'play' ? 'border-emerald-600 text-zinc-900 dark:border-emerald-500 dark:text-white' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200' }}"
                             wire:click="$set('activeTab', 'play')"
                         >
                             Play
                         </button>
                         <button
                             type="button"
-                            class="shrink-0 rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $activeTab === 'tools' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
+                            class="shrink-0 border-b-2 px-3 py-2 text-sm font-medium transition {{ $activeTab === 'tools' ? 'border-emerald-600 text-zinc-900 dark:border-emerald-500 dark:text-white' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200' }}"
                             wire:click="$set('activeTab', 'tools')"
                         >
                             <span class="lg:hidden">Share</span>
@@ -627,9 +646,9 @@
 
                     @if (($activeTab ?? '') === 'play')
                         <div
-                            class="flex flex-wrap items-center gap-2 rounded-xl border border-emerald-200/70 bg-emerald-50/90 px-3 py-2 lg:hidden dark:border-emerald-900/40 dark:bg-emerald-950/30"
+                            class="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200/80 bg-zinc-50/80 px-3 py-2 lg:hidden dark:border-zinc-700 dark:bg-zinc-900/50"
                         >
-                            <span class="text-[11px] font-bold uppercase tracking-wide text-emerald-800 dark:text-emerald-300">Live watch</span>
+                            <span class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Live watch</span>
                             <div class="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-2">
                                 @if (empty($state['shareUuid'] ?? ''))
                                     <button
@@ -676,15 +695,12 @@
 
                     <div
                         @class([
-                            'rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-50/90 to-white p-3 shadow-sm dark:border-emerald-900/40 dark:from-emerald-950/25 dark:to-zinc-950/80 sm:p-4',
+                            'rounded-xl border border-zinc-200/80 bg-zinc-50/60 p-3 dark:border-zinc-700 dark:bg-zinc-900/50 sm:p-4',
                             'hidden lg:block' => ($activeTab ?? '') !== 'tools',
                         ])
                     >
-                        <p class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300/90">Share live</p>
-                        <p class="mt-1 hidden text-xs leading-relaxed text-zinc-600 md:block dark:text-zinc-400">
-                            You have one live watch URL per account. Copy it anytime; reconnect this device to push updates if the host key was cleared.
-                        </p>
-                        <div class="mt-3 space-y-2">
+                        <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-100">Live watch</p>
+                        <div class="mt-2 space-y-2">
                             @if (empty($state['shareUuid'] ?? ''))
                                 <div>
                                     <button type="button" class="rounded-2xl bg-zinc-800 px-3 py-2 text-sm font-semibold text-white dark:bg-zinc-200 dark:text-zinc-900" wire:click="startSharing" wire:loading.attr="disabled" @disabled($shareBusy)>
@@ -709,12 +725,12 @@
                                 </button>
                             @endif
                             @if (! empty($state['shareUuid']) && ! empty($state['shareSecret'] ?? ''))
-                                <div class="flex flex-wrap items-center gap-2 text-xs">
-                                    <span class="text-zinc-600 dark:text-zinc-400">Live updates:</span>
+                                <div class="flex flex-wrap items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                                    <span>Updates</span>
                                     @if (! empty($state['shareSyncEnabled']))
-                                        <button type="button" class="font-semibold text-emerald-700 underline dark:text-emerald-400" wire:click="pauseSharing">On (tap to pause)</button>
+                                        <button type="button" class="font-semibold text-emerald-700 underline dark:text-emerald-400" wire:click="pauseSharing">On</button>
                                     @else
-                                        <button type="button" class="font-semibold text-zinc-500 underline" wire:click="resumeSharing">Off (tap to resume)</button>
+                                        <button type="button" class="font-semibold text-zinc-500 underline" wire:click="resumeSharing">Off</button>
                                     @endif
                                 </div>
                                 <button type="button" class="text-xs text-zinc-500 underline" wire:confirm="Stop sharing? Watch links will stop working." wire:click="revokeSharing">Stop sharing</button>
@@ -726,53 +742,36 @@
                     </div>
 
                     @if ($activeTab === 'tools')
-                        <div class="space-y-4 rounded-2xl border border-zinc-200/90 bg-zinc-50/50 p-3 dark:border-zinc-800 dark:bg-zinc-950/40 sm:p-4">
-                            <div>
-                                <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Export / import</p>
-                                <div class="mt-2 flex flex-wrap gap-2">
-                                    <button type="button" class="rounded-xl bg-zinc-800 px-3 py-2 text-sm font-semibold text-white dark:bg-zinc-200 dark:text-zinc-900" wire:click="exportJson">
-                                        Export JSON
-                                    </button>
-                                    <label class="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-zinc-300 px-3 py-2 text-sm font-semibold dark:border-zinc-600">
-                                        <span>Import JSON</span>
-                                        <input type="file" class="sr-only" accept=".json,.txt,application/json,text/plain" wire:model="importFile" wire:change="importJson" />
-                                    </label>
-                                </div>
-                                @if (! empty($state['importError'] ?? ''))
-                                    <p class="mt-2 text-xs text-red-600">{{ $state['importError'] }}</p>
-                                @endif
-                            </div>
-                            <div class="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-                                <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Danger zone</p>
-                                <div class="mt-2 flex flex-wrap gap-2">
-                                    <button
-                                        type="button"
-                                        class="rounded-xl border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:text-amber-200"
-                                        wire:confirm="Clear all scores and matches on this session?"
-                                        wire:click="resetSession"
-                                    >
-                                        Reset session
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="rounded-xl border border-red-300 px-3 py-2 text-xs font-semibold text-red-800 dark:border-red-900 dark:text-red-300"
-                                        wire:confirm="Erase all GameQ data and return to the session list?"
-                                        wire:click="fullReset"
-                                    >
-                                        Full reset
-                                    </button>
-                                </div>
+                        <div class="rounded-xl border border-zinc-200/80 bg-zinc-50/40 p-3 dark:border-zinc-800 dark:bg-zinc-950/40 sm:p-4">
+                            <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Danger zone</p>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <button
+                                    type="button"
+                                    class="rounded-xl border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:text-amber-200"
+                                    wire:confirm="Clear all scores and matches on this session?"
+                                    wire:click="resetSession"
+                                >
+                                    Reset session
+                                </button>
+                                <button
+                                    type="button"
+                                    class="rounded-xl border border-red-300 px-3 py-2 text-xs font-semibold text-red-800 dark:border-red-900 dark:text-red-300"
+                                    wire:confirm="Erase all GameQ data and return to the session list?"
+                                    wire:click="fullReset"
+                                >
+                                    Full reset
+                                </button>
                             </div>
                         </div>
                     @endif
 
-                    {{-- Courts, queue, and match timers stay visible on both tabs; Share & data only adds export/import above. --}}
+                    {{-- Courts and timers stay visible on both tabs; Share & data adds live watch + danger actions. --}}
                         <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                             <button type="button" class="touch-manipulation min-h-11 flex-1 rounded-2xl bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-sm hover:bg-emerald-500 active:scale-[0.98] sm:flex-none sm:px-5 sm:py-2.5" wire:click="fillCourts">Fill courts</button>
                             <button type="button" class="touch-manipulation min-h-11 flex-1 rounded-2xl border border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 active:scale-[0.98] dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:flex-none sm:rounded-xl sm:py-2.5" wire:click="syncQueueFromIdle">Sync queue</button>
                         </div>
 
-                        <div class="rounded-2xl border border-zinc-200/90 bg-white p-3 shadow-sm dark:border-zinc-700 dark:bg-zinc-900/60 sm:p-4">
+                        <div class="rounded-xl border border-zinc-200/80 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900/60 sm:p-4">
                             <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-4 sm:gap-y-2">
                                 <div class="flex flex-wrap items-center gap-2">
                                     <label class="text-sm font-medium text-zinc-800 dark:text-zinc-200" for="gq-session-time-limit">Match timer limit</label>
@@ -788,11 +787,8 @@
                                     />
                                     <span class="text-xs text-zinc-500">min</span>
                                 </div>
-                                <p class="hidden text-xs leading-snug text-zinc-500 dark:text-zinc-400 sm:max-w-md sm:block">
-                                    <span class="font-medium text-zinc-700 dark:text-zinc-300">0</span> = no countdown. Limit and each court clock stay in sync.
-                                </p>
-                                <p class="text-[11px] leading-snug text-zinc-500 sm:hidden dark:text-zinc-400">
-                                    <span class="font-medium text-zinc-700 dark:text-zinc-300">0</span> = no countdown.
+                                <p class="text-xs leading-snug text-zinc-500 dark:text-zinc-400">
+                                    <span class="font-medium text-zinc-700 dark:text-zinc-300">0</span> = no countdown; limit applies to all courts.
                                 </p>
                             </div>
                         </div>
@@ -805,26 +801,26 @@
                                         $rs = $court ? $eq->remainingSeconds($court) : null;
                                     @endphp
                                     <div
-                                        class="mx-auto w-full max-w-4xl overflow-hidden rounded-xl border transition-shadow xl:max-w-5xl {{ $court ? 'border-emerald-200/90 bg-gradient-to-b from-emerald-50/90 via-white to-white shadow-md shadow-emerald-900/[0.06] dark:border-emerald-800/45 dark:from-emerald-950/35 dark:via-zinc-900/80 dark:to-zinc-950 dark:shadow-emerald-950/25' : 'border-dashed border-zinc-200 bg-zinc-50/40 dark:border-zinc-700 dark:bg-zinc-900/35' }}"
+                                        class="w-full overflow-hidden rounded-xl border {{ $court ? 'border-zinc-200/90 bg-white dark:border-zinc-700 dark:bg-zinc-900/70' : 'border-dashed border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/40' }}"
                                         wire:key="court-{{ $i }}"
                                     >
-                                        <div class="border-b {{ $court ? 'border-emerald-200/60 bg-emerald-600/[0.06] dark:border-emerald-900/50 dark:bg-emerald-500/[0.04]' : 'border-zinc-200/80 dark:border-zinc-700' }}">
+                                        <div class="border-b border-zinc-200/80 {{ $court ? 'bg-zinc-50/50 dark:bg-zinc-900/80' : '' }} dark:border-zinc-700">
                                             @if ($court)
                                                 @php $tl = (int) ($state['timeLimitMinutes'] ?? 0); @endphp
                                                 <div
-                                                    class="flex flex-wrap items-center gap-x-2 gap-y-2 px-3 py-2.5 sm:gap-x-3"
+                                                    class="flex flex-wrap items-center gap-x-3 gap-y-2 px-3 py-2 sm:gap-x-4"
                                                     role="group"
                                                     aria-label="{{ $eq->courtDisplayLabel($i) }} timer"
                                                 >
-                                                    <span
-                                                        class="inline-flex shrink-0 items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider {{ $court ? 'bg-emerald-600/15 text-emerald-900 dark:bg-emerald-500/20 dark:text-emerald-100' : 'bg-zinc-200/90 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300' }}"
-                                                    >
+                                                    <span class="flex shrink-0 flex-wrap items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
                                                         {{ $eq->courtDisplayLabel($i) }}
+                                                        @if ($eq->courtSkillLock((int) $i) > 0)
+                                                            <span class="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-900 dark:bg-violet-950/60 dark:text-violet-200">Lvl {{ $eq->courtSkillLock((int) $i) }}</span>
+                                                        @endif
                                                     </span>
                                                     @if ($tl > 0)
-                                                        <span class="hidden h-5 w-px shrink-0 bg-emerald-200/80 sm:block dark:bg-emerald-800/50" aria-hidden="true"></span>
                                                         <div class="flex shrink-0 items-baseline gap-1.5">
-                                                            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Rem</span>
+                                                            <span class="text-xs text-zinc-500 dark:text-zinc-400">Rem</span>
                                                             <span
                                                                 class="font-mono text-xl font-bold tabular-nums leading-none sm:text-2xl {{ ($rs === 0) ? 'text-amber-600 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300' }}"
                                                                 title="Time remaining on this court"
@@ -834,30 +830,28 @@
                                                         </div>
                                                     @endif
                                                     @if ($run === 'paused')
-                                                        <span class="shrink-0 rounded-md bg-amber-100/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900 dark:bg-amber-950/50 dark:text-amber-200">Paused</span>
+                                                        <span class="shrink-0 rounded-md bg-amber-100/80 px-2 py-0.5 text-xs font-medium text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">Paused</span>
                                                     @elseif ($run === 'stopped')
-                                                        <span class="shrink-0 text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Stopped</span>
+                                                        <span class="shrink-0 text-xs font-medium text-zinc-500 dark:text-zinc-400">Stopped</span>
                                                     @endif
-                                                    <span class="hidden h-5 w-px shrink-0 bg-emerald-200/80 sm:block dark:bg-emerald-800/50" aria-hidden="true"></span>
                                                     <div class="flex flex-wrap items-center gap-1.5">
                                                         @if ($run === 'running')
-                                                            <button type="button" class="touch-manipulation rounded-lg border border-emerald-300/80 bg-white px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-900 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-100 dark:hover:bg-emerald-950/50" wire:click="pauseCourtTimer({{ $i }})">Pause</button>
-                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-300/80 bg-white px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700" wire:click="stopCourtTimer({{ $i }})">Stop</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800" wire:click="pauseCourtTimer({{ $i }})">Pause</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700" wire:click="stopCourtTimer({{ $i }})">Stop</button>
                                                         @endif
                                                         @if ($run === 'paused')
-                                                            <button type="button" class="touch-manipulation rounded-lg border border-emerald-300/80 bg-white px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-emerald-900 hover:bg-emerald-50 dark:border-emerald-800 dark:bg-zinc-900 dark:text-emerald-100 dark:hover:bg-emerald-950/50" wire:click="resumeCourtTimer({{ $i }})">Resume</button>
-                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-300/80 bg-white px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700" wire:click="stopCourtTimer({{ $i }})">Stop</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800" wire:click="resumeCourtTimer({{ $i }})">Resume</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700" wire:click="stopCourtTimer({{ $i }})">Stop</button>
                                                         @endif
                                                         @if ($run === 'stopped')
-                                                            <button type="button" class="touch-manipulation rounded-lg bg-emerald-600 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white hover:bg-emerald-500 dark:hover:bg-emerald-500" wire:click="startCourtTimer({{ $i }})">Start</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500 dark:hover:bg-emerald-500" wire:click="startCourtTimer({{ $i }})">Start</button>
                                                         @endif
                                                     </div>
                                                     @if ($tl > 0)
-                                                        <span class="hidden h-5 w-px shrink-0 bg-emerald-200/80 sm:block dark:bg-emerald-800/50" aria-hidden="true"></span>
-                                                        <div class="flex w-full flex-wrap items-center gap-1.5 sm:w-auto">
-                                                            <span class="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Adjust</span>
-                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[10px] font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800" wire:click="bumpCourtRemainingMinutes({{ $i }}, 1)" title="Add one minute left">+1</button>
-                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-[10px] font-semibold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800" wire:click="bumpCourtRemainingMinutes({{ $i }}, -1)" title="Remove one minute left">−1</button>
+                                                        <div class="flex w-full flex-wrap items-center gap-1.5 sm:ml-auto sm:w-auto">
+                                                            <span class="text-xs text-zinc-500 dark:text-zinc-400">Adjust</span>
+                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800" wire:click="bumpCourtRemainingMinutes({{ $i }}, 1)" title="Add one minute left">+1</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800" wire:click="bumpCourtRemainingMinutes({{ $i }}, -1)" title="Remove one minute left">−1</button>
                                                             <input
                                                                 type="number"
                                                                 min="0"
@@ -869,45 +863,73 @@
                                                                 wire:model.live="state.courtRemainingInput.{{ $i }}"
                                                             />
                                                             <span class="text-[10px] text-zinc-500">min</span>
-                                                            <button type="button" class="touch-manipulation rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[10px] font-bold text-white hover:bg-emerald-500" wire:click="applyCourtRemainingMinutes({{ $i }})">Apply</button>
+                                                            <button type="button" class="touch-manipulation rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-emerald-500" wire:click="applyCourtRemainingMinutes({{ $i }})">Apply</button>
                                                         </div>
                                                     @endif
                                                 </div>
                                             @else
-                                                <div class="px-3 py-2.5">
-                                                    <span
-                                                        class="inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-zinc-200/90 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300"
-                                                    >
-                                                        {{ $eq->courtDisplayLabel($i) }}
-                                                    </span>
+                                                <div class="flex flex-wrap items-center gap-2 px-3 py-2">
+                                                    <span class="text-sm font-semibold text-zinc-600 dark:text-zinc-300">{{ $eq->courtDisplayLabel($i) }}</span>
+                                                    @if ($eq->courtSkillLock((int) $i) > 0)
+                                                        <span class="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-900 dark:bg-violet-950/60 dark:text-violet-200">Lvl {{ $eq->courtSkillLock((int) $i) }}</span>
+                                                    @endif
                                                 </div>
+                                                <p class="px-3 pb-1 text-center text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                                                    Open — use <span class="font-semibold text-zinc-700 dark:text-zinc-300">Fill courts</span> when ready.
+                                                </p>
                                             @endif
+                                            <div class="border-t border-zinc-200/70 px-3 pb-2.5 pt-2 dark:border-zinc-700/80">
+                                                <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
+                                                    <label class="min-w-0 flex-1 text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400" for="gq-card-court-label-{{ $i }}">
+                                                        Court name
+                                                        <input
+                                                            id="gq-card-court-label-{{ $i }}"
+                                                            type="text"
+                                                            maxlength="48"
+                                                            wire:model.live="state.courtLabels.{{ $i }}"
+                                                            class="mt-0.5 h-8 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                                            placeholder="Default: Court {{ $i + 1 }}"
+                                                            autocomplete="off"
+                                                        />
+                                                    </label>
+                                                    <label class="w-full shrink-0 sm:w-[8.5rem]" for="gq-card-court-skill-{{ $i }}">
+                                                        <span class="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">Skill slot</span>
+                                                        <select
+                                                            id="gq-card-court-skill-{{ $i }}"
+                                                            wire:model.live="state.courtSkillLocks.{{ $i }}"
+                                                            class="mt-0.5 h-8 w-full rounded-lg border border-zinc-200 bg-white px-2 text-xs font-medium text-zinc-800 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                                                            title="Any level, or only players at that level for Fill courts and lineups"
+                                                        >
+                                                            <option value="0">Any level</option>
+                                                            @for ($lv = 1; $lv <= 5; $lv++)
+                                                                <option value="{{ $lv }}">Lvl {{ $lv }} only</option>
+                                                            @endfor
+                                                        </select>
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
-                                        @if (! $court)
-                                            <p class="px-3 py-5 text-center text-xs text-zinc-500 dark:text-zinc-400">
-                                                Open slot — use <span class="font-semibold text-zinc-700 dark:text-zinc-300">Fill courts</span>
-                                            </p>
-                                        @else
+                                        @if ($court)
                                             <div class="space-y-2 p-2.5 sm:p-3">
-                                                <div class="mx-auto grid w-full max-w-3xl grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch sm:gap-2">
-                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-emerald-200/70 bg-white/80 px-3 py-3 shadow-sm dark:border-emerald-900/40 dark:bg-zinc-950/60">
-                                                        <p class="text-[9px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400/90">Side A</p>
-                                                        <p class="mt-1 font-display text-base font-bold leading-snug tracking-tight text-zinc-900 sm:text-lg dark:text-zinc-100">
-                                                            {{ $eq->sideLabelsWithStandings($court['sideA'] ?? []) }}
-                                                        </p>
+                                                <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch sm:gap-3">
+                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-zinc-200/80 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-950/50">
+                                                        <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Side A</p>
+                                                        <div class="mt-1 min-w-0 text-zinc-900 dark:text-zinc-100">
+                                                            @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideA'] ?? [], 'variant' => 'organizer'])
+                                                        </div>
                                                     </div>
                                                     <div class="flex items-center justify-center py-0.5 sm:w-10 sm:shrink-0 sm:self-center sm:py-0">
-                                                        <span class="rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">vs</span>
+                                                        <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500">vs</span>
                                                     </div>
-                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-violet-200/70 bg-white/80 px-3 py-3 shadow-sm dark:border-violet-900/40 dark:bg-zinc-950/60">
-                                                        <p class="text-[9px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400/90">Side B</p>
-                                                        <p class="mt-1 font-display text-base font-bold leading-snug tracking-tight text-zinc-900 sm:text-lg dark:text-zinc-100">
-                                                            {{ $eq->sideLabelsWithStandings($court['sideB'] ?? []) }}
-                                                        </p>
+                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-zinc-200/80 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-950/50">
+                                                        <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Side B</p>
+                                                        <div class="mt-1 min-w-0 text-zinc-900 dark:text-zinc-100">
+                                                            @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideB'] ?? [], 'variant' => 'organizer', 'align' => 'end'])
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <details
-                                                    class="mx-auto w-full max-w-3xl rounded-lg border border-zinc-200/80 bg-white px-3 py-2 dark:border-zinc-600 dark:bg-zinc-800/40"
+                                                    class="w-full rounded-lg border border-zinc-200/70 bg-zinc-50/50 px-3 py-2 dark:border-zinc-700 dark:bg-zinc-900/40"
                                                     @if ($courtLineupEditorOpen === $i) open @endif
                                                 >
                                                     <summary
@@ -954,7 +976,7 @@
                                                         </div>
                                                     @endif
                                                 </details>
-                                                <div class="mx-auto w-full max-w-2xl rounded-lg border border-zinc-200/90 bg-zinc-50/95 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-950/90">
+                                                <div class="w-full rounded-lg border border-zinc-200/70 bg-zinc-50/60 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-950/80">
                                                     <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3 lg:gap-4">
                                                         <div class="flex items-center justify-center gap-2 sm:gap-2.5">
                                                             <label class="sr-only" for="gq-score-a-{{ $i }}">Side A score</label>
@@ -1032,38 +1054,34 @@
         <div class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" wire:click="$set('peopleModalOpen', false)">
             <div class="absolute inset-0 z-0 bg-zinc-900/50" aria-hidden="true"></div>
             <div
-                class="relative z-10 flex max-h-[min(92vh,720px)] w-full max-w-2xl flex-col rounded-t-[1.75rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-[1.75rem]"
+                class="relative z-10 flex max-h-[min(92vh,800px)] w-full max-w-5xl flex-col rounded-t-[1.75rem] border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-[1.75rem]"
                 wire:click.stop
             >
-                <div class="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
+                <div class="flex items-center justify-between border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-800">
                     <h2 class="font-display text-lg font-extrabold text-zinc-900 dark:text-white">Standings &amp; log</h2>
                     <button type="button" class="rounded-2xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" wire:click="$set('peopleModalOpen', false)" aria-label="Close">✕</button>
                 </div>
                 <div class="min-h-0 flex-1 overflow-y-auto p-4">
-                    <div class="mb-4 flex flex-wrap gap-2 border-b border-zinc-200 pb-3 dark:border-zinc-800">
+                    <div class="mb-4 flex gap-1 border-b border-zinc-200/80 pb-0 dark:border-zinc-800">
                         <button
                             type="button"
-                            class="rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $modalTab === 'standings' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
+                            class="border-b-2 px-3 py-2 text-sm font-medium transition {{ $modalTab === 'standings' ? 'border-emerald-600 text-zinc-900 dark:border-emerald-500 dark:text-white' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200' }}"
                             wire:click="$set('modalTab', 'standings')"
                         >
                             Standings
                         </button>
                         <button
                             type="button"
-                            class="rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide {{ $modalTab === 'log' ? 'bg-emerald-600 text-white' : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800' }}"
+                            class="border-b-2 px-3 py-2 text-sm font-medium transition {{ $modalTab === 'log' ? 'border-emerald-600 text-zinc-900 dark:border-emerald-500 dark:text-white' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200' }}"
                             wire:click="$set('modalTab', 'log')"
                         >
                             Head-to-head &amp; log
                         </button>
                     </div>
-                    <p class="mb-4 hidden text-xs leading-relaxed text-zinc-500 sm:block dark:text-zinc-400">
-                        Use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> in the host bar to add or edit players. Tap a name in <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings</span> for that player’s full head-to-head page.
-                    </p>
                     @if ($modalTab === 'standings')
-                        <div class="space-y-6">
+                        <div class="space-y-4">
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Standings</p>
-                                <ol class="mt-3 space-y-2">
+                                <ol class="space-y-2">
                                     @foreach ($eq->rankings() as $ri => $r)
                                         <li
                                             class="flex items-center justify-between gap-3 rounded-2xl border px-3 py-3 text-sm transition dark:border-zinc-800 {{ $ri === 0 ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/90 to-white dark:border-amber-900/40 dark:from-amber-950/30 dark:to-zinc-900/50' : 'border-zinc-100 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/50' }}"
@@ -1108,20 +1126,20 @@
                                 </ul>
                             </details>
                             <div>
-                                <p class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Recent matches</p>
-                                <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                                    Edit scores, then apply. Use <span class="font-medium text-zinc-600 dark:text-zinc-300">Cancel result</span> to drop a finished match from the tally entirely. On court, <span class="font-medium text-zinc-600 dark:text-zinc-300">Cancel game</span> ends play without recording a score.
-                                </p>
+                                <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Recent matches</p>
+                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Edit scores, then apply. <span class="text-zinc-600 dark:text-zinc-300">Cancel result</span> removes a row from the tally.</p>
                                 @php $completedLog = $state['completedMatches'] ?? []; @endphp
                                 <ul class="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
                                     @for ($ri = count($completedLog) - 1; $ri >= 0; $ri--)
                                         @php $m = $completedLog[$ri]; @endphp
                                         <li
-                                            class="rounded-xl border border-zinc-200/80 bg-white px-3 py-2.5 text-xs shadow-sm dark:border-zinc-700 dark:bg-zinc-950/60"
+                                            class="rounded-lg border border-zinc-200/70 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950/60"
                                             wire:key="match-log-{{ $ri }}"
                                         >
-                                            <div class="grid grid-cols-1 items-center gap-2 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
-                                                <span class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-left">{{ $eq->sideLabelsWithStandings($m['sideA'] ?? []) }}</span>
+                                            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-3">
+                                                <div class="min-w-0 justify-self-start text-zinc-800 dark:text-zinc-200 sm:text-left">
+                                                    @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $m['sideA'] ?? [], 'variant' => 'organizer', 'compact' => true])
+                                                </div>
                                                 <div class="flex flex-wrap items-center justify-center gap-1.5">
                                                     <label class="sr-only" for="gq-log-a-{{ $ri }}">Side A score</label>
                                                     <input
@@ -1145,7 +1163,9 @@
                                                         class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center font-mono text-sm font-bold tabular-nums text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
                                                     />
                                                 </div>
-                                                <span class="min-w-0 font-medium leading-snug text-zinc-800 dark:text-zinc-200 sm:text-right">{{ $eq->sideLabelsWithStandings($m['sideB'] ?? []) }}</span>
+                                                <div class="min-w-0 justify-self-end text-zinc-800 dark:text-zinc-200 sm:text-right">
+                                                    @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $m['sideB'] ?? [], 'variant' => 'organizer', 'compact' => true, 'align' => 'end'])
+                                                </div>
                                             </div>
                                             <div class="mt-2 flex justify-end border-t border-zinc-100 pt-2 dark:border-zinc-800">
                                                 <button
@@ -1183,7 +1203,7 @@
         <div class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" wire:click="$set('rosterModalOpen', false)">
             <div class="absolute inset-0 z-0 bg-zinc-900/50" aria-hidden="true"></div>
             <div
-                class="relative z-10 flex max-h-[min(92vh,720px)] w-full max-w-4xl flex-col rounded-t-[1.75rem] border border-zinc-200 bg-white shadow-xl dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-[1.75rem]"
+                class="relative z-10 flex max-h-[min(92vh,800px)] w-full max-w-5xl flex-col rounded-t-[1.75rem] border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-[1.75rem]"
                 wire:click.stop
             >
                 <div class="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
@@ -1212,7 +1232,7 @@
                                 <input
                                     type="number"
                                     min="1"
-                                    max="10"
+                                    max="5"
                                     wire:model.live="state.newLevel"
                                     class="mt-1 w-full rounded-xl border border-zinc-200 px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
                                 />
@@ -1238,14 +1258,14 @@
                         <div class="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
                             <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Add a list</p>
                             <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                One name per line. Numbered lines are cleaned; duplicates in the box are merged. New players use the level and team fields above.
+                                One player per line. Optional skill (1–5): <span class="font-mono">Name - 3</span> (spaces around the dash). Numbered lines are cleaned. Lines without a number use the <span class="font-semibold">Lvl</span> and team fields above. Duplicates are merged.
                             </p>
                             <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 Paste names
                                 <textarea
                                     wire:model.live="state.bulkPlayerList"
                                     rows="5"
-                                    placeholder="Sam&#10;2. Jordan&#10;3) Casey"
+                                    placeholder="Sam&#10;Jordan - 5&#10;3) Casey - 4"
                                     class="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
                                 ></textarea>
                             </label>
@@ -1268,6 +1288,9 @@
                             </div>
                             @if (! empty($state['bulkAddFeedback'] ?? ''))
                                 <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $state['bulkAddFeedback'] }}</p>
+                            @endif
+                            @if (! empty($state['importError'] ?? ''))
+                                <p class="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">{{ $state['importError'] }}</p>
                             @endif
                         </div>
                         <p class="text-xs text-zinc-500 md:hidden dark:text-zinc-400">Swipe the table sideways for all columns.</p>
@@ -1301,7 +1324,7 @@
                                                 <input
                                                     type="number"
                                                     min="1"
-                                                    max="10"
+                                                    max="5"
                                                     wire:model.live="state.players.{{ $pi }}.level"
                                                     class="w-12 rounded border border-zinc-200 px-1 py-0.5 dark:border-zinc-600 dark:bg-zinc-950"
                                                 />
