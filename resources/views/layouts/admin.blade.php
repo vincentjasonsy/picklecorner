@@ -371,6 +371,7 @@
                     </div>
                     <div class="flex shrink-0 items-center gap-2">
                         <livewire:notification-bell />
+                        <x-pwa-install-guide />
                         <x-theme-toggle />
                     </div>
                 </header>

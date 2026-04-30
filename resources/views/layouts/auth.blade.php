@@ -121,6 +121,7 @@
                 class="relative flex flex-1 flex-col bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100"
             >
                 <div class="absolute right-4 top-4 z-10 sm:right-8 sm:top-8">
+                    <x-pwa-install-guide />
                     <x-theme-toggle />
                 </div>
                 <div class="flex flex-1 items-center justify-center px-4 py-10 sm:px-8">

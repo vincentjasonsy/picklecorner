@@ -284,7 +284,10 @@
                             {{ $title ?? 'Front desk' }}
                         </h2>
                     </div>
-                    <x-theme-toggle />
+                    <div class="flex items-center gap-2">
+                        <x-pwa-install-guide />
+                        <x-theme-toggle />
+                    </div>
                 </div>
                 <main class="flex-1 px-4 py-6 md:px-8 md:py-8">
                     {{ $slot }}

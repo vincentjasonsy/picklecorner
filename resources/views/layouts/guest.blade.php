@@ -65,6 +65,7 @@
                         {{ config('app.name') }}
                     </a>
                     <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+                        <x-pwa-install-guide />
                         <x-theme-toggle />
                         @unless ($hideGuestPrimaryNav)
                         {{-- Desktop / large tablet navigation --}}

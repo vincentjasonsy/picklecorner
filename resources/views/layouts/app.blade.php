@@ -17,6 +17,10 @@
     <body
         class="min-h-screen bg-zinc-50 text-zinc-900 antialiased transition-colors duration-200 dark:bg-zinc-950 dark:text-zinc-100"
     >
+        <div class="fixed right-4 top-4 z-40">
+            <x-pwa-install-guide />
+        </div>
+
         {{ $slot }}
 
         @livewireScripts

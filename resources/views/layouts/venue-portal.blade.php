@@ -367,7 +367,10 @@
                             Customers
                         </a>
                     </nav>
-                    <x-theme-toggle />
+                    <div class="flex items-center gap-2">
+                        <x-pwa-install-guide />
+                        <x-theme-toggle />
+                    </div>
                 </header>
                 <main class="flex-1 p-4 md:p-6">
                     {{ $slot }}
