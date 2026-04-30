@@ -1253,10 +1253,163 @@ class Engine
         ];
     }
 
+    /**
+     * Fill a single empty court. Open courts use the same match ordering as {@see fillCourts()} over the current queue pool.
+     * Skill-locked courts only pull a homogeneous match for this slot (not reserved players from other empty locked courts).
+     */
+    public function fillCourt(int $courtIndex): void
+    {
+        $this->ensureCourtSlots();
+        $this->syncQueueFromIdle();
+
+        if (($this->state['courts'][$courtIndex] ?? null) !== null) {
+            return;
+        }
+
+        $pool = $this->orderedPoolForFill();
+        $req = $this->courtSkillLock($courtIndex);
+
+        if ($req > 0) {
+            $consumed = [];
+            $m = $this->allocateHomogeneousSkillMatchFromPool($pool, $consumed, $req);
+            if ($m === null) {
+                return;
+            }
+            [$teamA, $teamB] = $m['teams'];
+            $this->placeMatchOnCourt($courtIndex, $teamA, $teamB);
+
+            return;
+        }
+
+        $remaining = [];
+        foreach ($pool as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            $id = (string) ($p['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+            $remaining[] = $p;
+        }
+
+        $balanced = $this->sortMatchesForFillAssignmentFromRemaining($remaining);
+        foreach ($balanced as $row) {
+            $teams = $row['teams'] ?? [[], []];
+            $ta = $teams[0] ?? [];
+            $tb = $teams[1] ?? [];
+            if ($this->matchSatisfiesCourtSkillLock($ta, $tb, 0)) {
+                $this->placeMatchOnCourt($courtIndex, $ta, $tb);
+
+                return;
+            }
+        }
+    }
+
     public function fillCourts(): void
     {
         $this->ensureCourtSlots();
         $this->syncQueueFromIdle();
+        $plan = $this->buildFillCourtsPlan();
+        $this->applyFillCourtsPlan($plan);
+    }
+
+    /**
+     * @param  list<string|int>  $teamA
+     * @param  list<string|int>  $teamB
+     */
+    private function placeMatchOnCourt(int $courtIndex, array $teamA, array $teamB): void
+    {
+        $this->state['courts'][$courtIndex] = [
+            'courtIndex' => $courtIndex,
+            'sideA' => $teamA,
+            'sideB' => $teamB,
+            'timerRunState' => 'stopped',
+            'totalPausedMs' => 0,
+            'pausedAt' => null,
+        ];
+    }
+
+    /**
+     * Same ordering as {@see fillCourts()} “balanced” matches for a player subset (queue-eligible pool rows).
+     *
+     * @param  list<array<string, mixed>>  $remaining
+     * @return list<array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>
+     */
+    private function sortMatchesForFillAssignmentFromRemaining(array $remaining): array
+    {
+        $sides = $this->buildSides($remaining);
+
+        $matches = [];
+
+        $allLevels = array_map(fn ($p) => (int) $p['level'], $this->state['players']);
+        if ($allLevels === []) {
+            return [];
+        }
+        $globalMin = min($allLevels);
+        $globalMax = max($allLevels);
+        $mid = ($globalMin + $globalMax) / 2;
+
+        for ($i = 0; $i + 1 < count($sides); $i += 2) {
+            $teamA = $sides[$i];
+            $teamB = $sides[$i + 1];
+
+            $players = array_merge($teamA, $teamB);
+
+            $levels = array_map(function ($id) {
+                $p = $this->playerById($id);
+
+                return (int) ($p['level'] ?? 0);
+            }, $players);
+
+            $avg = array_sum($levels) / count($levels);
+
+            if ($avg <= $mid - 0.5) {
+                $bucket = 'low';
+            } elseif ($avg >= $mid + 0.5) {
+                $bucket = 'high';
+            } else {
+                $bucket = 'mid';
+            }
+
+            $matches[] = [
+                'teams' => [$teamA, $teamB],
+                'bucket' => $bucket,
+            ];
+        }
+
+        foreach ($matches as $i => &$m) {
+            $m['_fillOrder'] = $i;
+        }
+        unset($m);
+        $bucketRank = ['low' => 0, 'mid' => 1, 'high' => 2];
+        usort($matches, function (array $a, array $b) use ($bucketRank): int {
+            $ma = $this->minGamesAmongTeams($a['teams'][0] ?? [], $a['teams'][1] ?? []);
+            $mb = $this->minGamesAmongTeams($b['teams'][0] ?? [], $b['teams'][1] ?? []);
+            if ($ma !== $mb) {
+                return $ma <=> $mb;
+            }
+            $ra = $bucketRank[$a['bucket'] ?? 'mid'] ?? 1;
+            $rb = $bucketRank[$b['bucket'] ?? 'mid'] ?? 1;
+            if ($ra !== $rb) {
+                return $ra <=> $rb;
+            }
+
+            return ($a['_fillOrder'] ?? 0) <=> ($b['_fillOrder'] ?? 0);
+        });
+        foreach ($matches as &$m) {
+            unset($m['_fillOrder']);
+        }
+        unset($m);
+
+        return $matches;
+    }
+
+    /**
+     * @return array{sortedEmpty: list<int>, lockedCourtMatches: array<int, array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>, balanced: list<array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>}
+     */
+    private function buildFillCourtsPlan(): array
+    {
         $pool = $this->orderedPoolForFill();
 
         $emptyIdx = [];
@@ -1304,86 +1457,31 @@ class Engine
             $remaining[] = $p;
         }
 
-        $sides = $this->buildSides($remaining);
-
-        // 👉 build matches (open courts + any locked slot we did not pre-fill)
-        $matches = [];
-
-        $allLevels = array_map(fn ($p) => (int) $p['level'], $this->state['players']);
-        $globalMin = min($allLevels);
-        $globalMax = max($allLevels);
-        $mid = ($globalMin + $globalMax) / 2;
-
-        for ($i = 0; $i + 1 < count($sides); $i += 2) {
-            $teamA = $sides[$i];
-            $teamB = $sides[$i + 1];
-
-            $players = array_merge($teamA, $teamB);
-
-            $levels = array_map(function ($id) {
-                $p = $this->playerById($id);
-
-                return (int) ($p['level'] ?? 0);
-            }, $players);
-
-            $avg = array_sum($levels) / count($levels);
-
-            if ($avg <= $mid - 0.5) {
-                $bucket = 'low';
-            } elseif ($avg >= $mid + 0.5) {
-                $bucket = 'high';
-            } else {
-                $bucket = 'mid';
-            }
-
-            $matches[] = [
-                'teams' => [$teamA, $teamB],
-                'bucket' => $bucket,
-            ];
-        }
-
-        // Order matches for assignment: fewest games among the four players first, then skill bucket
-        // (low / mid / high) so we do not send a "high skill / many games" pod to court 1 while zeros wait.
-        foreach ($matches as $i => &$m) {
-            $m['_fillOrder'] = $i;
-        }
-        unset($m);
-        $bucketRank = ['low' => 0, 'mid' => 1, 'high' => 2];
-        usort($matches, function (array $a, array $b) use ($bucketRank): int {
-            $ma = $this->minGamesAmongTeams($a['teams'][0] ?? [], $a['teams'][1] ?? []);
-            $mb = $this->minGamesAmongTeams($b['teams'][0] ?? [], $b['teams'][1] ?? []);
-            if ($ma !== $mb) {
-                return $ma <=> $mb;
-            }
-            $ra = $bucketRank[$a['bucket'] ?? 'mid'] ?? 1;
-            $rb = $bucketRank[$b['bucket'] ?? 'mid'] ?? 1;
-            if ($ra !== $rb) {
-                return $ra <=> $rb;
-            }
-
-            return ($a['_fillOrder'] ?? 0) <=> ($b['_fillOrder'] ?? 0);
-        });
-        foreach ($matches as &$m) {
-            unset($m['_fillOrder']);
-        }
-        unset($m);
-
-        $balanced = $matches;
+        $balanced = $this->sortMatchesForFillAssignmentFromRemaining($remaining);
 
         $sortedEmpty = array_merge($restricted, $open);
+
+        return [
+            'sortedEmpty' => $sortedEmpty,
+            'lockedCourtMatches' => $lockedCourtMatches,
+            'balanced' => $balanced,
+        ];
+    }
+
+    /**
+     * @param  array{sortedEmpty: list<int>, lockedCourtMatches: array<int, array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>, balanced: list<array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>}  $plan
+     */
+    private function applyFillCourtsPlan(array $plan): void
+    {
+        $sortedEmpty = $plan['sortedEmpty'];
+        $lockedCourtMatches = $plan['lockedCourtMatches'];
+        $balanced = $plan['balanced'];
 
         $usedMatchIdx = [];
         foreach ($sortedEmpty as $courtIndex) {
             if (isset($lockedCourtMatches[$courtIndex])) {
                 [$teamA, $teamB] = $lockedCourtMatches[$courtIndex]['teams'];
-                $this->state['courts'][$courtIndex] = [
-                    'courtIndex' => $courtIndex,
-                    'sideA' => $teamA,
-                    'sideB' => $teamB,
-                    'timerRunState' => 'stopped',
-                    'totalPausedMs' => 0,
-                    'pausedAt' => null,
-                ];
+                $this->placeMatchOnCourt($courtIndex, $teamA, $teamB);
 
                 continue;
             }
@@ -1408,14 +1506,7 @@ class Engine
             $usedMatchIdx[$picked] = true;
             [$teamA, $teamB] = $balanced[$picked]['teams'];
 
-            $this->state['courts'][$courtIndex] = [
-                'courtIndex' => $courtIndex,
-                'sideA' => $teamA,
-                'sideB' => $teamB,
-                'timerRunState' => 'stopped',
-                'totalPausedMs' => 0,
-                'pausedAt' => null,
-            ];
+            $this->placeMatchOnCourt($courtIndex, $teamA, $teamB);
         }
     }
 
@@ -1954,6 +2045,38 @@ class Engine
             }
         }
         $this->state['scoreDraft'][$i] = ['a' => 0, 'b' => 0];
+    }
+
+    /**
+     * Record the match using a placeholder scoreline (11–9 / 9–11) so standings only depend on who won.
+     */
+    public function completeMatchWithWinner(int $i, bool $sideAWon, ?int $nowMs = null): void
+    {
+        if ($sideAWon) {
+            $this->state['scoreDraft'][$i] = ['a' => 11.0, 'b' => 9.0];
+        } else {
+            $this->state['scoreDraft'][$i] = ['a' => 9.0, 'b' => 11.0];
+        }
+        $this->completeMatch($i, $nowMs);
+    }
+
+    /**
+     * Fix which side won for a past match in the log; recomputes W–L and head-to-head.
+     */
+    public function setCompletedMatchWinner(int $index, bool $sideAWon): void
+    {
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log) || ! isset($log[$index]) || ! is_array($log[$index])) {
+            return;
+        }
+        if ($sideAWon) {
+            $this->state['completedMatches'][$index]['scoreA'] = 11.0;
+            $this->state['completedMatches'][$index]['scoreB'] = 9.0;
+        } else {
+            $this->state['completedMatches'][$index]['scoreA'] = 9.0;
+            $this->state['completedMatches'][$index]['scoreB'] = 11.0;
+        }
+        $this->rebuildStatsFromCompletedMatches();
     }
 
     /**

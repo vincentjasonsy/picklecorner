@@ -371,6 +371,11 @@ class OpenPlayOrganizer extends Component
         $this->withEngine(fn (Engine $e) => $e->fillCourts());
     }
 
+    public function fillCourt(int $i): void
+    {
+        $this->withEngine(fn (Engine $e) => $e->fillCourt($i));
+    }
+
     public function pauseCourtTimer(int $i): void
     {
         $now = (int) round(microtime(true) * 1000);
@@ -431,10 +436,23 @@ class OpenPlayOrganizer extends Component
         }
     }
 
-    public function completeMatch(int $i): void
+    public function completeMatchWithWinner(int $i, string $side): void
     {
+        $side = strtolower($side);
+        if ($side !== 'a' && $side !== 'b') {
+            return;
+        }
         $now = (int) round(microtime(true) * 1000);
-        $this->withEngine(fn (Engine $e) => $e->completeMatch($i, $now));
+        $this->withEngine(fn (Engine $e) => $e->completeMatchWithWinner($i, $side === 'a', $now));
+    }
+
+    public function setLogMatchWinner(int $index, string $side): void
+    {
+        $side = strtolower($side);
+        if ($side !== 'a' && $side !== 'b') {
+            return;
+        }
+        $this->withEngine(fn (Engine $e) => $e->setCompletedMatchWinner($index, $side === 'a'));
     }
 
     /** Recompute W–L and head-to-head after editing scores in the completed log. */

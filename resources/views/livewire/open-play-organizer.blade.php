@@ -427,7 +427,7 @@
                             <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 Paste names
                                     <textarea
-                                        wire:model.live="state.bulkPlayerList"
+                                        wire:model="state.bulkPlayerList"
                                         rows="5"
                                         placeholder="Sam&#10;Jordan - 5&#10;3) Casey - 4"
                                         class="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
@@ -873,9 +873,17 @@
                                                     @if ($eq->courtSkillLock((int) $i) > 0)
                                                         <span class="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-900 dark:bg-violet-950/60 dark:text-violet-200">Lvl {{ $eq->courtSkillLock((int) $i) }}</span>
                                                     @endif
+                                                    <button
+                                                        type="button"
+                                                        title="Pull the next fair matchup from the queue onto this court"
+                                                        class="touch-manipulation rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500 sm:ml-auto"
+                                                        wire:click="fillCourt({{ $i }})"
+                                                    >
+                                                        Fill this court
+                                                    </button>
                                                 </div>
                                                 <p class="px-3 pb-1 text-center text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
-                                                    Open — use <span class="font-semibold text-zinc-700 dark:text-zinc-300">Fill courts</span> when ready.
+                                                    Open — tap <span class="font-semibold text-zinc-700 dark:text-zinc-300">Fill this court</span> on any slot, or <span class="font-semibold text-zinc-700 dark:text-zinc-300">Fill courts</span> to fill every empty slot at once.
                                                 </p>
                                             @endif
                                             <div class="border-t border-zinc-200/70 px-3 pb-2.5 pt-2 dark:border-zinc-700/80">
@@ -917,6 +925,13 @@
                                                         <div class="mt-1 min-w-0 text-zinc-900 dark:text-zinc-100">
                                                             @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideA'] ?? [], 'variant' => 'organizer'])
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            class="mt-2 w-full touch-manipulation rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500"
+                                                            wire:click="completeMatchWithWinner({{ $i }}, 'a')"
+                                                        >
+                                                            Set as winner
+                                                        </button>
                                                     </div>
                                                     <div class="flex items-center justify-center py-0.5 sm:w-10 sm:shrink-0 sm:self-center sm:py-0">
                                                         <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500">vs</span>
@@ -926,6 +941,13 @@
                                                         <div class="mt-1 min-w-0 text-zinc-900 dark:text-zinc-100">
                                                             @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideB'] ?? [], 'variant' => 'organizer', 'align' => 'end'])
                                                         </div>
+                                                        <button
+                                                            type="button"
+                                                            class="mt-2 w-full touch-manipulation rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500"
+                                                            wire:click="completeMatchWithWinner({{ $i }}, 'b')"
+                                                        >
+                                                            Set as winner
+                                                        </button>
                                                     </div>
                                                 </div>
                                                 <details
@@ -943,17 +965,22 @@
                                                             @if (! empty($state['lineupEditError'] ?? ''))
                                                                 <p class="text-xs font-medium text-red-600 dark:text-red-400">{{ $state['lineupEditError'] }}</p>
                                                             @endif
-                                                            @php $slots = (($state['mode'] ?? 'singles') === 'singles') ? [0] : [0, 1]; @endphp
+                                                            @php
+                                                                $slots = (($state['mode'] ?? 'singles') === 'singles') ? [0] : [0, 1];
+                                                                $lineupPlayerOptions = collect($state['players'] ?? [])
+                                                                    ->filter(fn ($pl) => is_array($pl) && empty($pl['disabled']))
+                                                                    ->sortBy(fn ($pl) => mb_strtolower((string) ($pl['name'] ?? '')))
+                                                                    ->values()
+                                                                    ->all();
+                                                            @endphp
                                                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                                                 <div class="space-y-2">
                                                                     <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Side A</p>
                                                                     @foreach ($slots as $slot)
                                                                         <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.a.{{ $slot }}">
                                                                             <option value="">—</option>
-                                                                            @foreach ($state['players'] ?? [] as $pl)
-                                                                                @if (empty($pl['disabled']))
-                                                                                    <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
-                                                                                @endif
+                                                                            @foreach ($lineupPlayerOptions as $pl)
+                                                                                <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
                                                                             @endforeach
                                                                         </select>
                                                                     @endforeach
@@ -963,10 +990,8 @@
                                                                     @foreach ($slots as $slot)
                                                                         <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.b.{{ $slot }}">
                                                                             <option value="">—</option>
-                                                                            @foreach ($state['players'] ?? [] as $pl)
-                                                                                @if (empty($pl['disabled']))
-                                                                                    <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
-                                                                                @endif
+                                                                            @foreach ($lineupPlayerOptions as $pl)
+                                                                                <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
                                                                             @endforeach
                                                                         </select>
                                                                     @endforeach
@@ -976,41 +1001,15 @@
                                                         </div>
                                                     @endif
                                                 </details>
-                                                <div class="w-full rounded-lg border border-zinc-200/70 bg-zinc-50/60 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-950/80">
-                                                    <div class="flex flex-col items-stretch gap-2 sm:flex-row sm:items-center sm:justify-center sm:gap-3 lg:gap-4">
-                                                        <div class="flex items-center justify-center gap-2 sm:gap-2.5">
-                                                            <label class="sr-only" for="gq-score-a-{{ $i }}">Side A score</label>
-                                                            <input
-                                                                id="gq-score-a-{{ $i }}"
-                                                                type="number"
-                                                                min="0"
-                                                                inputmode="numeric"
-                                                                class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center text-lg font-bold tabular-nums text-zinc-900 shadow-inner transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/25"
-                                                                wire:model.live="state.scoreDraft.{{ $i }}.a"
-                                                            />
-                                                            <span class="select-none text-xl font-light leading-none text-zinc-300 dark:text-zinc-600" aria-hidden="true">–</span>
-                                                            <label class="sr-only" for="gq-score-b-{{ $i }}">Side B score</label>
-                                                            <input
-                                                                id="gq-score-b-{{ $i }}"
-                                                                type="number"
-                                                                min="0"
-                                                                inputmode="numeric"
-                                                                class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center text-lg font-bold tabular-nums text-zinc-900 shadow-inner transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-emerald-400 dark:focus:ring-emerald-400/25"
-                                                                wire:model.live="state.scoreDraft.{{ $i }}.b"
-                                                            />
-                                                        </div>
-                                                        <div class="flex flex-wrap items-center justify-center gap-1.5 sm:shrink-0">
-                                                            <button type="button" class="min-h-8 min-w-[5.5rem] rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500" wire:click="completeMatch({{ $i }})">Done</button>
-                                                            <button
-                                                                type="button"
-                                                                class="min-h-8 rounded-lg px-2 text-xs font-semibold text-zinc-500 transition hover:bg-white hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
-                                                                wire:confirm="Cancel this game without recording a score? Players go back to the queue."
-                                                                wire:click="clearCourt({{ $i }})"
-                                                            >
-                                                                Cancel game
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                                                <div class="flex justify-center rounded-lg border border-zinc-200/70 bg-zinc-50/60 px-2.5 py-2 dark:border-zinc-700 dark:bg-zinc-950/80">
+                                                    <button
+                                                        type="button"
+                                                        class="min-h-8 rounded-lg px-2 text-xs font-semibold text-zinc-500 transition hover:bg-white hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                                                        wire:confirm="Cancel this game without recording a winner? Players go back to the queue."
+                                                        wire:click="clearCourt({{ $i }})"
+                                                    >
+                                                        Cancel game
+                                                    </button>
                                                 </div>
                                             </div>
                                         @endif
@@ -1127,7 +1126,7 @@
                             </details>
                             <div>
                                 <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Recent matches</p>
-                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Edit scores, then apply. <span class="text-zinc-600 dark:text-zinc-300">Cancel result</span> removes a row from the tally.</p>
+                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Tap <span class="font-medium text-zinc-700 dark:text-zinc-300">Set as winner</span> to record or fix who won. <span class="text-zinc-600 dark:text-zinc-300">Cancel result</span> removes a row from the tally.</p>
                                 @php $completedLog = $state['completedMatches'] ?? []; @endphp
                                 <ul class="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
                                     @for ($ri = count($completedLog) - 1; $ri >= 0; $ri--)
@@ -1136,35 +1135,30 @@
                                             class="rounded-lg border border-zinc-200/70 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950/60"
                                             wire:key="match-log-{{ $ri }}"
                                         >
-                                            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center sm:gap-3">
+                                            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
                                                 <div class="min-w-0 justify-self-start text-zinc-800 dark:text-zinc-200 sm:text-left">
                                                     @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $m['sideA'] ?? [], 'variant' => 'organizer', 'compact' => true])
+                                                    <button
+                                                        type="button"
+                                                        class="mt-2 w-full touch-manipulation rounded-lg border border-emerald-200/90 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-100 active:scale-[0.98] dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
+                                                        wire:click="setLogMatchWinner({{ $ri }}, 'a')"
+                                                    >
+                                                        Set as winner
+                                                    </button>
                                                 </div>
-                                                <div class="flex flex-wrap items-center justify-center gap-1.5">
-                                                    <label class="sr-only" for="gq-log-a-{{ $ri }}">Side A score</label>
-                                                    <input
-                                                        id="gq-log-a-{{ $ri }}"
-                                                        type="number"
-                                                        min="0"
-                                                        step="any"
-                                                        inputmode="decimal"
-                                                        wire:model="state.completedMatches.{{ $ri }}.scoreA"
-                                                        class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center font-mono text-sm font-bold tabular-nums text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-                                                    />
-                                                    <span class="select-none font-mono text-zinc-400" aria-hidden="true">–</span>
-                                                    <label class="sr-only" for="gq-log-b-{{ $ri }}">Side B score</label>
-                                                    <input
-                                                        id="gq-log-b-{{ $ri }}"
-                                                        type="number"
-                                                        min="0"
-                                                        step="any"
-                                                        inputmode="decimal"
-                                                        wire:model="state.completedMatches.{{ $ri }}.scoreB"
-                                                        class="h-9 w-[4.25rem] rounded-lg border border-zinc-200 bg-white px-1 text-center font-mono text-sm font-bold tabular-nums text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-                                                    />
+                                                <div class="flex flex-col items-center justify-center gap-1 py-0.5 sm:self-start sm:pt-1">
+                                                    <span class="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Score</span>
+                                                    <span class="font-mono text-sm font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">{{ (int) ($m['scoreA'] ?? 0) }} – {{ (int) ($m['scoreB'] ?? 0) }}</span>
                                                 </div>
                                                 <div class="min-w-0 justify-self-end text-zinc-800 dark:text-zinc-200 sm:text-right">
                                                     @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $m['sideB'] ?? [], 'variant' => 'organizer', 'compact' => true, 'align' => 'end'])
+                                                    <button
+                                                        type="button"
+                                                        class="mt-2 w-full touch-manipulation rounded-lg border border-emerald-200/90 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-100 active:scale-[0.98] dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
+                                                        wire:click="setLogMatchWinner({{ $ri }}, 'b')"
+                                                    >
+                                                        Set as winner
+                                                    </button>
                                                 </div>
                                             </div>
                                             <div class="mt-2 flex justify-end border-t border-zinc-100 pt-2 dark:border-zinc-800">
@@ -1180,16 +1174,6 @@
                                         </li>
                                     @endfor
                                 </ul>
-                                @if (count($completedLog) > 0)
-                                    <button
-                                        type="button"
-                                        class="mt-3 w-full rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.99] dark:shadow-emerald-950/30 sm:w-auto"
-                                        wire:click="syncStandingsFromCompletedLog"
-                                    >
-                                        <span wire:loading.remove wire:target="syncStandingsFromCompletedLog">Apply scores to standings</span>
-                                        <span wire:loading wire:target="syncStandingsFromCompletedLog">Updating…</span>
-                                    </button>
-                                @endif
                             </div>
                         </div>
                     @endif
@@ -1263,7 +1247,7 @@
                             <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                 Paste names
                                 <textarea
-                                    wire:model.live="state.bulkPlayerList"
+                                    wire:model="state.bulkPlayerList"
                                     rows="5"
                                     placeholder="Sam&#10;Jordan - 5&#10;3) Casey - 4"
                                     class="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
