@@ -409,7 +409,7 @@
                                 </a>
                             @endunless
                             <livewire:notification-bell />
-                            <x-pwa-install-guide />
+                            <x-pwa-install-guide sheet />
                             <x-theme-toggle />
                         </div>
                     </header>
