@@ -70,10 +70,34 @@
             </div>
         @endif
         <div>
-            <dt class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">Amount</dt>
+            <dt class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                Court amount
+            </dt>
             <dd class="mt-1 text-stone-900 dark:text-stone-100">
                 {{ Money::formatMinor($b->amount_cents, $b->currency ?? 'PHP') }}
             </dd>
         </div>
+        <div>
+            <dt class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                Convenience fee
+            </dt>
+            <dd class="mt-1 text-stone-900 dark:text-stone-100">
+                {{ Money::formatMinor((int) ($b->platform_booking_fee_cents ?? 0), $b->currency ?? 'PHP') }}
+            </dd>
+        </div>
+        @php
+            $courtCents = (int) ($b->amount_cents ?? 0);
+            $convCents = (int) ($b->platform_booking_fee_cents ?? 0);
+        @endphp
+        @if ($convCents > 0)
+            <div class="sm:col-span-2 border-t border-stone-100 pt-4 dark:border-stone-700">
+                <dt class="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400">
+                    Total charged (court + convenience fee)
+                </dt>
+                <dd class="mt-1 font-display text-lg font-bold text-stone-900 dark:text-stone-50">
+                    {{ Money::formatMinor($courtCents + $convCents, $b->currency ?? 'PHP') }}
+                </dd>
+            </div>
+        @endif
     </dl>
 </div>

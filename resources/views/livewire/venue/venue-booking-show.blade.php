@@ -77,9 +77,17 @@
             <dd class="mt-1 text-zinc-800 dark:text-zinc-200">{{ $b->deskSubmitter?->name ?? '—' }}</dd>
         </div>
         <div>
-            <dt class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Amount</dt>
+            <dt class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Court amount</dt>
             <dd class="mt-1 text-zinc-800 dark:text-zinc-200">
                 {{ Money::formatMinor($b->amount_cents, $b->currency) }}
+            </dd>
+        </div>
+        <div>
+            <dt class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                Convenience fee
+            </dt>
+            <dd class="mt-1 text-zinc-800 dark:text-zinc-200">
+                {{ Money::formatMinor((int) ($b->platform_booking_fee_cents ?? 0), $b->currency) }}
             </dd>
         </div>
         <div>
