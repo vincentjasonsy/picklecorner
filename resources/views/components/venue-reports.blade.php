@@ -33,8 +33,10 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
             return [
                 'all_time' => 0,
                 'all_time_revenue_cents' => 0,
+                'all_time_convenience_fee_cents' => 0,
                 'this_month' => 0,
                 'this_month_revenue_cents' => 0,
+                'this_month_convenience_fee_cents' => 0,
                 'cancelled' => 0,
                 'pending_approval' => 0,
                 'denied' => 0,
@@ -47,12 +49,19 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
         return [
             'all_time' => (clone $base)->countingTowardRevenue()->count(),
             'all_time_revenue_cents' => BookingReporting::coalescedRevenueSum($base),
+            'all_time_convenience_fee_cents' => BookingReporting::coalescedPlatformBookingFeeSum($base),
             'this_month' => (clone $base)
                 ->countingTowardRevenue()
                 ->where('starts_at', '>=', $mw['start'])
                 ->where('starts_at', '<=', $mw['end'])
                 ->count(),
             'this_month_revenue_cents' => BookingReporting::coalescedRevenueSum(
+                Booking::query()
+                    ->where('court_client_id', $c->id)
+                    ->where('starts_at', '>=', $mw['start'])
+                    ->where('starts_at', '<=', $mw['end']),
+            ),
+            'this_month_convenience_fee_cents' => BookingReporting::coalescedPlatformBookingFeeSum(
                 Booking::query()
                     ->where('court_client_id', $c->id)
                     ->where('starts_at', '>=', $mw['start'])
@@ -168,9 +177,9 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
     @else
         <div class="flex flex-wrap items-end justify-between gap-4">
             <p class="max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-                Reporting for <strong>{{ $vc->name }}</strong>. Timezone: <strong>{{ $tz }}</strong>. Revenue uses
-                <strong>confirmed</strong> and <strong>completed</strong> bookings; missing amounts count as zero.
-                Monthly charts include every calendar month (zeros when empty).
+                Reporting for <strong>{{ $vc->name }}</strong>. Timezone: <strong>{{ $tz }}</strong>. Revenue is
+                court-side amounts for <strong>confirmed</strong> and <strong>completed</strong> bookings;
+                <strong>convenience fee</strong> is the platform fee when shown. Missing amounts count as zero.
             </p>
             <div class="flex flex-wrap gap-2">
                 <a
@@ -208,6 +217,10 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
                 <p class="mt-2 font-display text-2xl font-bold text-zinc-900 dark:text-white">
                     {{ Money::formatMinor($this->totals['all_time_revenue_cents'], $vc->currency) }}
                 </p>
+                <p class="mt-1 text-xs text-zinc-500">
+                    Conv. fees
+                    {{ Money::formatMinor($this->totals['all_time_convenience_fee_cents'], $vc->currency) }}
+                </p>
             </div>
             <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">This calendar month</p>
@@ -216,7 +229,8 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
                     <span class="text-sm font-normal text-zinc-500">bookings</span>
                 </p>
                 <p class="mt-1 text-xs text-zinc-500">
-                    {{ Money::formatMinor($this->totals['this_month_revenue_cents'], $vc->currency) }} revenue
+                    {{ Money::formatMinor($this->totals['this_month_revenue_cents'], $vc->currency) }} revenue ·
+                    {{ Money::formatMinor($this->totals['this_month_convenience_fee_cents'], $vc->currency) }} conv. fees
                 </p>
             </div>
             <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -233,10 +247,11 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
 
         <div class="grid gap-4 sm:grid-cols-2">
             <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Revenue this month</p>
+                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Convenience fees (this month)</p>
                 <p class="mt-2 font-display text-2xl font-bold text-zinc-900 dark:text-white">
-                    {{ Money::formatMinor($this->totals['this_month_revenue_cents'], $vc->currency) }}
+                    {{ Money::formatMinor($this->totals['this_month_convenience_fee_cents'], $vc->currency) }}
                 </p>
+                <p class="mt-1 text-xs text-zinc-500">Platform fee portion on automated bookings</p>
             </div>
         </div>
 
@@ -267,7 +282,9 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
         <div class="grid gap-6 lg:grid-cols-2">
             <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
                 <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Top guests (this month)</h2>
-                <p class="mt-1 text-xs text-zinc-500">Confirmed + completed by booking start.</p>
+                <p class="mt-1 text-xs text-zinc-500">
+                    Court revenue · convenience fee (confirmed + completed by booking start).
+                </p>
                 <ul class="mt-4 space-y-2 text-sm">
                     @forelse ($this->topBookersThisMonth as $row)
                         <li class="flex justify-between gap-2 border-b border-zinc-100 pb-2 dark:border-zinc-800">
@@ -278,6 +295,7 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
                             <span class="shrink-0 text-right text-zinc-600 dark:text-zinc-400">
                                 {{ number_format($row->booking_count) }} ·
                                 {{ Money::formatMinor($row->revenue_cents, $vc->currency) }}
+                                · fee {{ Money::formatMinor($row->convenience_fee_cents ?? 0, $vc->currency) }}
                             </span>
                         </li>
                     @empty
@@ -302,7 +320,9 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
 
         <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Last 6 calendar months</h2>
-            <p class="mt-1 text-xs text-zinc-500">Volume (confirmed + completed) by start time.</p>
+            <p class="mt-1 text-xs text-zinc-500">
+                Volume (confirmed + completed) by start time. Revenue = court-side; conv. fee = platform fee.
+            </p>
             <div class="mt-6 flex h-40 items-end gap-2">
                 @forelse ($this->lastSixMonths as $m)
                     <div class="flex flex-1 flex-col items-center gap-2">
@@ -323,19 +343,24 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
                         <tr class="border-b border-zinc-200 text-left dark:border-zinc-700">
                             <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Month</th>
                             <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Bookings</th>
-                            <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300">Revenue</th>
+                            <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Revenue</th>
+                            <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300">Conv. fee</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($this->lastSixMonths as $i => $m)
                             @php
                                 $rev = $this->lastSixMonthsRevenue[$i]['revenue_cents'] ?? 0;
+                                $fee = $this->lastSixMonthsRevenue[$i]['convenience_fee_cents'] ?? 0;
                             @endphp
                             <tr class="border-b border-zinc-100 dark:border-zinc-800">
                                 <td class="py-2 pr-4 text-zinc-800 dark:text-zinc-200">{{ $m['label'] }}</td>
                                 <td class="py-2 pr-4 text-zinc-600 dark:text-zinc-400">{{ number_format($m['count']) }}</td>
-                                <td class="py-2 text-zinc-600 dark:text-zinc-400">
+                                <td class="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
                                     {{ Money::formatMinor($rev, $vc->currency) }}
+                                </td>
+                                <td class="py-2 text-zinc-600 dark:text-zinc-400">
+                                    {{ Money::formatMinor($fee, $vc->currency) }}
                                 </td>
                             </tr>
                         @endforeach
@@ -356,6 +381,7 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
                             <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Guest</th>
                             <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Status</th>
                             <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Amount</th>
+                            <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Conv. fee</th>
                             <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300"></th>
                         </tr>
                     </thead>
@@ -374,6 +400,9 @@ new #[Layout('layouts::venue-portal'), Title('Reports')] class extends Component
                                 </td>
                                 <td class="whitespace-nowrap py-2 pr-3 text-zinc-600 dark:text-zinc-400">
                                     {{ Money::formatMinor($b->amount_cents, $b->currency ?? $vc->currency) }}
+                                </td>
+                                <td class="whitespace-nowrap py-2 pr-3 text-zinc-600 dark:text-zinc-400">
+                                    {{ Money::formatMinor((int) ($b->platform_booking_fee_cents ?? 0), $b->currency ?? $vc->currency) }}
                                 </td>
                                 <td class="whitespace-nowrap py-2 text-right">
                                     <a

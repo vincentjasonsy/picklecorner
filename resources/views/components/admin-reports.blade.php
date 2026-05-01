@@ -28,12 +28,18 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
         return [
             'all_time' => (clone $base)->countingTowardRevenue()->count(),
             'all_time_revenue_cents' => BookingReporting::coalescedRevenueSum($base),
+            'all_time_convenience_fee_cents' => BookingReporting::coalescedPlatformBookingFeeSum($base),
             'this_month' => (clone $base)
                 ->countingTowardRevenue()
                 ->where('starts_at', '>=', $this->monthWindow['start'])
                 ->where('starts_at', '<=', $this->monthWindow['end'])
                 ->count(),
             'this_month_revenue_cents' => BookingReporting::coalescedRevenueSum(
+                Booking::query()
+                    ->where('starts_at', '>=', $this->monthWindow['start'])
+                    ->where('starts_at', '<=', $this->monthWindow['end']),
+            ),
+            'this_month_convenience_fee_cents' => BookingReporting::coalescedPlatformBookingFeeSum(
                 Booking::query()
                     ->where('starts_at', '>=', $this->monthWindow['start'])
                     ->where('starts_at', '<=', $this->monthWindow['end']),
@@ -58,6 +64,14 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
             ->groupBy('court_client_id')
             ->pluck('rev', 'court_client_id');
 
+        $feeMonth = Booking::query()
+            ->countingTowardRevenue()
+            ->where('starts_at', '>=', $monthStart)
+            ->where('starts_at', '<=', $monthEnd)
+            ->selectRaw('court_client_id, COALESCE(SUM(COALESCE(platform_booking_fee_cents, 0)), 0) as fee')
+            ->groupBy('court_client_id')
+            ->pluck('fee', 'court_client_id');
+
         return CourtClient::query()
             ->withCount([
                 'bookings as bookings_all' => fn ($q) => $q->countingTowardRevenue(),
@@ -68,8 +82,9 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
             ])
             ->orderBy('name')
             ->get()
-            ->each(function (CourtClient $cc) use ($revenueMonth): void {
+            ->each(function (CourtClient $cc) use ($revenueMonth, $feeMonth): void {
                 $cc->revenue_month_cents = (int) ($revenueMonth[$cc->id] ?? 0);
+                $cc->convenience_fee_month_cents = (int) ($feeMonth[$cc->id] ?? 0);
             });
     }
 
@@ -128,10 +143,10 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
 <div class="space-y-10">
     <div class="flex flex-wrap items-end justify-between gap-4">
         <p class="max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-            All figures use the app timezone (<strong>{{ $tz }}</strong>). <strong>Revenue</strong> sums
-            <strong>confirmed</strong> and <strong>completed</strong> bookings only, with missing amounts treated as
-            zero. <strong>Booking counts</strong> in KPIs use the same revenue filter unless noted. Charts fill every
-            calendar month in the window (zero when empty).
+            All figures use the app timezone (<strong>{{ $tz }}</strong>). <strong>Revenue</strong> is court rental (and
+            related line items) for <strong>confirmed</strong> and <strong>completed</strong> bookings;
+            <strong>convenience fee</strong> is the platform fee stored per booking when applicable. Missing amounts
+            count as zero. <strong>Booking counts</strong> in KPIs use the same revenue filter unless noted.
         </p>
         <div class="flex flex-wrap gap-2">
             <a
@@ -176,7 +191,13 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
             <p class="mt-2 font-display text-2xl font-bold text-zinc-900 dark:text-white">
                 {{ Money::formatMinor($this->totals['all_time_revenue_cents']) }}
             </p>
-            <p class="mt-1 text-xs text-zinc-500">COALESCE(amount) · same scope as above</p>
+            <p class="mt-1 text-xs text-zinc-500">Court-side amounts · same scope as above</p>
+            <p class="mt-1 text-xs text-zinc-500">
+                Convenience fees:
+                <span class="font-medium text-zinc-700 dark:text-zinc-300">{{
+                    Money::formatMinor($this->totals['all_time_convenience_fee_cents'])
+                }}</span>
+            </p>
         </div>
         <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">This calendar month</p>
@@ -185,7 +206,8 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                 <span class="text-sm font-normal text-zinc-500">bookings</span>
             </p>
             <p class="mt-1 text-xs text-zinc-500">
-                {{ Money::formatMinor($this->totals['this_month_revenue_cents']) }} revenue
+                {{ Money::formatMinor($this->totals['this_month_revenue_cents']) }} revenue ·
+                {{ Money::formatMinor($this->totals['this_month_convenience_fee_cents']) }} convenience fees
             </p>
         </div>
         <div class="rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
@@ -227,8 +249,8 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
     <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">By venue (this month)</h2>
         <p class="mt-1 text-xs text-zinc-500">
-            {{ $mw['start']->isoFormat('MMM D') }} – {{ $mw['end']->isoFormat('MMM D, YYYY') }} · revenue = confirmed +
-            completed
+            {{ $mw['start']->isoFormat('MMM D') }} – {{ $mw['end']->isoFormat('MMM D, YYYY') }} · revenue = court-side
+            confirmed + completed · convenience fee column = platform fee totals
         </p>
         <div class="mt-4 overflow-x-auto">
             <table class="min-w-full text-sm">
@@ -236,7 +258,8 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                     <tr class="border-b border-zinc-200 text-left dark:border-zinc-700">
                         <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Venue</th>
                         <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Bookings</th>
-                        <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300">Revenue</th>
+                        <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Revenue</th>
+                        <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300">Conv. fee</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -250,6 +273,9 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                             <td class="py-2 text-zinc-600 dark:text-zinc-400">
                                 {{ Money::formatMinor((int) ($row->revenue_month_cents ?? 0)) }}
                             </td>
+                            <td class="py-2 text-zinc-600 dark:text-zinc-400">
+                                {{ Money::formatMinor((int) ($row->convenience_fee_month_cents ?? 0)) }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -260,7 +286,9 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
     <div class="grid gap-6 lg:grid-cols-2">
         <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Top guests (this month)</h2>
-            <p class="mt-1 text-xs text-zinc-500">By number of confirmed + completed bookings starting this month.</p>
+            <p class="mt-1 text-xs text-zinc-500">
+                By confirmed + completed bookings this month. Amounts: court revenue · convenience fee.
+            </p>
             <ul class="mt-4 space-y-2 text-sm">
                 @forelse ($this->topBookersThisMonth as $row)
                     <li class="flex justify-between gap-2 border-b border-zinc-100 pb-2 dark:border-zinc-800">
@@ -271,6 +299,7 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                         <span class="shrink-0 text-right text-zinc-600 dark:text-zinc-400">
                             {{ number_format($row->booking_count) }} ·
                             {{ Money::formatMinor($row->revenue_cents) }}
+                            · fee {{ Money::formatMinor($row->convenience_fee_cents ?? 0) }}
                         </span>
                     </li>
                 @empty
@@ -303,7 +332,9 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
 
     <div class="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
         <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Last 6 calendar months</h2>
-        <p class="mt-1 text-xs text-zinc-500">Volume and revenue (confirmed + completed, by booking start time).</p>
+        <p class="mt-1 text-xs text-zinc-500">
+            Volume and amounts (confirmed + completed, by booking start). Revenue = court-side; conv. fee = platform fee.
+        </p>
         <div class="mt-6 flex h-40 items-end gap-2">
             @foreach ($this->lastSixMonths as $m)
                 <div class="flex flex-1 flex-col items-center gap-2">
@@ -322,18 +353,21 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                     <tr class="border-b border-zinc-200 text-left dark:border-zinc-700">
                         <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Month</th>
                         <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Bookings</th>
-                        <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300">Revenue</th>
+                        <th class="py-2 pr-4 font-semibold text-zinc-700 dark:text-zinc-300">Revenue</th>
+                        <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300">Conv. fee</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($this->lastSixMonths as $i => $m)
                         @php
                             $rev = $this->lastSixMonthsRevenue[$i]['revenue_cents'] ?? 0;
+                            $fee = $this->lastSixMonthsRevenue[$i]['convenience_fee_cents'] ?? 0;
                         @endphp
                         <tr class="border-b border-zinc-100 dark:border-zinc-800">
                             <td class="py-2 pr-4 text-zinc-800 dark:text-zinc-200">{{ $m['label'] }}</td>
                             <td class="py-2 pr-4 text-zinc-600 dark:text-zinc-400">{{ number_format($m['count']) }}</td>
-                            <td class="py-2 text-zinc-600 dark:text-zinc-400">{{ Money::formatMinor($rev) }}</td>
+                            <td class="py-2 pr-4 text-zinc-600 dark:text-zinc-400">{{ Money::formatMinor($rev) }}</td>
+                            <td class="py-2 text-zinc-600 dark:text-zinc-400">{{ Money::formatMinor($fee) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -354,6 +388,7 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                         <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Guest</th>
                         <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Status</th>
                         <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Amount</th>
+                        <th class="py-2 pr-3 font-semibold text-zinc-700 dark:text-zinc-300">Conv. fee</th>
                         <th class="py-2 font-semibold text-zinc-700 dark:text-zinc-300"></th>
                     </tr>
                 </thead>
@@ -373,6 +408,9 @@ new #[Layout('layouts::admin'), Title('Reports')] class extends Component
                             </td>
                             <td class="whitespace-nowrap py-2 text-zinc-600 dark:text-zinc-400">
                                 {{ Money::formatMinor($b->amount_cents, $b->currency) }}
+                            </td>
+                            <td class="whitespace-nowrap py-2 text-zinc-600 dark:text-zinc-400">
+                                {{ Money::formatMinor((int) ($b->platform_booking_fee_cents ?? 0), $b->currency) }}
                             </td>
                             <td class="whitespace-nowrap py-2 text-right">
                                 <a

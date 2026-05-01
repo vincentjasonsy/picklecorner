@@ -102,6 +102,7 @@ class ReportExportTest extends TestCase
 
         $csv = $response->streamedContent();
         $this->assertStringContainsString('booking_id', $csv);
+        $this->assertStringContainsString('convenience_fee_cents', $csv);
         $this->assertStringContainsString('Alpha Club', $csv);
         $this->assertStringContainsString('Beta Club', $csv);
         $this->assertStringContainsString('guest1@example.test', $csv);

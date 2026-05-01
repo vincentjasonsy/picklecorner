@@ -15,7 +15,7 @@
         <h1 class="mt-4 font-display text-2xl font-bold text-zinc-900 dark:text-white">Manual &amp; automated bookings</h1>
         <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
             Compare <strong>manual</strong> (desk / admin grid) and <strong>automated</strong> (Book now member checkout)
-            bookings. <strong>Platform booking fees</strong> are convenience fees stored per booking — they normally apply to
+            bookings. <strong>Convenience fee</strong> (platform booking fee) is stored per row — it usually applies to
             automated checkouts; manual rows are typically zero.
         </p>
     </div>
@@ -37,7 +37,7 @@
                     </dd>
                 </div>
                 <div class="flex justify-between gap-4">
-                    <dt class="text-zinc-600 dark:text-zinc-400">Platform booking fees</dt>
+                    <dt class="text-zinc-600 dark:text-zinc-400">Convenience fee</dt>
                     <dd class="font-medium tabular-nums text-zinc-900 dark:text-zinc-100">
                         {{ Money::formatMinor($manualSummary['platform_fee_cents'], $displayCurrency) }}
                     </dd>
@@ -60,7 +60,7 @@
                     </dd>
                 </div>
                 <div class="flex justify-between gap-4">
-                    <dt class="text-emerald-900 dark:text-emerald-200">Platform booking fees</dt>
+                    <dt class="text-emerald-900 dark:text-emerald-200">Convenience fee</dt>
                     <dd class="font-medium tabular-nums text-emerald-950 dark:text-emerald-50">
                         {{ Money::formatMinor($automatedSummary['platform_fee_cents'], $displayCurrency) }}
                     </dd>
@@ -181,7 +181,7 @@
                             Amount
                         </th>
                         <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                            Platform fee
+                            Conv. fee
                         </th>
                     </tr>
                 </thead>

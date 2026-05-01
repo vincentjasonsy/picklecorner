@@ -31,6 +31,14 @@ final class BookingReporting
             ->sum(DB::raw('COALESCE(amount_cents, 0)'));
     }
 
+    /** Platform convenience fee total (confirmed + completed); NULL counts as 0. */
+    public static function coalescedPlatformBookingFeeSum(Builder $bookingQuery): int
+    {
+        return (int) (clone $bookingQuery)
+            ->countingTowardRevenue()
+            ->sum(DB::raw('COALESCE(platform_booking_fee_cents, 0)'));
+    }
+
     /**
      * @param  Closure(Builder):void  $scope  Apply venue / global scope to a fresh {@see Booking} query builder.
      * @return list<array{label: string, count: int}>
@@ -67,7 +75,7 @@ final class BookingReporting
 
     /**
      * @param  Closure(Builder):void  $scope
-     * @return list<array{label: string, revenue_cents: int}>
+     * @return list<array{label: string, revenue_cents: int, convenience_fee_cents: int}>
      */
     public static function lastNMonthsRevenue(Closure $scope, int $months = 6): array
     {
@@ -81,10 +89,12 @@ final class BookingReporting
             ->countingTowardRevenue()
             ->where('starts_at', '>=', $firstMonth->copy()->timezone($tz))
             ->where('starts_at', '<', $anchor->copy()->addMonth()->timezone($tz))
-            ->get(['starts_at', 'amount_cents']);
+            ->get(['starts_at', 'amount_cents', 'platform_booking_fee_cents']);
 
-        $sums = $rows->groupBy(fn (Booking $b) => $b->starts_at->timezone($tz)->format('Y-m'))
-            ->map(fn ($g) => $g->sum(fn (Booking $b) => (int) ($b->amount_cents ?? 0)));
+        $byMonth = $rows->groupBy(fn (Booking $b) => $b->starts_at->timezone($tz)->format('Y-m'));
+
+        $sumsRev = $byMonth->map(fn ($g) => $g->sum(fn (Booking $b) => (int) ($b->amount_cents ?? 0)));
+        $sumsFee = $byMonth->map(fn ($g) => $g->sum(fn (Booking $b) => (int) ($b->platform_booking_fee_cents ?? 0)));
 
         $out = [];
         for ($i = 0; $i < $months; $i++) {
@@ -92,7 +102,8 @@ final class BookingReporting
             $key = $m->format('Y-m');
             $out[] = [
                 'label' => $key,
-                'revenue_cents' => (int) ($sums[$key] ?? 0),
+                'revenue_cents' => (int) ($sumsRev[$key] ?? 0),
+                'convenience_fee_cents' => (int) ($sumsFee[$key] ?? 0),
             ];
         }
 
@@ -101,9 +112,9 @@ final class BookingReporting
 
     /**
      * @param  Closure(Builder):void  $scope
-     * @return \Illuminate\Support\Collection<int, object{status: string, c: int}>
+     * @return Collection<int, object{status: string, c: int}>
      */
-    public static function statusCounts(Closure $scope): \Illuminate\Support\Collection
+    public static function statusCounts(Closure $scope): Collection
     {
         $q = Booking::query();
         $scope($q);
@@ -118,7 +129,7 @@ final class BookingReporting
 
     /**
      * @param  Closure(Builder):void  $scope
-     * @return Collection<int, object{user: ?User, booking_count: int, revenue_cents: int}>
+     * @return Collection<int, object{user: ?User, booking_count: int, revenue_cents: int, convenience_fee_cents: int}>
      */
     public static function topBookers(Closure $scope, IlluminateCarbon $from, IlluminateCarbon $to, int $limit = 10): Collection
     {
@@ -130,7 +141,7 @@ final class BookingReporting
             ->countingTowardRevenue()
             ->where('starts_at', '>=', $from)
             ->where('starts_at', '<=', $to)
-            ->selectRaw('user_id, COUNT(*) as booking_count, COALESCE(SUM(COALESCE(amount_cents, 0)), 0) as revenue_cents')
+            ->selectRaw('user_id, COUNT(*) as booking_count, COALESCE(SUM(COALESCE(amount_cents, 0)), 0) as revenue_cents, COALESCE(SUM(COALESCE(platform_booking_fee_cents, 0)), 0) as convenience_fee_cents')
             ->groupBy('user_id')
             ->orderByDesc('booking_count')
             ->limit($limit)
@@ -147,6 +158,7 @@ final class BookingReporting
             'user' => $users->get($row->user_id),
             'booking_count' => (int) $row->booking_count,
             'revenue_cents' => (int) $row->revenue_cents,
+            'convenience_fee_cents' => (int) $row->convenience_fee_cents,
         ])->filter(fn (object $x) => $x->user !== null)->values();
     }
 

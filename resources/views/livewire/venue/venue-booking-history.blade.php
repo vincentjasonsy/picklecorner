@@ -136,6 +136,9 @@
                                     <th class="px-4 py-2 text-right font-semibold text-zinc-700 dark:text-zinc-300">
                                         Amount
                                     </th>
+                                    <th class="px-4 py-2 text-right font-semibold text-zinc-700 dark:text-zinc-300">
+                                        Conv. fee
+                                    </th>
                                     <th class="px-4 py-2 text-right font-semibold text-zinc-700 dark:text-zinc-300"></th>
                                 </tr>
                             </thead>
@@ -164,7 +167,10 @@
                                             </span>
                                         </td>
                                         <td class="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
-                                            {{ Money::formatMinor($b->amount_cents, $b->currency) }}
+                                            {{ Money::formatMinor($b->amount_cents, $b->currency ?? $courtClient->currency) }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-right text-zinc-600 dark:text-zinc-400">
+                                            {{ Money::formatMinor((int) ($b->platform_booking_fee_cents ?? 0), $b->currency ?? $courtClient->currency) }}
                                         </td>
                                         <td class="whitespace-nowrap px-4 py-3 text-right">
                                             <a
