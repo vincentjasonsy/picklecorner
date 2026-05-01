@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Livewire\Desk\DeskManualBooking;
+use App\Livewire\Venue\VenueManualBooking;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
@@ -107,5 +108,86 @@ class DeskBookingPolicyTest extends TestCase
         $this->assertSame(Booking::STATUS_DENIED, $booking->status);
         $this->assertStringContainsString('Auto-denied by venue desk booking policy.', (string) $booking->notes);
         $this->assertStringContainsString('Walk-in', (string) $booking->notes);
+    }
+
+    public function test_desk_cannot_select_or_submit_past_time_slots_on_today(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-08-20 14:30:00', $tz));
+
+        [$client, $court] = $this->makeVenueWithCourtForDate('2026-08-20');
+
+        $desk = User::factory()->courtClientDesk($client)->create();
+        $player = User::factory()->player()->create();
+
+        $today = '2026-08-20';
+
+        Livewire::actingAs($desk)
+            ->test(DeskManualBooking::class)
+            ->set('bookingCalendarDate', $today)
+            ->call('toggleManualSlot', $court->id, 10)
+            ->assertSet('selectedManualSlots', []);
+
+        Livewire::actingAs($desk)
+            ->test(DeskManualBooking::class)
+            ->set('bookingCalendarDate', $today)
+            ->call('toggleManualSlot', $court->id, 15)
+            ->assertSet('selectedManualSlots', [$court->id.'-15']);
+
+        Livewire::actingAs($desk)
+            ->test(DeskManualBooking::class)
+            ->set('bookingCalendarDate', $today)
+            ->set('selectedManualSlots', [$court->id.'-10'])
+            ->set('manualBookingUserId', $player->id)
+            ->call('saveManualBooking')
+            ->assertHasErrors('selectedManualSlots');
+
+        Carbon::setTestNow();
+    }
+
+    public function test_venue_admin_cannot_select_or_submit_past_time_slots_on_today(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $tz = config('app.timezone', 'UTC');
+        Carbon::setTestNow(Carbon::parse('2026-08-20 14:30:00', $tz));
+
+        $admin = User::factory()->courtAdmin()->create();
+        $client = CourtClient::factory()->forAdmin($admin)->create();
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+        ]);
+
+        $player = User::factory()->player()->create();
+        $today = '2026-08-20';
+
+        Livewire::actingAs($admin)
+            ->test(VenueManualBooking::class)
+            ->set('bookingCalendarDate', $today)
+            ->call('toggleManualSlot', $court->id, 10)
+            ->assertSet('selectedManualSlots', []);
+
+        Livewire::actingAs($admin)
+            ->test(VenueManualBooking::class)
+            ->set('bookingCalendarDate', $today)
+            ->call('toggleManualSlot', $court->id, 15)
+            ->assertSet('selectedManualSlots', [$court->id.'-15']);
+
+        Livewire::actingAs($admin)
+            ->test(VenueManualBooking::class)
+            ->set('bookingCalendarDate', $today)
+            ->set('selectedManualSlots', [$court->id.'-10'])
+            ->set('manualBookingUserId', $player->id)
+            ->set('manualBookingPaymentMethod', Booking::PAYMENT_GCASH)
+            ->set('manualBookingPaymentReference', 'REF-OK')
+            ->call('saveManualBooking')
+            ->assertHasErrors('selectedManualSlots');
+
+        Carbon::setTestNow();
     }
 }

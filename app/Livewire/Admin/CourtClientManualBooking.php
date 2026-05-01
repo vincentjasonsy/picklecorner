@@ -244,6 +244,51 @@ class CourtClientManualBooking extends Component
         }
     }
 
+    /** Desk and venue portal manual booking cannot target past calendar days or hours that have already started today. */
+    public function manualBookingRestrictsPastSlots(): bool
+    {
+        return in_array($this->manualBookingPortal(), ['desk', 'venue'], true);
+    }
+
+    /**
+     * When {@see manualBookingRestrictsPastSlots()} applies: slot must be on today or a future day, and on today the
+     * slot hour start must be strictly after now.
+     */
+    protected function mayBookManualSlotAt(string $dateYmd, int $hour): bool
+    {
+        $tz = config('app.timezone', 'UTC');
+        try {
+            $pickDay = Carbon::parse($dateYmd.' 12:00:00', $tz)->startOfDay();
+        } catch (\Throwable) {
+            return false;
+        }
+        $todayStart = Carbon::now($tz)->startOfDay();
+        if ($pickDay->lt($todayStart)) {
+            return false;
+        }
+        if ($pickDay->gt($todayStart)) {
+            return true;
+        }
+
+        $slotStart = Carbon::parse($dateYmd.' '.sprintf('%02d:00:00', $hour), $tz);
+
+        return $slotStart->gt(Carbon::now($tz));
+    }
+
+    /** Open grid cells only — booked cells stay interactive (e.g. desk view details). */
+    public function manualBookingOpenSlotIsPast(int $hour): bool
+    {
+        if (! $this->manualBookingRestrictsPastSlots()) {
+            return false;
+        }
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date === null) {
+            return true;
+        }
+
+        return ! $this->mayBookManualSlotAt($date, $hour);
+    }
+
     public function courtsOrderedForGrid(): Collection
     {
         return Court::orderedForGridColumns(
@@ -425,6 +470,11 @@ class CourtClientManualBooking extends Component
             return;
         }
 
+        $date = $this->normalizedBookingCalendarDate();
+        if ($date !== null && $this->manualBookingRestrictsPastSlots() && ! $this->mayBookManualSlotAt($date, $hour)) {
+            return;
+        }
+
         $key = $courtId.'-'.$hour;
         $occupancy = $this->manualBookingOccupancyBySlot;
         if (isset($occupancy[$key])) {
@@ -591,6 +641,14 @@ class CourtClientManualBooking extends Component
                 foreach ($hours as $h) {
                     if ($this->isManualGridCellBlocked($courtId, $h, $court)) {
                         return ['specs' => [], 'error' => 'Desk requests cannot include blocked time slots. Pick open hours only.'];
+                    }
+                }
+            }
+
+            if ($this->manualBookingRestrictsPastSlots()) {
+                foreach ($hours as $h) {
+                    if (! $this->mayBookManualSlotAt($date, $h)) {
+                        return ['specs' => [], 'error' => 'Cannot book past date or time slots. Pick a future time.'];
                     }
                 }
             }

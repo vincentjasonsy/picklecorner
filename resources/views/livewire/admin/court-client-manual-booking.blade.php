@@ -138,10 +138,16 @@
                                     Availability grid — tap to select
                                 </p>
                                 <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                    @if ($this->manualBookingPortal() === 'desk')
-                                        Green = open; slate = booked — <strong>tap a booked cell</strong> for full
-                                        details. Red = blocked (not selectable). Strong green = your selection for a new
-                                        request.
+                                    @if ($this->manualBookingRestrictsPastSlots())
+                                        Green = open; slate = booked @if ($this->manualBookingPortal() === 'desk')
+                                            — <strong>tap a booked cell</strong> for full details @endif. Red = blocked
+                                        @if ($this->manualBookingMaySelectBlockedSlots())
+                                            (venue may override)
+                                        @else
+                                            (not selectable)
+                                        @endif
+                                        . Gray “Past” = already started or ended for today (not bookable). Strong green =
+                                        your selection for a new booking.
                                     @else
                                         Green = open; slate = already booked (shows guest). Red = blocked (venue staff may
                                         still select to override). Strong green = your selection. Booked cells cannot be
@@ -282,6 +288,20 @@
                                                             <span class="mt-0.5 text-[9px] font-medium opacity-80">
                                                                 {{ $cellMeta }}
                                                             </span>
+                                                        </div>
+                                                    @elseif ($this->manualBookingRestrictsPastSlots() && $booked === null && $this->manualBookingOpenSlotIsPast($hour))
+                                                        <div
+                                                            title="This time has already passed — choose a future slot"
+                                                            class="flex min-h-[3.25rem] w-full cursor-default flex-col items-center justify-center gap-0.5 rounded-lg border border-zinc-200 bg-zinc-100/90 px-2 py-2 text-center text-xs font-semibold text-zinc-500 dark:border-zinc-600 dark:bg-zinc-800/80 dark:text-zinc-400"
+                                                        >
+                                                            <span class="text-[10px] font-bold uppercase tracking-wide">
+                                                                Past
+                                                            </span>
+                                                            @if ($slotPriceLabel !== '')
+                                                                <span class="text-[9px] font-semibold tabular-nums opacity-70">
+                                                                    {{ $slotPriceLabel }}
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     @elseif ($blocked && ! $this->manualBookingMaySelectBlockedSlots())
                                                         <div
