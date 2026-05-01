@@ -601,23 +601,24 @@ class CourtClientEdit extends Component
         if ($this->slotEditMode === CourtTimeSlotSetting::MODE_NORMAL) {
             CourtTimeSlotSetting::query()
                 ->where('court_id', $court->id)
-                ->where('day_of_week', $dow)
                 ->where('slot_start_hour', $this->slotEditHour)
                 ->delete();
         } else {
-            CourtTimeSlotSetting::query()->updateOrCreate(
-                [
-                    'court_id' => $court->id,
-                    'day_of_week' => $dow,
-                    'slot_start_hour' => $this->slotEditHour,
-                ],
-                [
-                    'mode' => $this->slotEditMode,
-                    'amount_cents' => $this->slotEditMode === CourtTimeSlotSetting::MODE_MANUAL
-                        ? $manualSlotCents
-                        : null,
-                ],
-            );
+            for ($dowLoop = 0; $dowLoop <= 6; $dowLoop++) {
+                CourtTimeSlotSetting::query()->updateOrCreate(
+                    [
+                        'court_id' => $court->id,
+                        'day_of_week' => $dowLoop,
+                        'slot_start_hour' => $this->slotEditHour,
+                    ],
+                    [
+                        'mode' => $this->slotEditMode,
+                        'amount_cents' => $this->slotEditMode === CourtTimeSlotSetting::MODE_MANUAL
+                            ? $manualSlotCents
+                            : null,
+                    ],
+                );
+            }
         }
 
         $this->courtClient->refresh();
@@ -629,7 +630,7 @@ class CourtClientEdit extends Component
         ]);
         $this->closeSlotEditor();
 
-        session()->flash('status', 'Slot pricing updated.');
+        session()->flash('status', 'Slot pricing updated for every day of the week.');
     }
 
     public function openAvailabilityEditor(string $courtId, int $hour): void

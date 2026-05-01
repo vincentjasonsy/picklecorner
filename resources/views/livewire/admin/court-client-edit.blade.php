@@ -631,9 +631,10 @@
         <div class="mt-10 border-t border-zinc-200 pt-8 dark:border-zinc-800">
             <h3 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Weekly slots</h3>
             <p class="mt-1 max-w-3xl text-sm text-zinc-600 dark:text-zinc-400">
-                The <strong>availability calendar date</strong> sets which weekday you edit for both
-                <strong>hourly slot pricing</strong> and <strong>availability</strong> — blocks can apply to that date only,
-                every matching weekday, or both. Use <strong>whole-venue closed days</strong> for holidays
+                The <strong>availability calendar date</strong> chooses which weekday’s hour rows you see (from venue
+                hours). <strong>Hourly slot pricing</strong> applies to that clock time on <strong>every day</strong>.
+                <strong>Availability</strong> blocks can apply to that date only, every matching weekday, or both. Use
+                <strong>whole-venue closed days</strong> for holidays
                 (no public bookings that calendar day). Confirmed bookings for players and coaches are on
                 @if ($isVenuePortal)
                     <a
@@ -726,7 +727,8 @@
                     <div class="mt-8">
                         <h4 class="font-display text-base font-bold text-zinc-900 dark:text-white">Hourly slot pricing</h4>
                     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        Same weekday as the <strong>availability calendar date</strong> below. Click a card for Normal,
+                        Each rate applies to this clock hour on <strong>every day of the week</strong>. The calendar date
+                        below only picks which weekday’s venue hours define which rows appear. Click a card for Normal,
                         Peak, or Manual pesos per hour. Defaults follow venue or court overrides.
                     </p>
                     <div class="mt-3 overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800">
@@ -787,9 +789,9 @@
                 <div class="mt-10">
                     <h4 class="font-display text-base font-bold text-zinc-900 dark:text-white">Availability</h4>
                     <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                        <strong>Hourly slot pricing</strong> above uses this same weekday. Matches the
-                        <strong>whole-venue closed days</strong> calendar. <strong>Blocked</strong> if closed for that weekday
-                        every week and/or blocked for this date only.
+                        Grid follows this calendar date’s weekday (venue hours). Pricing above is still per clock hour on
+                        all days. Matches the <strong>whole-venue closed days</strong> calendar. <strong>Blocked</strong> if
+                        closed for that weekday every week and/or blocked for this date only.
                     </p>
                     <div
                         class="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4"
@@ -912,7 +914,7 @@
                 <p class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
                     {{ $editCourt?->name ?? 'Court' }}
                     ·
-                    {{ $dayLabels[$availabilityDow] ?? '' }}
+                    Every day
                     ·
                     {{ $this->slotHourLabel($slotEditHour) }}
                 </p>

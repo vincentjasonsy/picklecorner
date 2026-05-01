@@ -4,15 +4,15 @@ namespace App\Notifications;
 
 use App\Models\Booking;
 use App\Models\User;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class MemberVenueBookingSubmittedNotification extends Notification implements ShouldQueue
+/**
+ * Sent synchronously so members receive mail as soon as the booking succeeds,
+ * without requiring a queue worker (QUEUE_CONNECTION / artisan queue:work).
+ */
+class MemberVenueBookingSubmittedNotification extends Notification
 {
-    use Queueable;
-
     /**
      * @param  array{
      *     venueName: string,
