@@ -7,6 +7,7 @@ use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\GiftCard;
 use App\Models\User;
+use App\Models\UserVenueCredit;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -36,6 +37,7 @@ class PublicVenueBookingSubmission
         ?string $coachUserId = null,
         ?array $openPlay = null,
         ?string $forcedBookingRequestId = null,
+        bool $applyVenueCredit = false,
     ): array {
         if ($specs === []) {
             throw new \InvalidArgumentException('No time slots to book.');
@@ -101,6 +103,7 @@ class PublicVenueBookingSubmission
             $coachId,
             $openPlay,
             $forcedBookingRequestId,
+            $applyVenueCredit,
         ) {
             $bookingRequestId = ($forcedBookingRequestId !== null && $forcedBookingRequestId !== '')
                 ? (string) $forcedBookingRequestId
@@ -155,13 +158,42 @@ class PublicVenueBookingSubmission
 
             CourtBookingConcurrency::lockCourtsAndAssertNoOverlap($specs);
 
+            $nSpecs = count($specs);
+            $netAfterGiftPerLine = [];
+            for ($gi = 0; $gi < $nSpecs; $gi++) {
+                $grossGi = (int) $specs[$gi]['gross_cents'];
+                $sliceGi = $giftSlices[$gi] ?? 0;
+                $netAfterGiftPerLine[$gi] = max(0, $grossGi - $sliceGi);
+            }
+            $linePayables = [];
+            for ($gi = 0; $gi < $nSpecs; $gi++) {
+                $linePayables[$gi] = $netAfterGiftPerLine[$gi] + (int) ($platformFeePerLine[$gi] ?? 0);
+            }
+            $venueCreditGrandTotal = 0;
+            $venueSlices = array_fill(0, $nSpecs, 0);
+            if ($applyVenueCredit) {
+                $totalAfterGiftPayable = (int) array_sum($linePayables);
+                if ($totalAfterGiftPayable > 0) {
+                    $creditWallet = UserVenueCredit::query()
+                        ->where('user_id', $booker->id)
+                        ->where('currency', $courtClient->currency ?? 'PHP')
+                        ->lockForUpdate()
+                        ->first();
+                    $balance = $creditWallet !== null ? (int) $creditWallet->balance_cents : 0;
+                    $venueCreditGrandTotal = min($balance, $totalAfterGiftPayable);
+                    if ($venueCreditGrandTotal > 0) {
+                        $venueSlices = GiftCardService::allocateAppliedCentsAcrossLines($venueCreditGrandTotal, $linePayables);
+                    }
+                }
+            }
+
             $created = [];
             foreach ($specs as $i => $spec) {
                 /** @var Court $court */
                 $court = $spec['court'];
                 $gross = (int) $spec['gross_cents'];
                 $slice = $giftSlices[$i] ?? 0;
-                $netCents = max(0, $gross - $slice);
+                $netAfterGift = $netAfterGiftPerLine[$i] ?? max(0, $gross - $slice);
 
                 $coachFee = (int) ($spec['coach_fee_cents'] ?? 0);
 
@@ -174,6 +206,13 @@ class PublicVenueBookingSubmission
                 $linePlatform = (int) ($platformFeePerLine[$i] ?? 0);
                 $courtGrossLine = (int) ($spec['court_gross_cents'] ?? 0);
 
+                $vSlice = (int) ($venueSlices[$i] ?? 0);
+                [$finalNet, $finalPlatform] = VenueBookingCheckoutAmounts::reducePayableBySlice(
+                    $netAfterGift,
+                    $linePlatform,
+                    $vSlice,
+                );
+
                 $booking = Booking::query()->create([
                     'court_client_id' => $courtClient->id,
                     'booking_request_id' => $bookingRequestId,
@@ -184,9 +223,9 @@ class PublicVenueBookingSubmission
                     'starts_at' => $spec['starts'],
                     'ends_at' => $spec['ends'],
                     'status' => $deskStatus,
-                    'amount_cents' => $netCents > 0 ? $netCents : null,
+                    'amount_cents' => $finalNet > 0 ? $finalNet : null,
                     'coach_fee_cents' => $coachFee > 0 ? $coachFee : null,
-                    'platform_booking_fee_cents' => $linePlatform > 0 ? $linePlatform : null,
+                    'platform_booking_fee_cents' => $finalPlatform > 0 ? $finalPlatform : null,
                     'checkout_snapshot' => BookingCheckoutSnapshot::memberPublicCheckout(
                         currency: $courtClient->currency ?? 'PHP',
                         feeRuleLabel: $feeRuleLabel,
@@ -199,13 +238,18 @@ class PublicVenueBookingSubmission
                         lineCoachFeeCents: $coachFee,
                         lineCourtCoachGrossCents: $gross,
                         lineGiftAppliedCents: $slice,
-                        lineCourtCoachAfterGiftCents: $netCents,
+                        lineCourtCoachAfterGiftCents: $netAfterGift,
                         linePlatformBookingFeeCents: $linePlatform,
+                        lineVenueCreditAppliedCents: $vSlice,
+                        lineCourtCoachCashDueCents: $finalNet,
+                        linePlatformFeeCashDueCents: $finalPlatform,
+                        requestVenueCreditAppliedTotalCents: $venueCreditGrandTotal > 0 ? $venueCreditGrandTotal : null,
                     ),
                     'currency' => $courtClient->currency ?? 'PHP',
                     'notes' => $bookingNotesForCreate,
                     'gift_card_id' => $slice > 0 ? $giftCardId : null,
                     'gift_card_redeemed_cents' => $slice > 0 ? $slice : null,
+                    'venue_credit_redeemed_cents' => $vSlice > 0 ? $vSlice : null,
                     'payment_method' => $pm,
                     'payment_reference' => $pref !== '' ? $pref : null,
                     'payment_proof_path' => $proofPath,
@@ -222,6 +266,27 @@ class PublicVenueBookingSubmission
                 }
 
                 $created[] = $booking;
+            }
+
+            if ($venueCreditGrandTotal > 0 && $created !== []) {
+                UserVenueCreditService::debitForCheckout(
+                    $booker,
+                    $courtClient,
+                    $venueCreditGrandTotal,
+                    $created[0],
+                    'Venue credit applied to checkout ('.count($created).' court line(s)).',
+                );
+
+                ActivityLogger::log(
+                    'venue_credit.redeemed_checkout',
+                    [
+                        'amount_cents' => $venueCreditGrandTotal,
+                        'booking_ids' => array_map(fn (Booking $b) => $b->id, $created),
+                    ],
+                    $created[0],
+                    'Venue credit applied to member checkout',
+                    $booker->id,
+                );
             }
 
             if ($giftAppliedTotal !== null && $giftCardId !== null && $giftAppliedTotal > 0) {

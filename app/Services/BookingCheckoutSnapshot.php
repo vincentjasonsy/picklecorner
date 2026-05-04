@@ -20,6 +20,8 @@ use App\Models\Booking;
  *         checkout_total_before_gift_cents: int,
  *         gift_applied_total_cents: int|null,
  *         balance_after_gift_cents: int,
+ *         venue_credit_applied_total_cents: int|null,
+ *         balance_after_all_credits_cents: int,
  *     },
  *     line: array{
  *         court_subtotal_cents: int,
@@ -28,6 +30,9 @@ use App\Models\Booking;
  *         gift_applied_cents: int,
  *         court_coach_after_gift_cents: int,
  *         platform_booking_fee_cents: int,
+ *         venue_credit_applied_cents: int,
+ *         court_coach_cash_due_cents: int,
+ *         platform_fee_cash_due_cents: int,
  *         line_total_payable_cents: int,
  *     },
  * }
@@ -59,36 +64,58 @@ final class BookingCheckoutSnapshot
         int $lineGiftAppliedCents,
         int $lineCourtCoachAfterGiftCents,
         int $linePlatformBookingFeeCents,
+        int $lineVenueCreditAppliedCents = 0,
+        ?int $lineCourtCoachCashDueCents = null,
+        ?int $linePlatformFeeCashDueCents = null,
+        ?int $requestVenueCreditAppliedTotalCents = null,
     ): array {
         $giftTotal = $requestGiftAppliedTotalCents;
         $balanceAfter = $giftTotal !== null
             ? max(0, $requestCheckoutTotalBeforeGiftCents - $giftTotal)
             : $requestCheckoutTotalBeforeGiftCents;
 
-        $linePayable = max(0, $lineCourtCoachAfterGiftCents + $linePlatformBookingFeeCents);
+        $venueTotal = $requestVenueCreditAppliedTotalCents;
+        $balanceAfterAll = $venueTotal !== null && $venueTotal > 0
+            ? max(0, $balanceAfter - $venueTotal)
+            : $balanceAfter;
+
+        $cashCoach = $lineCourtCoachCashDueCents ?? $lineCourtCoachAfterGiftCents;
+        $cashPlat = $linePlatformFeeCashDueCents ?? $linePlatformBookingFeeCents;
+        $linePayable = max(0, $cashCoach + $cashPlat);
+
+        $request = [
+            'court_subtotal_cents' => $requestCourtSubtotalCents,
+            'coach_fee_total_cents' => $requestCoachFeeTotalCents,
+            'booking_fee_total_cents' => $requestBookingFeeTotalCents,
+            'checkout_total_before_gift_cents' => $requestCheckoutTotalBeforeGiftCents,
+            'gift_applied_total_cents' => $giftTotal,
+            'balance_after_gift_cents' => $balanceAfter,
+            'balance_after_all_credits_cents' => $balanceAfterAll,
+        ];
+        if ($venueTotal !== null && $venueTotal > 0) {
+            $request['venue_credit_applied_total_cents'] = $venueTotal;
+        }
+
+        $line = [
+            'court_subtotal_cents' => $lineCourtSubtotalCents,
+            'coach_fee_cents' => $lineCoachFeeCents,
+            'court_coach_gross_cents' => $lineCourtCoachGrossCents,
+            'gift_applied_cents' => $lineGiftAppliedCents,
+            'court_coach_after_gift_cents' => $lineCourtCoachAfterGiftCents,
+            'platform_booking_fee_cents' => $linePlatformBookingFeeCents,
+            'venue_credit_applied_cents' => $lineVenueCreditAppliedCents,
+            'court_coach_cash_due_cents' => $cashCoach,
+            'platform_fee_cash_due_cents' => $cashPlat,
+            'line_total_payable_cents' => $linePayable,
+        ];
 
         return [
             'schema_version' => self::SCHEMA_VERSION,
             'currency' => $currency,
             'fee_rule_label' => $feeRuleLabel,
             'source' => self::SOURCE_MEMBER_PUBLIC,
-            'request' => [
-                'court_subtotal_cents' => $requestCourtSubtotalCents,
-                'coach_fee_total_cents' => $requestCoachFeeTotalCents,
-                'booking_fee_total_cents' => $requestBookingFeeTotalCents,
-                'checkout_total_before_gift_cents' => $requestCheckoutTotalBeforeGiftCents,
-                'gift_applied_total_cents' => $giftTotal,
-                'balance_after_gift_cents' => $balanceAfter,
-            ],
-            'line' => [
-                'court_subtotal_cents' => $lineCourtSubtotalCents,
-                'coach_fee_cents' => $lineCoachFeeCents,
-                'court_coach_gross_cents' => $lineCourtCoachGrossCents,
-                'gift_applied_cents' => $lineGiftAppliedCents,
-                'court_coach_after_gift_cents' => $lineCourtCoachAfterGiftCents,
-                'platform_booking_fee_cents' => $linePlatformBookingFeeCents,
-                'line_total_payable_cents' => $linePayable,
-            ],
+            'request' => $request,
+            'line' => $line,
         ];
     }
 

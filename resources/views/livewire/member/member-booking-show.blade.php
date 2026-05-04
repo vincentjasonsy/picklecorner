@@ -1,5 +1,6 @@
 @php
     use App\Models\Booking;
+    use App\Models\BookingChangeRequest;
     use App\Models\Court;
     use App\Services\BookingCheckoutSnapshot;
     use App\Support\BookingCalendar;
@@ -373,4 +374,149 @@
             </div>
         @endif
     </dl>
+
+    @if ($this->venueCreditBalanceCents > 0)
+        <div
+            class="rounded-2xl border border-emerald-200 bg-emerald-50/90 p-5 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-100"
+        >
+            <p class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                Venue credit ({{ $client?->name ?? 'this venue' }})
+            </p>
+            <p class="mt-1 font-display text-2xl font-bold tabular-nums">
+                {{ Money::formatMinor($this->venueCreditBalanceCents, $currency) }}
+            </p>
+            <p class="mt-1 text-xs text-emerald-900/80 dark:text-emerald-200/80">
+                Use toward your next online booking at this venue when checkout supports it.
+            </p>
+        </div>
+    @endif
+
+    @if ($this->pendingChangeRequest)
+        @php
+            $p = $this->pendingChangeRequest;
+        @endphp
+        <div
+            class="rounded-2xl border border-amber-200 bg-amber-50/90 p-5 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100"
+        >
+            <p class="font-semibold">Request pending: {{ BookingChangeRequest::typeLabel($p->type) }}</p>
+            <p class="mt-1 text-xs text-amber-900/80 dark:text-amber-200/80">
+                {{ BookingChangeRequest::statusLabel($p->status) }}
+                · submitted {{ $p->created_at?->isoFormat('MMM D, h:mm a') }}
+            </p>
+            <button
+                type="button"
+                wire:click="withdrawPendingRequest"
+                wire:loading.attr="disabled"
+                class="mt-4 inline-flex rounded-xl border border-amber-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-amber-950 hover:bg-amber-100 disabled:opacity-50 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/70"
+            >
+                Withdraw request
+            </button>
+        </div>
+    @elseif ($this->mayRequestChange)
+        <div class="space-y-6">
+            <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Need to cancel or move?</h2>
+            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                Send a request to the venue. Refunds are issued as credit at this venue (not a card reversal). Reschedule
+                keeps the same length; pick a new start time that doesn’t overlap another booking.
+            </p>
+            <div class="grid gap-6 lg:grid-cols-2">
+                @if ($this->defaultRefundCreditCents > 0)
+                    <form wire:submit="submitRefundRequest" class="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                        <h3 class="font-display font-bold text-zinc-900 dark:text-white">Credit refund</h3>
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                            If approved, your booking is cancelled and you’ll receive about
+                            <span class="font-semibold text-zinc-900 dark:text-zinc-100">
+                                {{ Money::formatMinor($this->defaultRefundCreditCents, $currency) }}
+                            </span>
+                            in venue credit (amount may be adjusted by staff).
+                        </p>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                Note (optional)
+                            </label>
+                            <textarea
+                                wire:model="refundNote"
+                                rows="2"
+                                class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                                placeholder="Reason or details for the venue"
+                            ></textarea>
+                            @error('refundNote')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <button
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            class="inline-flex w-full justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:hover:bg-emerald-600"
+                        >
+                            Request credit refund
+                        </button>
+                    </form>
+                @endif
+
+                <form
+                    wire:submit="submitRescheduleRequest"
+                    class="space-y-4 rounded-2xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900"
+                >
+                    <h3 class="font-display font-bold text-zinc-900 dark:text-white">Reschedule</h3>
+                    <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                        Same duration as this booking. Times are in {{ $tz }}.
+                    </p>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                New date
+                            </label>
+                            <input
+                                type="date"
+                                wire:model="rescheduleDate"
+                                class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                            />
+                            @error('rescheduleDate')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                                New start time
+                            </label>
+                            <input
+                                type="time"
+                                wire:model="rescheduleStartTime"
+                                step="60"
+                                class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                            />
+                            @error('rescheduleStartTime')
+                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                            Note (optional)
+                        </label>
+                        <textarea
+                            wire:model="rescheduleNote"
+                            rows="2"
+                            class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                            placeholder="Anything the desk should know"
+                        ></textarea>
+                        @error('rescheduleNote')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    @error('reschedule')
+                        <p class="text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                    <button
+                        type="submit"
+                        wire:loading.attr="disabled"
+                        class="inline-flex w-full justify-center rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-bold text-zinc-900 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800"
+                    >
+                        Request reschedule
+                    </button>
+                </form>
+            </div>
+        </div>
+    @endif
 </div>

@@ -3,7 +3,12 @@
 namespace App\Livewire\Venue;
 
 use App\Models\Booking;
+use App\Models\CourtClient;
+use App\Models\User;
+use App\Models\UserVenueCreditLedgerEntry;
 use App\Services\ActivityLogger;
+use App\Services\BookingChangeRequestService;
+use App\Services\UserVenueCreditService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -126,7 +131,9 @@ class VenueBookingApprovals extends Component
         $note = trim($this->denyReason);
         $denyLine = 'Denied: '.$note;
 
-        DB::transaction(function () use ($group, $denyLine): void {
+        $creditIssuedCents = 0;
+
+        DB::transaction(function () use ($group, $denyLine, &$creditIssuedCents): void {
             foreach ($group as $b) {
                 $prevNotes = $b->notes;
                 $b->status = Booking::STATUS_DENIED;
@@ -135,6 +142,36 @@ class VenueBookingApprovals extends Component
                     : $denyLine;
                 $b->save();
             }
+
+            $first = $group->first();
+            if ($first === null || $first->user_id === null) {
+                return;
+            }
+
+            $venue = CourtClient::query()->find($first->court_client_id);
+            if ($venue === null) {
+                return;
+            }
+
+            $totalCredit = BookingChangeRequestService::totalDeskDenialCreditCents($group);
+            if ($totalCredit <= 0) {
+                return;
+            }
+
+            $member = User::query()->find($first->user_id);
+            if ($member === null) {
+                return;
+            }
+
+            UserVenueCreditService::addCredit(
+                $member,
+                $venue,
+                $totalCredit,
+                UserVenueCreditLedgerEntry::ENTRY_TYPE_DESK_DENIAL,
+                $first,
+                'Booking request denied; credit returned to your account.',
+            );
+            $creditIssuedCents = $totalCredit;
         });
 
         $first = $group->first();
@@ -146,6 +183,7 @@ class VenueBookingApprovals extends Component
                 'booking_ids' => $ids,
                 'booking_request_id' => $first?->booking_request_id,
                 'reason' => $note,
+                'credit_issued_cents' => $creditIssuedCents > 0 ? $creditIssuedCents : null,
             ],
             $first,
             count($ids) === 1
@@ -162,11 +200,16 @@ class VenueBookingApprovals extends Component
         $ref = $first?->transactionReference() ?? '';
         $refPart = $ref !== '' ? ' Reference: '.$ref.'.' : '';
 
+        $baseMsg = count($ids) === 1
+            ? 'Booking request denied.'
+            : 'Booking request denied ('.count($ids).' courts).';
+        if ($creditIssuedCents > 0 && $first?->user_id !== null) {
+            $baseMsg .= ' Account credit was issued to the booker.';
+        }
+
         session()->flash(
             'status',
-            (count($ids) === 1
-                ? 'Booking request denied.'
-                : 'Booking request denied ('.count($ids).' courts).').$refPart,
+            $baseMsg.$refPart,
         );
     }
 

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Events\ActivityLogged;
 use App\Models\ActivityLog;
 use App\Models\Booking;
+use App\Models\BookingChangeRequest;
 use App\Models\Court;
 use App\Models\CourtChangeRequest;
 use App\Models\CourtClient;
@@ -64,6 +65,10 @@ class ActivityLogger
         }
 
         if ($subject instanceof CourtChangeRequest) {
+            return (string) $subject->court_client_id;
+        }
+
+        if ($subject instanceof BookingChangeRequest) {
             return (string) $subject->court_client_id;
         }
 

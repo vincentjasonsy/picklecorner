@@ -47,6 +47,7 @@ use App\Livewire\Coach\CoachGiftCardShow;
 use App\Livewire\Coach\CoachHome;
 use App\Livewire\Coach\CoachProfileEdit;
 use App\Livewire\ContactPage;
+use App\Livewire\Desk\DeskBookingChangeRequests;
 use App\Livewire\Desk\DeskBookingsCalendar;
 use App\Livewire\Desk\DeskBookingShow;
 use App\Livewire\Desk\DeskCourtsLive;
@@ -71,6 +72,7 @@ use App\Livewire\PublicCourtShow;
 use App\Livewire\RefundPolicyPage;
 use App\Livewire\TermsConditionsPage;
 use App\Livewire\Venue\VenueBookingApprovals;
+use App\Livewire\Venue\VenueBookingChangeRequests;
 use App\Livewire\Venue\VenueBookingHistory;
 use App\Livewire\Venue\VenueBookingsCalendar;
 use App\Livewire\Venue\VenueBookingShow;
@@ -210,6 +212,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/settings', VenueCourtClientManage::class)->name('settings');
         Route::livewire('/manual-booking', VenueManualBooking::class)->name('manual-booking');
         Route::livewire('/bookings/pending', VenueBookingApprovals::class)->name('bookings.pending');
+        Route::livewire('/bookings/change-requests', VenueBookingChangeRequests::class)
+            ->name('bookings.change-requests');
         Route::livewire('/bookings/history', VenueBookingHistory::class)->name('bookings.history');
         Route::livewire('/bookings/calendar', VenueBookingsCalendar::class)->name('bookings.calendar');
         Route::livewire('/bookings/{booking}', VenueBookingShow::class)->name('bookings.show');
@@ -235,6 +239,8 @@ Route::middleware(['auth', 'demo.valid'])->group(function (): void {
         Route::livewire('/booking-request', DeskManualBooking::class)->name('booking-request');
         Route::livewire('/my-requests', DeskMyRequests::class)->name('my-requests');
         Route::livewire('/bookings/calendar', DeskBookingsCalendar::class)->name('bookings.calendar');
+        Route::livewire('/bookings/change-requests', DeskBookingChangeRequests::class)
+            ->name('bookings.change-requests');
         Route::livewire('/bookings/{booking}', DeskBookingShow::class)->name('bookings.show');
     });
 

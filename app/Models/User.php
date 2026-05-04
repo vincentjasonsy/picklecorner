@@ -98,6 +98,11 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
+    public function venueCredits(): HasMany
+    {
+        return $this->hasMany(UserVenueCredit::class);
+    }
+
     /** Courts saved from the public book-now court page. */
     public function favoriteCourts(): BelongsToMany
     {

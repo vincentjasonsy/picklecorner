@@ -288,13 +288,22 @@ final class VenueBookingSpecsBuilder
         }
     }
 
-    public static function bookingOverlapsCourt(string $courtId, Carbon $starts, Carbon $ends): bool
-    {
-        return Booking::query()
+    public static function bookingOverlapsCourt(
+        string $courtId,
+        Carbon $starts,
+        Carbon $ends,
+        ?string $exceptBookingId = null,
+    ): bool {
+        $q = Booking::query()
             ->where('court_id', $courtId)
             ->whereIn('status', Booking::statusesBlockingCourtAvailability())
             ->where('starts_at', '<', $ends)
-            ->where('ends_at', '>', $starts)
-            ->exists();
+            ->where('ends_at', '>', $starts);
+
+        if ($exceptBookingId !== null && $exceptBookingId !== '') {
+            $q->where('id', '!=', $exceptBookingId);
+        }
+
+        return $q->exists();
     }
 }

@@ -137,7 +137,7 @@
                         $step === 'review'
                         && auth()->check()
                         && $this->canSubmitBookings()
-                        && ($paymongoConfigured || $this->reviewBalanceAfterGiftCents <= 0)
+                        && ($paymongoConfigured || $this->reviewBalanceAfterVenueCreditCents <= 0)
                     ),
             ])
         >
@@ -827,16 +827,47 @@
                                         <tr>
                                             <td
                                                 colspan="2"
-                                                class="pt-2 text-base font-bold text-zinc-900 dark:text-white"
+                                                class="pt-2 text-sm font-semibold text-zinc-900 dark:text-white"
                                             >
-                                                Estimated balance
+                                                Balance after gift
                                             </td>
-                                            <td class="pt-2 text-right text-base font-bold tabular-nums text-zinc-900 dark:text-white">
+                                            <td class="pt-2 text-right text-sm font-semibold tabular-nums text-zinc-900 dark:text-white">
                                                 {{ Money::formatMinor($this->reviewBalanceAfterGiftCents, $currency) }}
                                             </td>
                                             <td class="pt-2"></td>
                                         </tr>
                                     @endif
+                                    @auth
+                                        @if ($this->applyVenueCredit && $this->reviewVenueCreditAppliedCents > 0)
+                                            <tr>
+                                                <td
+                                                    colspan="2"
+                                                    class="pt-1 text-sm text-zinc-700 dark:text-zinc-300"
+                                                >
+                                                    Venue credit
+                                                    <span class="block text-xs font-normal text-zinc-500 dark:text-zinc-400">
+                                                        Refund credit for this venue
+                                                    </span>
+                                                </td>
+                                                <td class="pt-1 text-right text-sm tabular-nums text-sky-800 dark:text-sky-200">
+                                                    −{{ Money::formatMinor($this->reviewVenueCreditAppliedCents, $currency) }}
+                                                </td>
+                                                <td class="pt-1"></td>
+                                            </tr>
+                                        @endif
+                                    @endauth
+                                    <tr>
+                                        <td
+                                            colspan="2"
+                                            class="pt-2 text-base font-bold text-zinc-900 dark:text-white"
+                                        >
+                                            Estimated amount due
+                                        </td>
+                                        <td class="pt-2 text-right text-base font-bold tabular-nums text-zinc-900 dark:text-white">
+                                            {{ Money::formatMinor($this->reviewBalanceAfterVenueCreditCents, $currency) }}
+                                        </td>
+                                        <td class="pt-2"></td>
+                                    </tr>
                                 </tfoot>
                             </table>
                         </div>
@@ -912,6 +943,31 @@
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+                        @auth
+                            @if ($this->availableVenueCreditCents > 0)
+                                <div class="mt-4 rounded-lg border border-sky-200/80 bg-sky-50/60 px-3 py-3 dark:border-sky-900/50 dark:bg-sky-950/30">
+                                    <label class="flex cursor-pointer items-start gap-3 text-sm text-zinc-800 dark:text-zinc-200">
+                                        <input
+                                            type="checkbox"
+                                            wire:model.live="applyVenueCredit"
+                                            class="mt-0.5 size-4 shrink-0 rounded border-zinc-300 text-sky-600 focus:ring-sky-500 dark:border-zinc-600 dark:bg-zinc-950"
+                                        />
+                                        <span>
+                                            <span class="font-semibold text-zinc-900 dark:text-white">Use venue credit</span>
+                                            <span class="block text-xs text-zinc-600 dark:text-zinc-400">
+                                                You have
+                                                {{ Money::formatMinor($this->availableVenueCreditCents, $currency) }}
+                                                in credit at this venue (from approved refunds). Applied after any gift
+                                                code, up to the amount due.
+                                            </span>
+                                        </span>
+                                    </label>
+                                    @error('applyVenueCredit')
+                                        <p class="mt-2 text-xs text-red-600">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endif
+                        @endauth
                         <p class="mt-3 text-xs text-zinc-500 dark:text-zinc-400">
                             The venue confirms the final amount when they review your request.
                         </p>
@@ -1050,7 +1106,7 @@
                         </div>
                     @endif
 
-                    @if (! $paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0)
+                    @if (! $paymongoConfigured && $this->reviewBalanceAfterVenueCreditCents > 0)
                         <div
                             class="rounded-xl border border-amber-200/90 bg-amber-50/90 p-4 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/35 dark:text-amber-100/95"
                             role="status"
@@ -1103,7 +1159,7 @@
                         @if (
                             $step === 'review'
                             && $this->canSubmitBookings()
-                            && ($paymongoConfigured || $this->reviewBalanceAfterGiftCents <= 0)
+                            && ($paymongoConfigured || $this->reviewBalanceAfterVenueCreditCents <= 0)
                         )
                             @php
                                 $ctaCourtSub = $this->reviewCourtSubtotalCents;
@@ -1111,8 +1167,8 @@
                                 $ctaBookingFee = $this->reviewBookingFeeCents;
                                 $ctaCheckoutTotal = $this->reviewCheckoutTotalCents;
                                 $ctaGiftEst = $this->reviewGiftEstimateCents;
-                                $ctaBalanceAfter = $this->reviewBalanceAfterGiftCents;
-                                $ctaNeedsPayment = $paymongoConfigured && $this->reviewBalanceAfterGiftCents > 0;
+                                $ctaBalanceAfter = $this->reviewBalanceAfterVenueCreditCents;
+                                $ctaNeedsPayment = $paymongoConfigured && $this->reviewBalanceAfterVenueCreditCents > 0;
                             @endphp
 
                             {{-- Floating checkout + totals (matches times-step continue bar) --}}

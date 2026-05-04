@@ -3,6 +3,7 @@
 namespace App\Livewire\Desk;
 
 use App\Models\Booking;
+use App\Models\BookingChangeRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Computed;
@@ -44,6 +45,20 @@ class DeskHome extends Component
             ->where('court_client_id', $c->id)
             ->where('desk_submitted_by', auth()->id())
             ->where('status', Booking::STATUS_PENDING_APPROVAL)
+            ->count();
+    }
+
+    #[Computed]
+    public function pendingMemberChangeRequests(): int
+    {
+        $c = $this->courtClient;
+        if (! $c) {
+            return 0;
+        }
+
+        return BookingChangeRequest::query()
+            ->where('court_client_id', $c->id)
+            ->where('status', BookingChangeRequest::STATUS_PENDING)
             ->count();
     }
 

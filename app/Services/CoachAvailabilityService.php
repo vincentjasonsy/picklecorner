@@ -115,14 +115,23 @@ final class CoachAvailabilityService
         return $by;
     }
 
-    public static function coachHasOverlappingBooking(string $coachUserId, Carbon $starts, Carbon $ends): bool
-    {
-        return Booking::query()
+    public static function coachHasOverlappingBooking(
+        string $coachUserId,
+        Carbon $starts,
+        Carbon $ends,
+        ?string $exceptBookingId = null,
+    ): bool {
+        $q = Booking::query()
             ->where('coach_user_id', $coachUserId)
             ->whereIn('status', Booking::statusesBlockingCourtAvailability())
             ->where('starts_at', '<', $ends)
-            ->where('ends_at', '>', $starts)
-            ->exists();
+            ->where('ends_at', '>', $starts);
+
+        if ($exceptBookingId !== null && $exceptBookingId !== '') {
+            $q->where('id', '!=', $exceptBookingId);
+        }
+
+        return $q->exists();
     }
 
     /**

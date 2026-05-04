@@ -6,21 +6,20 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\CourtDateSlotBlock;
-use App\Models\GiftCard;
 use App\Models\PaymongoBookingIntent;
 use App\Models\UserType;
+use App\Models\UserVenueCredit;
 use App\Models\VenueWeeklyHour;
 use App\Services\BookingFeeService;
 use App\Services\CoachAvailabilityService;
 use App\Services\CourtSlotPricing;
-use App\Services\GiftCardService;
 use App\Services\PaymongoVenueBookingPayment;
 use App\Services\PublicVenueBookingSubmission;
+use App\Services\VenueBookingCheckoutAmounts;
 use App\Services\VenueBookingSlotProbe;
 use App\Services\VenueBookingSpecsBuilder;
 use App\Support\BookingCalendar;
 use App\Support\Money;
-use App\Support\VenueScheduleHours;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
@@ -84,6 +83,9 @@ class VenueBookingPage extends Component
 
     /** Acknowledgement that the convenience fee is non-refundable when a convenience fee applies. */
     public bool $ackConvenienceFeeNonRefundable = false;
+
+    /** Apply this venue’s wallet credit after gift (logged-in checkout only). */
+    public bool $applyVenueCredit = false;
 
     public function mount(CourtClient $courtClient): void
     {
@@ -176,6 +178,10 @@ class VenueBookingPage extends Component
 
         if (is_string($payload['gift_card_code'] ?? null)) {
             $this->giftCardCode = $payload['gift_card_code'];
+        }
+
+        if (array_key_exists('apply_venue_credit', $payload)) {
+            $this->applyVenueCredit = (bool) $payload['apply_venue_credit'];
         }
 
         if ($this->venueCheckoutShowCoach() && is_string($payload['coach_user_id'] ?? null)) {
@@ -391,6 +397,9 @@ class VenueBookingPage extends Component
         if (is_string($draft['open_play_refund_policy'] ?? null)) {
             $this->openPlayRefundPolicy = $draft['open_play_refund_policy'];
         }
+        if (array_key_exists('apply_venue_credit', $draft)) {
+            $this->applyVenueCredit = (bool) $draft['apply_venue_credit'];
+        }
         $this->step = ($draft['step'] ?? 'review') === 'times' ? 'times' : 'review';
 
         $this->clearCoachWhenCheckoutHidden();
@@ -421,6 +430,7 @@ class VenueBookingPage extends Component
             'open_play_host_payment_details' => $this->openPlayHostPaymentDetails,
             'open_play_external_contact' => $this->openPlayExternalContact,
             'open_play_refund_policy' => $this->openPlayRefundPolicy,
+            'apply_venue_credit' => $this->applyVenueCredit,
             'step' => 'review',
         ]);
         session()->put(self::AFTER_LOGIN_SESSION_KEY, true);
@@ -1214,38 +1224,89 @@ class VenueBookingPage extends Component
     }
 
     /**
-     * Best-effort preview (no row lock); submit re-validates.
+     * Gift + optional venue credit (no balance lock; submit path re-validates).
+     *
+     * @return array{gift_applied: int, after_gift: int, venue_credit_applied: int, payable: int}|null
      */
     #[Computed]
-    public function reviewGiftEstimateCents(): int
+    public function venueCheckoutPreview(): ?array
     {
-        $raw = trim($this->giftCardCode);
-        if ($raw === '' || $this->step !== 'review') {
-            return 0;
+        if ($this->step !== 'review') {
+            return null;
         }
         $specs = $this->buildSpecsForSubmit();
         if ($specs === []) {
-            return 0;
+            return null;
         }
-        $normalized = GiftCardService::normalizeCode($raw);
-        $card = GiftCard::query()
-            ->where('code', $normalized)
-            ->where(function ($q): void {
-                $q->where('court_client_id', $this->courtClient->id)
-                    ->orWhereNull('court_client_id');
-            })
-            ->first();
-        if ($card === null || ! $card->redeemableNow()) {
+        $user = auth()->user();
+        if ($user === null) {
+            return null;
+        }
+
+        return VenueBookingCheckoutAmounts::preview(
+            $this->courtClient,
+            $user,
+            $specs,
+            $this->giftCardCode,
+            $this->applyVenueCredit,
+        );
+    }
+
+    #[Computed]
+    public function reviewGiftEstimateCents(): int
+    {
+        $p = $this->venueCheckoutPreview;
+        if ($p === null) {
             return 0;
         }
 
-        return GiftCardService::computeAppliedCents($card, $this->reviewCheckoutTotalCents);
+        return (int) $p['gift_applied'];
     }
 
     #[Computed]
     public function reviewBalanceAfterGiftCents(): int
     {
-        return max(0, $this->reviewCheckoutTotalCents - $this->reviewGiftEstimateCents);
+        $p = $this->venueCheckoutPreview;
+        if ($p === null) {
+            return max(0, $this->reviewCheckoutTotalCents);
+        }
+
+        return (int) $p['after_gift'];
+    }
+
+    #[Computed]
+    public function availableVenueCreditCents(): int
+    {
+        if (! auth()->check() || $this->step !== 'review') {
+            return 0;
+        }
+
+        return (int) (UserVenueCredit::query()
+            ->where('user_id', auth()->id())
+            ->where('currency', $this->courtClient->currency ?? 'PHP')
+            ->value('balance_cents') ?? 0);
+    }
+
+    #[Computed]
+    public function reviewVenueCreditAppliedCents(): int
+    {
+        $p = $this->venueCheckoutPreview;
+        if ($p === null) {
+            return 0;
+        }
+
+        return (int) $p['venue_credit_applied'];
+    }
+
+    #[Computed]
+    public function reviewBalanceAfterVenueCreditCents(): int
+    {
+        $p = $this->venueCheckoutPreview;
+        if ($p !== null) {
+            return (int) $p['payable'];
+        }
+
+        return max(0, $this->reviewCheckoutTotalCents);
     }
 
     #[Computed]
@@ -1355,10 +1416,10 @@ class VenueBookingPage extends Component
             return;
         }
 
-        $balanceAfterGift = $this->reviewBalanceAfterGiftCents;
+        $balanceAfterCredits = $this->reviewBalanceAfterVenueCreditCents;
         $paymongoOk = config('paymongo.enabled') && (string) config('paymongo.secret_key') !== '';
 
-        if ($balanceAfterGift > 0 && ! $paymongoOk) {
+        if ($balanceAfterCredits > 0 && ! $paymongoOk) {
             $this->addError(
                 'submit',
                 'Online payment is not available yet. Please contact the venue or try again later.',
@@ -1367,10 +1428,12 @@ class VenueBookingPage extends Component
             return;
         }
 
+        $useVenueCreditSubmit = $this->applyVenueCredit;
+
         if (
             $this->paymentMethod === Booking::PAYMENT_PAYMONGO
             && $paymongoOk
-            && $balanceAfterGift > 0
+            && $balanceAfterCredits > 0
         ) {
             try {
                 $checkoutUrl = PaymongoVenueBookingPayment::createCheckoutRedirect(
@@ -1385,7 +1448,8 @@ class VenueBookingPage extends Component
                     $this->venueCheckoutShowCoach(),
                     $this->isOpenPlay,
                     $openPlayPayload,
-                    $balanceAfterGift,
+                    $balanceAfterCredits,
+                    $useVenueCreditSubmit,
                 );
             } catch (\Throwable $e) {
                 report($e);
@@ -1401,7 +1465,7 @@ class VenueBookingPage extends Component
         }
 
         $paymentMethodForSubmit = $this->paymentMethod;
-        if ($balanceAfterGift <= 0 && $paymentMethodForSubmit === Booking::PAYMENT_PAYMONGO) {
+        if ($balanceAfterCredits <= 0 && $paymentMethodForSubmit === Booking::PAYMENT_PAYMONGO) {
             $paymentMethodForSubmit = Booking::PAYMENT_GCASH;
         }
 
@@ -1417,6 +1481,8 @@ class VenueBookingPage extends Component
                 $this->giftCardCode,
                 $this->effectiveCoachUserId() !== '' ? $this->effectiveCoachUserId() : null,
                 $openPlayPayload,
+                null,
+                $useVenueCreditSubmit,
             );
         } catch (\InvalidArgumentException $e) {
             if ($e->getMessage() === 'No time slots to book.') {
@@ -1425,6 +1491,8 @@ class VenueBookingPage extends Component
                 $this->addError('selectedSlots', $e->getMessage());
             } elseif (trim($this->giftCardCode) !== '') {
                 $this->addError('giftCardCode', $e->getMessage());
+            } elseif (str_contains($e->getMessage(), 'Venue credit')) {
+                $this->addError('applyVenueCredit', $e->getMessage());
             } else {
                 $this->addError('submit', $e->getMessage());
             }
@@ -1443,6 +1511,7 @@ class VenueBookingPage extends Component
         $this->paymentReference = '';
         $this->paymentMethod = Booking::PAYMENT_PAYMONGO;
         $this->giftCardCode = '';
+        $this->applyVenueCredit = false;
         $this->coachUserId = '';
         $this->coachPaidHours = 0;
         $this->isOpenPlay = false;
@@ -1469,6 +1538,13 @@ class VenueBookingPage extends Component
         };
         if ($giftTotal > 0) {
             $flash .= ' Gift card applied: '.Money::formatMinor($giftTotal).' total.';
+        }
+        $venueCreditTotal = (int) array_sum(array_filter(array_map(
+            fn (Booking $b) => $b->venue_credit_redeemed_cents,
+            $bookings,
+        )));
+        if ($venueCreditTotal > 0) {
+            $flash .= ' Venue credit applied: '.Money::formatMinor($venueCreditTotal).' total.';
         }
         if ($openPlayPayload !== null) {
             $flash .= ' Open play enabled — share the link from Account → Court open play after the venue confirms.';

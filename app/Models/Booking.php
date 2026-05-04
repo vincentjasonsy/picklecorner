@@ -114,6 +114,7 @@ class Booking extends Model
         'notes',
         'gift_card_id',
         'gift_card_redeemed_cents',
+        'venue_credit_redeemed_cents',
         'payment_method',
         'payment_reference',
         'payment_proof_path',
@@ -135,6 +136,7 @@ class Booking extends Model
             'starts_at' => 'datetime',
             'ends_at' => 'datetime',
             'gift_card_redeemed_cents' => 'integer',
+            'venue_credit_redeemed_cents' => 'integer',
             'coach_fee_cents' => 'integer',
             'platform_booking_fee_cents' => 'integer',
             'checkout_snapshot' => 'array',
@@ -245,6 +247,12 @@ class Booking extends Model
         return $this->belongsToMany(CourtClientInvoice::class, 'invoice_bookings', 'booking_id', 'court_client_invoice_id')
             ->withPivot('amount_cents')
             ->withTimestamps();
+    }
+
+    /** @return HasMany<BookingChangeRequest, $this> */
+    public function changeRequests(): HasMany
+    {
+        return $this->hasMany(BookingChangeRequest::class);
     }
 
     public function paymentProofUrl(): ?string

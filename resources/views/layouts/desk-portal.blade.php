@@ -234,6 +234,28 @@
                         </p>
                         <div class="flex flex-col gap-1.5">
                             <a
+                                href="{{ route('desk.bookings.change-requests') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                                    request()->routeIs('desk.bookings.change-requests')
+                                        ? 'bg-teal-600 text-white shadow-md shadow-teal-900/25 dark:bg-teal-600 dark:text-white'
+                                        : 'text-stone-700 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800/80',
+                                ])
+                            >
+                                <span class="block">Refund &amp; reschedule</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-xs font-normal',
+                                        request()->routeIs('desk.bookings.change-requests')
+                                            ? 'text-teal-100'
+                                            : 'text-stone-500 dark:text-stone-500',
+                                    ])
+                                >
+                                    Member requests
+                                </span>
+                            </a>
+                            <a
                                 href="{{ route('desk.bookings.calendar') }}"
                                 wire:navigate
                                 @class([

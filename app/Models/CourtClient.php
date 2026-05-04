@@ -178,6 +178,12 @@ class CourtClient extends Model
         return $this->hasMany(CourtChangeRequest::class)->orderByDesc('created_at');
     }
 
+    /** Member-initiated refund (credit) and reschedule requests for this venue. */
+    public function memberBookingChangeRequests(): HasMany
+    {
+        return $this->hasMany(BookingChangeRequest::class)->orderByDesc('created_at');
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(CourtClientInvoice::class)->orderByDesc('created_at');

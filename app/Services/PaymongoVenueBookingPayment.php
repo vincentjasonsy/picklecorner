@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
-use App\Models\GiftCard;
 use App\Models\PaymongoBookingIntent;
 use App\Models\User;
 use App\Support\Money;
@@ -37,6 +36,7 @@ final class PaymongoVenueBookingPayment
         bool $isOpenPlay,
         ?array $openPlayPayload,
         int $amountCentavos,
+        bool $applyVenueCredit = false,
     ): string {
         $secret = config('paymongo.secret_key');
         if (! is_string($secret) || $secret === '') {
@@ -61,7 +61,7 @@ final class PaymongoVenueBookingPayment
             throw new \RuntimeException('No time slots to book for PayMongo checkout.');
         }
 
-        $amounts = self::amountsForSpecsAndGift($courtClient, $specs, $giftCardCode);
+        $amounts = self::amountsForCheckout($courtClient, $booker, $specs, $giftCardCode, $applyVenueCredit);
 
         if ($amounts['payable'] !== $amountCentavos) {
             throw new \RuntimeException('Checkout amount mismatch; refresh this page and try again.');
@@ -81,6 +81,7 @@ final class PaymongoVenueBookingPayment
             'is_open_play' => $isOpenPlay,
             'open_play' => $openPlayPayload,
             'expected_balance_centavos' => $amountCentavos,
+            'apply_venue_credit' => $applyVenueCredit,
         ];
 
         $intent = PaymongoBookingIntent::query()->create([
@@ -336,7 +337,9 @@ final class PaymongoVenueBookingPayment
                 throw new \RuntimeException('PayMongo intent '.$locked->id.' could not rebuild booking specs.');
             }
 
-            $amounts = self::amountsForSpecsAndGift($courtClient, $specs, $giftCardCode);
+            $applyVenueCredit = (bool) ($payload['apply_venue_credit'] ?? false);
+
+            $amounts = self::amountsForCheckout($courtClient, $booker, $specs, $giftCardCode, $applyVenueCredit);
 
             if ($amounts['payable'] !== $locked->amount_centavos) {
                 throw new \RuntimeException(
@@ -365,6 +368,7 @@ final class PaymongoVenueBookingPayment
                 $coachUserId,
                 $openForSubmit,
                 $bookingRequestId,
+                $applyVenueCredit,
             );
 
             $locked->update([
@@ -379,33 +383,20 @@ final class PaymongoVenueBookingPayment
      * @param  list<array{court: Court, starts: Carbon, ends: Carbon, gross_cents: int, court_gross_cents?: int, hours: list<int>, coach_fee_cents?: int}>  $specs
      * @return array{total_gross: int, booking_fee: int, checkout_total: int, payable: int}
      */
-    private static function amountsForSpecsAndGift(CourtClient $courtClient, array $specs, string $giftCardCode): array
-    {
-        $totalGross = (int) array_sum(array_column($specs, 'gross_cents'));
-        $bookingFeeCents = BookingFeeService::calculateCentsForSpecs($specs);
-        $checkoutTotal = $totalGross + $bookingFeeCents;
-        $payable = $checkoutTotal;
-
-        $normalizedGift = GiftCardService::normalizeCode(trim($giftCardCode));
-        if ($normalizedGift !== '') {
-            $card = GiftCard::query()
-                ->where('code', $normalizedGift)
-                ->where(function ($q) use ($courtClient): void {
-                    $q->where('court_client_id', $courtClient->id)
-                        ->orWhereNull('court_client_id');
-                })
-                ->first();
-            if ($card !== null && $card->redeemableNow()) {
-                $applied = GiftCardService::computeAppliedCents($card, $checkoutTotal);
-                $payable = max(0, $checkoutTotal - $applied);
-            }
-        }
+    private static function amountsForCheckout(
+        CourtClient $courtClient,
+        User $booker,
+        array $specs,
+        string $giftCardCode,
+        bool $applyVenueCredit,
+    ): array {
+        $p = VenueBookingCheckoutAmounts::preview($courtClient, $booker, $specs, $giftCardCode, $applyVenueCredit);
 
         return [
-            'total_gross' => $totalGross,
-            'booking_fee' => $bookingFeeCents,
-            'checkout_total' => $checkoutTotal,
-            'payable' => $payable,
+            'total_gross' => $p['total_gross'],
+            'booking_fee' => $p['booking_fee'],
+            'checkout_total' => $p['checkout_total'],
+            'payable' => $p['payable'],
         ];
     }
 

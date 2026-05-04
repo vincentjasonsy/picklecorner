@@ -3,6 +3,7 @@
 namespace App\Livewire\Venue;
 
 use App\Models\Booking;
+use App\Models\BookingChangeRequest;
 use App\Models\CourtChangeRequest;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Layout;
@@ -49,6 +50,20 @@ class VenueHome extends Component
         return CourtChangeRequest::query()
             ->where('court_client_id', $c->id)
             ->where('status', CourtChangeRequest::STATUS_PENDING)
+            ->count();
+    }
+
+    #[Computed]
+    public function pendingMemberChangeRequests(): int
+    {
+        $c = $this->courtClient;
+        if (! $c) {
+            return 0;
+        }
+
+        return BookingChangeRequest::query()
+            ->where('court_client_id', $c->id)
+            ->where('status', BookingChangeRequest::STATUS_PENDING)
             ->count();
     }
 

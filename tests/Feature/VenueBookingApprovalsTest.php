@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Court;
 use App\Models\CourtClient;
 use App\Models\User;
+use App\Models\UserVenueCredit;
 use Carbon\Carbon;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -113,5 +114,57 @@ class VenueBookingApprovalsTest extends TestCase
 
         $this->assertSame(Booking::STATUS_CONFIRMED, $b1->fresh()->status);
         $this->assertSame(Booking::STATUS_CONFIRMED, $b2->fresh()->status);
+    }
+
+    public function test_denying_pending_manual_booking_credits_the_booker(): void
+    {
+        $this->seed(UserTypeSeeder::class);
+
+        $client = CourtClient::factory()->create([
+            'desk_booking_policy' => CourtClient::DESK_BOOKING_POLICY_MANUAL,
+        ]);
+        $admin = User::factory()->courtAdmin()->create();
+        $client->update(['admin_user_id' => $admin->id]);
+        $player = User::factory()->player()->create();
+
+        $court = Court::query()->create([
+            'court_client_id' => $client->id,
+            'name' => 'Court A',
+            'sort_order' => 0,
+            'environment' => Court::ENV_OUTDOOR,
+            'is_available' => true,
+        ]);
+
+        $tz = config('app.timezone');
+        $starts = Carbon::parse('2026-07-10 11:00:00', $tz);
+
+        $pending = Booking::query()->create([
+            'court_client_id' => $client->id,
+            'court_id' => $court->id,
+            'user_id' => $player->id,
+            'starts_at' => $starts,
+            'ends_at' => $starts->copy()->addHour(),
+            'status' => Booking::STATUS_PENDING_APPROVAL,
+            'amount_cents' => 3_000,
+            'platform_booking_fee_cents' => 150,
+            'venue_credit_redeemed_cents' => 250,
+            'currency' => 'PHP',
+        ]);
+
+        Livewire::actingAs($admin)
+            ->test(VenueBookingApprovals::class)
+            ->call('openDeny', $pending->id)
+            ->set('denyReason', 'Court maintenance')
+            ->call('confirmDeny')
+            ->assertHasNoErrors();
+
+        $this->assertSame(Booking::STATUS_DENIED, $pending->fresh()->status);
+
+        $wallet = UserVenueCredit::query()
+            ->where('user_id', $player->id)
+            ->where('currency', 'PHP')
+            ->first();
+        $this->assertNotNull($wallet);
+        $this->assertSame(3_000 + 150 + 250, $wallet->balance_cents);
     }
 }

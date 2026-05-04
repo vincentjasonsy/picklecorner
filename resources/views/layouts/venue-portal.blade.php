@@ -134,6 +134,28 @@
                                 </span>
                             </a>
                             <a
+                                href="{{ route('venue.bookings.change-requests') }}"
+                                wire:navigate
+                                @class([
+                                    'rounded-lg px-3 py-2 transition-colors',
+                                    request()->routeIs('venue.bookings.change-requests')
+                                        ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200'
+                                        : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-800/50',
+                                ])
+                            >
+                                <span class="block">Refund &amp; reschedule</span>
+                                <span
+                                    @class([
+                                        'mt-0.5 block text-[11px] font-normal normal-case',
+                                        request()->routeIs('venue.bookings.change-requests')
+                                            ? 'text-emerald-700/80 dark:text-emerald-300/80'
+                                            : 'text-zinc-500 dark:text-zinc-400',
+                                    ])
+                                >
+                                    Member requests
+                                </span>
+                            </a>
+                            <a
                                 href="{{ route('venue.bookings.history') }}"
                                 wire:navigate
                                 @class([
@@ -323,7 +345,11 @@
                         </h1>
                     </div>
                     @php
-                        $headerBookingActive = request()->routeIs('venue.bookings.history', 'venue.bookings.show');
+                        $headerBookingActive = request()->routeIs(
+                            'venue.bookings.history',
+                            'venue.bookings.show',
+                            'venue.bookings.change-requests',
+                        );
                         $headerCalendarActive = request()->routeIs('venue.bookings.calendar');
                     @endphp
                     <nav

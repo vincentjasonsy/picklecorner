@@ -16,7 +16,7 @@
             </p>
         </div>
 
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-5">
             <a
                 href="{{ route('venue.bookings.pending') }}"
                 wire:navigate
@@ -27,6 +27,17 @@
                     {{ $this->pendingDeskBookings }}
                 </p>
                 <p class="mt-1 text-xs text-zinc-500">Pending from desk · {{ $cc->deskBookingPolicyShortLabel() }}</p>
+            </a>
+            <a
+                href="{{ route('venue.bookings.change-requests') }}"
+                wire:navigate
+                class="rounded-xl border border-zinc-200 bg-white p-5 transition-colors hover:border-emerald-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-emerald-800"
+            >
+                <p class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Refund &amp; reschedule</p>
+                <p class="mt-2 font-display text-2xl font-bold text-zinc-900 dark:text-white">
+                    {{ $this->pendingMemberChangeRequests }}
+                </p>
+                <p class="mt-1 text-xs text-zinc-500">Member requests</p>
             </a>
             <a
                 href="{{ route('venue.courts') }}"
