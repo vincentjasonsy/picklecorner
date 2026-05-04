@@ -345,11 +345,11 @@
         <section class="space-y-3">
             <h2 class="font-display text-lg font-bold text-zinc-900 dark:text-white">Recent activity log</h2>
             <p class="text-sm text-zinc-500 dark:text-zinc-400">
-                Last 30 entries attributed to this user
                 @if ($venueScoped)
-                    at this venue
+                    Booking-related activity only — last 30 entries for this user at this venue.
+                @else
+                    Last 30 entries for this user.
                 @endif
-                .
             </p>
             <ul class="divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white dark:divide-zinc-800 dark:border-zinc-800 dark:bg-zinc-900">
                 @foreach ($activityLogs as $log)

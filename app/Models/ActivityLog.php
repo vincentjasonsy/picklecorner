@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -47,5 +48,22 @@ class ActivityLog extends Model
     public function subject(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * Limits logs to booking lifecycle and checkout gift redemption — for court admin customer summary only.
+     *
+     * @param  Builder<ActivityLog>  $query
+     * @return Builder<ActivityLog>
+     */
+    public function scopeBookingRelatedForCustomerSummary(Builder $query): Builder
+    {
+        $bookingMorph = (new Booking)->getMorphClass();
+
+        return $query->where(function (Builder $q) use ($bookingMorph): void {
+            $q->where('action', 'like', 'booking.%')
+                ->orWhere('subject_type', $bookingMorph)
+                ->orWhere('action', 'gift_card.redeemed');
+        });
     }
 }

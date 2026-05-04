@@ -96,7 +96,7 @@ class UserSummary extends Component
 
         $activityQ = ActivityLog::query()->where('user_id', $uid);
         if ($ccid !== null) {
-            $activityQ->where('court_client_id', $ccid);
+            $activityQ->where('court_client_id', $ccid)->bookingRelatedForCustomerSummary();
         }
         $activityLogs = $activityQ->orderByDesc('created_at')->limit(30)->get();
 
