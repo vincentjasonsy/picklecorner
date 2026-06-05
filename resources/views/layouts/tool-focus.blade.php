@@ -91,14 +91,8 @@
                 </div>
             </header>
 
-            <main class="flex min-h-0 flex-1 flex-col px-2 pt-3 sm:px-4 sm:pt-6">
-                <div
-                    class="mx-auto flex w-full max-w-5xl flex-1 flex-col rounded-2xl border border-zinc-200/90 bg-white/95 shadow-sm ring-1 ring-zinc-900/[0.04] dark:border-zinc-800 dark:bg-zinc-900/95 dark:ring-white/[0.06] sm:rounded-[1.75rem] sm:shadow-[0_24px_60px_-28px_rgba(0,0,0,0.18)] lg:rounded-[2rem]"
-                >
-                    <div class="min-h-0 flex-1 rounded-[inherit] p-3 sm:p-5 lg:p-6">
-                        {{ $slot }}
-                    </div>
-                </div>
+            <main class="mx-auto flex min-h-0 w-full max-w-[min(100%,1720px)] flex-1 flex-col px-2 pt-3 sm:px-4 sm:pt-6">
+                {{ $slot }}
             </main>
 
             <footer class="hidden shrink-0 px-4 py-3 text-center sm:block">

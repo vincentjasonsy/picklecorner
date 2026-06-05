@@ -528,10 +528,10 @@
                             @endif
                         </ul>
                         <p class="hidden text-sm text-zinc-500 dark:text-zinc-400 sm:block">
-                            Next: use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> in the host bar to add or edit players; open <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings &amp; log</span> anytime for the full leaderboard and match history.
+                            Next: manage players in the <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> card (side-by-side on large screens); open <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings &amp; log</span> anytime for the full leaderboard and match history.
                         </p>
                         <p class="text-xs text-zinc-500 sm:hidden dark:text-zinc-400">
-                            Use <span class="font-medium text-zinc-700 dark:text-zinc-300">Roster</span> &amp; <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings</span> from the host bar anytime.
+                            Courts and roster stack on phone; use <span class="font-medium text-zinc-700 dark:text-zinc-300">Standings</span> in the host bar anytime.
                         </p>
                     </div>
                 @endif
@@ -569,7 +569,7 @@
 
     {{-- ========== MINIMAL HOST VIEW ========== --}}
     @if ($uiPhase === 'session')
-        <div class="mx-auto w-full max-w-screen-2xl space-y-3 px-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5 sm:px-5 lg:px-8 xl:px-10">
+        <div class="w-full space-y-3 pb-[max(1rem,env(safe-area-inset-bottom))] sm:space-y-5">
             <header class="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
                 <div class="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                     <button
@@ -582,7 +582,7 @@
                     <button
                         type="button"
                         class="touch-manipulation shrink-0 rounded-2xl border border-red-200/90 bg-white px-3 py-2.5 text-sm font-semibold text-red-800 shadow-sm hover:bg-red-50 active:scale-[0.98] dark:border-red-900/50 dark:bg-zinc-900 dark:text-red-300 dark:hover:bg-red-950/40"
-                        wire:confirm="End this hosting session? Your local queue and scores will be cleared."
+                        wire:confirm="End this hosting session? Your local queue and results will be cleared."
                         wire:click="endHostingSession"
                     >
                         End session
@@ -598,13 +598,6 @@
                     </div>
                 </div>
                 <div class="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 sm:w-auto">
-                    <button
-                        type="button"
-                        class="touch-manipulation min-h-11 flex-1 rounded-2xl border border-zinc-200/90 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 shadow-sm hover:bg-zinc-50 active:scale-[0.98] dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:flex-none sm:min-w-[9rem]"
-                        wire:click="$set('rosterModalOpen', true)"
-                    >
-                        Roster
-                    </button>
                     <button
                         type="button"
                         class="touch-manipulation min-h-11 flex-1 rounded-2xl border border-zinc-200/90 bg-emerald-600/10 px-4 py-2.5 text-sm font-bold text-emerald-800 hover:bg-emerald-600/15 active:scale-[0.98] dark:border-emerald-800/50 dark:bg-emerald-950/40 dark:text-emerald-200 dark:hover:bg-emerald-950/60 sm:flex-none sm:min-w-[9rem]"
@@ -625,7 +618,7 @@
                 </p>
             @endif
 
-            <div class="min-w-0 space-y-3 sm:space-y-5">
+            <div class="min-w-0 space-y-4 sm:space-y-5">
                     <div class="-mx-1 flex gap-1 overflow-x-auto overflow-y-hidden border-b border-zinc-200/80 dark:border-zinc-800">
                         <button
                             type="button"
@@ -643,6 +636,31 @@
                             <span class="hidden lg:inline">Share &amp; data</span>
                         </button>
                     </div>
+
+                    @if (! $rosterPanelOpen)
+                        <div class="flex justify-end">
+                            <button
+                                type="button"
+                                class="touch-manipulation rounded-xl border border-zinc-200/90 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 shadow-sm hover:bg-zinc-50 active:scale-[0.98] dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                wire:click="$set('rosterPanelOpen', true)"
+                                aria-expanded="false"
+                                aria-controls="gameq-roster"
+                            >
+                                Show roster panel
+                            </button>
+                        </div>
+                    @endif
+
+                    <div @class([
+                        'grid grid-cols-1 gap-4 sm:gap-5 lg:items-start lg:gap-6 xl:gap-8',
+                        'lg:grid-cols-2' => $rosterPanelOpen,
+                    ])>
+                        <section
+                            class="min-w-0 rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/[0.04] dark:border-zinc-700 dark:bg-zinc-900/90 dark:ring-white/[0.06] sm:p-5 lg:p-6"
+                            aria-label="Courts and play"
+                        >
+                        <h2 class="font-display text-base font-extrabold text-zinc-900 dark:text-white sm:text-lg">Courts</h2>
+                        <div class="mt-4 min-w-0 space-y-3 sm:space-y-5">
 
                     @if (($activeTab ?? '') === 'play')
                         <div
@@ -748,7 +766,7 @@
                                 <button
                                     type="button"
                                     class="rounded-xl border border-amber-300 px-3 py-2 text-xs font-semibold text-amber-900 dark:border-amber-800 dark:text-amber-200"
-                                    wire:confirm="Clear all scores and matches on this session?"
+                                    wire:confirm="Clear all results and matches on this session?"
                                     wire:click="resetSession"
                                 >
                                     Reset session
@@ -793,18 +811,29 @@
                             </div>
                         </div>
 
-                        <div class="space-y-4">
-                            <section class="min-w-0 space-y-3">
+                        <div @class([
+                            'min-w-0',
+                            'space-y-4' => $rosterPanelOpen,
+                            'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3' => ! $rosterPanelOpen,
+                        ])>
+                            <section @class(['min-w-0', 'space-y-3' => $rosterPanelOpen, 'contents' => ! $rosterPanelOpen])>
                                 @foreach ($state['courts'] ?? [] as $i => $court)
                                     @php
                                         $run = $court['timerRunState'] ?? 'running';
                                         $rs = $court ? $eq->remainingSeconds($court) : null;
                                     @endphp
                                     <div
-                                        class="w-full overflow-hidden rounded-xl border {{ $court ? 'border-zinc-200/90 bg-white dark:border-zinc-700 dark:bg-zinc-900/70' : 'border-dashed border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/40' }}"
+                                        @class([
+                                            'w-full overflow-hidden rounded-xl border shadow-sm ring-1',
+                                            'border-emerald-200/90 bg-gradient-to-br from-emerald-50/95 via-white to-teal-50/45 ring-emerald-500/[0.08] dark:border-emerald-800/55 dark:from-emerald-950/45 dark:via-zinc-900/95 dark:to-teal-950/25 dark:ring-emerald-400/10' => (bool) $court,
+                                            'border-dashed border-zinc-200 bg-zinc-50/50 ring-transparent dark:border-zinc-700 dark:bg-zinc-900/40' => ! $court,
+                                        ])
                                         wire:key="court-{{ $i }}"
                                     >
-                                        <div class="border-b border-zinc-200/80 {{ $court ? 'bg-zinc-50/50 dark:bg-zinc-900/80' : '' }} dark:border-zinc-700">
+                                        <div @class([
+                                            'border-b dark:border-zinc-700',
+                                            'border-emerald-200/70 bg-emerald-50/75 dark:border-emerald-900/45 dark:bg-emerald-950/30' => (bool) $court,
+                                        ])>
                                             @if ($court)
                                                 @php $tl = (int) ($state['timeLimitMinutes'] ?? 0); @endphp
                                                 <div
@@ -920,8 +949,8 @@
                                         @if ($court)
                                             <div class="space-y-2 p-2.5 sm:p-3">
                                                 <div class="grid w-full grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_1fr] sm:items-stretch sm:gap-3">
-                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-zinc-200/80 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-950/50">
-                                                        <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Side A</p>
+                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-emerald-200/70 bg-gradient-to-br from-emerald-50/90 to-white px-3 py-3 dark:border-emerald-900/40 dark:from-emerald-950/45 dark:to-zinc-950/60">
+                                                        <p class="text-xs font-medium text-emerald-800/80 dark:text-emerald-300/90">Side A</p>
                                                         <div class="mt-1 min-w-0 text-zinc-900 dark:text-zinc-100">
                                                             @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideA'] ?? [], 'variant' => 'organizer'])
                                                         </div>
@@ -930,14 +959,14 @@
                                                             class="mt-2 w-full touch-manipulation rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500"
                                                             wire:click="completeMatchWithWinner({{ $i }}, 'a')"
                                                         >
-                                                            Set as winner
+                                                            A won
                                                         </button>
                                                     </div>
                                                     <div class="flex items-center justify-center py-0.5 sm:w-10 sm:shrink-0 sm:self-center sm:py-0">
                                                         <span class="text-xs font-medium text-zinc-400 dark:text-zinc-500">vs</span>
                                                     </div>
-                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-zinc-200/80 bg-white px-3 py-3 dark:border-zinc-700 dark:bg-zinc-950/50">
-                                                        <p class="text-xs font-medium text-zinc-500 dark:text-zinc-400">Side B</p>
+                                                    <div class="flex min-w-0 flex-col justify-center rounded-lg border border-violet-200/70 bg-gradient-to-br from-violet-50/90 to-white px-3 py-3 dark:border-violet-900/40 dark:from-violet-950/40 dark:to-zinc-950/60">
+                                                        <p class="text-xs font-medium text-violet-800/80 dark:text-violet-300/90">Side B</p>
                                                         <div class="mt-1 min-w-0 text-zinc-900 dark:text-zinc-100">
                                                             @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $court['sideB'] ?? [], 'variant' => 'organizer', 'align' => 'end'])
                                                         </div>
@@ -946,7 +975,7 @@
                                                             class="mt-2 w-full touch-manipulation rounded-lg bg-emerald-600 px-3 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.98] dark:shadow-emerald-950/40 dark:hover:bg-emerald-500"
                                                             wire:click="completeMatchWithWinner({{ $i }}, 'b')"
                                                         >
-                                                            Set as winner
+                                                            B won
                                                         </button>
                                                     </div>
                                                 </div>
@@ -977,27 +1006,58 @@
                                                                 <div class="space-y-2">
                                                                     <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Side A</p>
                                                                     @foreach ($slots as $slot)
-                                                                        <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.a.{{ $slot }}">
-                                                                            <option value="">—</option>
-                                                                            @foreach ($lineupPlayerOptions as $pl)
-                                                                                <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
-                                                                            @endforeach
-                                                                        </select>
+                                                                        <div class="flex gap-2">
+                                                                            <select class="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.a.{{ $slot }}">
+                                                                                <option value="">—</option>
+                                                                                @foreach ($lineupPlayerOptions as $pl)
+                                                                                    <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                            <button
+                                                                                type="button"
+                                                                                class="touch-manipulation shrink-0 rounded-lg border border-emerald-200/90 bg-emerald-50 px-2.5 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100 active:scale-[0.98] dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
+                                                                                title="Suggest fairest pick: fewest games, then your session shuffle rules"
+                                                                                wire:click="randomizeLineupSlot({{ $i }}, 'a', {{ $slot }})"
+                                                                                aria-label="Suggest player for side A slot {{ $slot + 1 }}"
+                                                                            >
+                                                                                Suggest
+                                                                            </button>
+                                                                        </div>
                                                                     @endforeach
                                                                 </div>
                                                                 <div class="space-y-2">
                                                                     <p class="text-[10px] font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400">Side B</p>
                                                                     @foreach ($slots as $slot)
-                                                                        <select class="w-full rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.b.{{ $slot }}">
-                                                                            <option value="">—</option>
-                                                                            @foreach ($lineupPlayerOptions as $pl)
-                                                                                <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
-                                                                            @endforeach
-                                                                        </select>
+                                                                        <div class="flex gap-2">
+                                                                            <select class="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100" wire:model="state.courtLineupDraft.{{ $i }}.b.{{ $slot }}">
+                                                                                <option value="">—</option>
+                                                                                @foreach ($lineupPlayerOptions as $pl)
+                                                                                    <option value="{{ $pl['id'] }}">{{ $pl['name'] }}</option>
+                                                                                @endforeach
+                                                                            </select>
+                                                                            <button
+                                                                                type="button"
+                                                                                class="touch-manipulation shrink-0 rounded-lg border border-emerald-200/90 bg-emerald-50 px-2.5 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100 active:scale-[0.98] dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
+                                                                                title="Suggest fairest pick: fewest games, then your session shuffle rules"
+                                                                                wire:click="randomizeLineupSlot({{ $i }}, 'b', {{ $slot }})"
+                                                                                aria-label="Suggest player for side B slot {{ $slot + 1 }}"
+                                                                            >
+                                                                                Suggest
+                                                                            </button>
+                                                                        </div>
                                                                     @endforeach
                                                                 </div>
                                                             </div>
-                                                            <button type="button" class="touch-manipulation rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-white" wire:click="applyCourtLineupDraft({{ $i }})">Apply lineup</button>
+                                                            <div class="flex flex-wrap gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    class="touch-manipulation rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                                                                    wire:click="suggestAllLineupSlots({{ $i }})"
+                                                                >
+                                                                    Suggest all slots
+                                                                </button>
+                                                                <button type="button" class="touch-manipulation rounded-lg bg-zinc-800 px-3 py-2 text-xs font-bold text-white hover:bg-zinc-700 dark:bg-zinc-200 dark:text-zinc-900 dark:hover:bg-white" wire:click="applyCourtLineupDraft({{ $i }})">Apply lineup</button>
+                                                            </div>
                                                         </div>
                                                     @endif
                                                 </details>
@@ -1044,6 +1104,249 @@
                             </section>
                             @endif
                         </div>
+                        </div>
+                        </section>
+
+                        @if ($rosterPanelOpen)
+                        <section
+                            id="gameq-roster"
+                            class="scroll-mt-24 min-w-0 rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/[0.04] dark:border-zinc-700 dark:bg-zinc-900/90 dark:ring-white/[0.06] sm:p-5 lg:p-6"
+                            aria-label="Roster settings"
+                        >
+                            <div class="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+                                <div>
+                                    <h2 class="font-display text-lg font-extrabold text-zinc-900 dark:text-white">Roster</h2>
+                                    <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                                        {{ count($state['players'] ?? []) }}/{{ OpenPlaySession::MAX_PLAYERS_PER_SESSION }} players
+                                    </p>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-end gap-2">
+                                    <button
+                                        type="button"
+                                        class="touch-manipulation rounded-xl border border-zinc-200/90 bg-white px-3 py-2.5 text-sm font-semibold text-zinc-600 shadow-sm transition hover:bg-zinc-50 active:scale-[0.98] dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                                        wire:click="$set('rosterPanelOpen', false)"
+                                        aria-expanded="true"
+                                        aria-controls="gameq-roster"
+                                    >
+                                        Hide panel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.99] dark:shadow-emerald-950/30"
+                                        wire:click="saveRoster"
+                                    >
+                                        <span wire:loading.remove wire:target="saveRoster">Save roster</span>
+                                        <span wire:loading wire:target="saveRoster">Saving…</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 space-y-5">
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_4.5rem_auto] sm:items-end">
+                                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                            Name
+                                            <input
+                                                type="text"
+                                                wire:model.live="state.newName"
+                                                class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
+                                                placeholder="Name"
+                                            />
+                                        </label>
+                                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                            Lvl
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="5"
+                                                wire:model.live="state.newLevel"
+                                                class="mt-1 w-full rounded-xl border border-zinc-200 px-2 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
+                                            />
+                                        </label>
+                                        <button
+                                            type="button"
+                                            class="touch-manipulation min-h-11 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:py-2"
+                                            wire:click="addPlayer"
+                                            @disabled(count($state['players'] ?? []) >= OpenPlaySession::MAX_PLAYERS_PER_SESSION)
+                                        >
+                                            Add
+                                        </button>
+                                    </div>
+
+                                    <div class="rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+                                        <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Add a list</p>
+                                        <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                                            One per line. Skill: <span class="font-mono">Name - 3</span>. Uses <span class="font-semibold">Lvl</span> above when omitted.
+                                        </p>
+                                        <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+                                            Paste names
+                                            <textarea
+                                                wire:model="state.bulkPlayerList"
+                                                rows="4"
+                                                placeholder="Sam&#10;Jordan - 5&#10;3) Casey - 4"
+                                                class="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                            ></textarea>
+                                        </label>
+                                        <div class="mt-3 flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+                                                wire:click="cleanupBulkPlayerList"
+                                            >
+                                                Clean up
+                                            </button>
+                                            <button
+                                                type="button"
+                                                class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                wire:click="addPlayersFromBulk"
+                                                @disabled(count($state['players'] ?? []) >= OpenPlaySession::MAX_PLAYERS_PER_SESSION)
+                                            >
+                                                Add from list
+                                            </button>
+                                        </div>
+                                        @if (! empty($state['bulkAddFeedback'] ?? ''))
+                                            <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $state['bulkAddFeedback'] }}</p>
+                                        @endif
+                                        @if (! empty($state['importError'] ?? ''))
+                                            <p class="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">{{ $state['importError'] }}</p>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                <div class="min-w-0">
+                                    @if (count($state['players'] ?? []) === 0)
+                                        <p class="text-sm text-zinc-500">No players yet.</p>
+                                    @else
+                                        <p class="text-xs text-zinc-500 sm:hidden dark:text-zinc-400">Swipe sideways if the table feels tight on small screens.</p>
+                                        <div class="-mx-1 overflow-x-auto px-1 sm:mx-0 sm:px-0 lg:overflow-x-visible">
+                                            <div class="min-w-[26rem] rounded-xl border border-zinc-200 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-950/30 lg:min-w-0">
+                                            <table class="w-full text-left text-sm">
+                                                <thead class="border-b border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
+                                                    <tr>
+                                                        <th class="px-3 py-2.5">Name</th>
+                                                        <th class="px-3 py-2.5">Lvl</th>
+                                                        <th class="px-3 py-2.5">W–L</th>
+                                                        <th class="px-3 py-2.5 leading-snug" title="Skip Fill courts until cleared">Break</th>
+                                                        <th class="px-3 py-2.5" title="Active on roster">On</th>
+                                                        <th class="px-3 py-2.5"></th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
+                                                    @foreach ($state['players'] ?? [] as $pi => $p)
+                                                        <tr
+                                                            class="{{ ! empty($p['disabled']) ? 'opacity-50' : (! empty($p['skipShuffle']) ? 'bg-amber-50/50 dark:bg-amber-950/15' : '') }}"
+                                                            wire:key="roster-row-{{ $p['id'] }}"
+                                                        >
+                                                            <td class="px-3 py-2.5">
+                                                                <input
+                                                                    type="text"
+                                                                    wire:model.live="state.players.{{ $pi }}.name"
+                                                                    class="w-full min-w-[6rem] rounded border border-transparent bg-transparent py-0.5 text-sm focus:border-emerald-500 dark:text-zinc-100"
+                                                                />
+                                                            </td>
+                                                            <td class="px-3 py-2.5">
+                                                                <input
+                                                                    type="number"
+                                                                    min="1"
+                                                                    max="5"
+                                                                    wire:model.live="state.players.{{ $pi }}.level"
+                                                                    class="w-12 rounded border border-zinc-200 px-1 py-0.5 dark:border-zinc-600 dark:bg-zinc-950"
+                                                                />
+                                                            </td>
+                                                            <td class="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-400">
+                                                                {{ (int) ($p['wins'] ?? 0) }}–{{ (int) ($p['losses'] ?? 0) }}
+                                                            </td>
+                                                            <td class="px-3 py-2.5">
+                                                                <label class="inline-flex cursor-pointer items-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        class="h-5 w-5 rounded border-zinc-300 text-amber-600 touch-manipulation"
+                                                                        @checked(! empty($p['skipShuffle']))
+                                                                        @disabled(! empty($p['disabled']))
+                                                                        wire:change="setSkipShuffleFromInput('{{ $p['id'] }}', $event.target.checked)"
+                                                                        aria-label="Take a break: {{ $p['name'] }}"
+                                                                    />
+                                                                </label>
+                                                            </td>
+                                                            <td class="px-3 py-2.5">
+                                                                <label class="inline-flex cursor-pointer items-center">
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        class="h-5 w-5 rounded border-zinc-300 text-emerald-600 touch-manipulation"
+                                                                        @checked(empty($p['disabled']))
+                                                                        wire:change="setDisabledFromInput('{{ $p['id'] }}', $event.target.checked)"
+                                                                        aria-label="Active roster {{ $p['name'] }}"
+                                                                    />
+                                                                </label>
+                                                            </td>
+                                                            <td class="px-3 py-2.5 text-right">
+                                                                <button type="button" class="touch-manipulation text-xs text-zinc-500 hover:text-red-600" wire:click="removePlayer('{{ $p['id'] }}')">Remove</button>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </section>
+                        @endif
+                    </div>
+
+                    @if (($activeTab ?? '') === 'play' && count($state['completedMatches'] ?? []) > 0)
+                        @php
+                            $completedLog = $state['completedMatches'] ?? [];
+                            $filteredFinishedIndices = $this->filteredCompletedMatchIndices();
+                        @endphp
+                        <section
+                            class="min-w-0 rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm ring-1 ring-zinc-950/[0.04] dark:border-zinc-700 dark:bg-zinc-900/90 dark:ring-white/[0.06] sm:p-5 lg:p-6"
+                            aria-label="Finished games"
+                        >
+                            <div class="flex flex-wrap items-end justify-between gap-3 border-b border-zinc-200 pb-4 dark:border-zinc-800">
+                                <div class="min-w-0 flex-1">
+                                    <h2 class="font-display text-base font-extrabold text-zinc-900 dark:text-white sm:text-lg">Finished games</h2>
+                                    <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                                        Newest first. Tap a side to fix the winner, put a game back on court if it was marked done by mistake, or remove it from the log.
+                                    </p>
+                                </div>
+                                <p class="text-xs font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">
+                                    @if (trim($finishedGamesSearch) !== '')
+                                        {{ count($filteredFinishedIndices) }} of {{ count($completedLog) }}
+                                    @else
+                                        {{ count($completedLog) }} {{ \Illuminate\Support\Str::plural('game', count($completedLog)) }}
+                                    @endif
+                                </p>
+                            </div>
+                            <label class="mt-4 block" for="gq-finished-games-search">
+                                <span class="sr-only">Search finished games by player name</span>
+                                <input
+                                    id="gq-finished-games-search"
+                                    type="search"
+                                    wire:model.live.debounce.300ms="finishedGamesSearch"
+                                    placeholder="Search by player name…"
+                                    autocomplete="off"
+                                    class="w-full rounded-xl border border-zinc-200 bg-white px-3 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
+                                />
+                            </label>
+                            @if (trim($finishedGamesSearch) !== '' && count($filteredFinishedIndices) === 0)
+                                <p class="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+                                    No finished games match “{{ trim($finishedGamesSearch) }}”.
+                                </p>
+                            @else
+                                <ul class="mt-4 max-h-[min(70vh,36rem)] space-y-3 overflow-y-auto pr-1">
+                                    @foreach ($filteredFinishedIndices as $ri)
+                                        <x-gameq-completed-match-row
+                                            :eq="$eq"
+                                            :match="$completedLog[$ri]"
+                                            :index="$ri"
+                                        />
+                                    @endforeach
+                                </ul>
+                            @endif
+                        </section>
+                    @endif
             </div>
         </div>
     @endif
@@ -1112,6 +1415,11 @@
                     @endif
                     @if ($modalTab === 'log')
                         <div class="space-y-6">
+                            <p class="text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+                                To fix a winner or undo a game marked done by mistake, use the
+                                <span class="font-semibold text-zinc-800 dark:text-zinc-200">Finished games</span>
+                                list at the bottom of the Play screen.
+                            </p>
                             <details class="rounded-xl border border-zinc-200 p-3 dark:border-zinc-700" open>
                                 <summary class="cursor-pointer text-sm font-semibold text-zinc-800 dark:text-zinc-200">Head-to-head</summary>
                                 <ul class="mt-2 divide-y divide-zinc-100 text-sm dark:divide-zinc-800">
@@ -1124,57 +1432,6 @@
                                     @endforeach
                                 </ul>
                             </details>
-                            <div>
-                                <p class="text-sm font-semibold text-zinc-800 dark:text-zinc-200">Recent matches</p>
-                                <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Tap <span class="font-medium text-zinc-700 dark:text-zinc-300">Set as winner</span> to record or fix who won. <span class="text-zinc-600 dark:text-zinc-300">Cancel result</span> removes a row from the tally.</p>
-                                @php $completedLog = $state['completedMatches'] ?? []; @endphp
-                                <ul class="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
-                                    @for ($ri = count($completedLog) - 1; $ri >= 0; $ri--)
-                                        @php $m = $completedLog[$ri]; @endphp
-                                        <li
-                                            class="rounded-lg border border-zinc-200/70 bg-white px-3 py-2.5 text-xs dark:border-zinc-700 dark:bg-zinc-950/60"
-                                            wire:key="match-log-{{ $ri }}"
-                                        >
-                                            <div class="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:gap-3">
-                                                <div class="min-w-0 justify-self-start text-zinc-800 dark:text-zinc-200 sm:text-left">
-                                                    @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $m['sideA'] ?? [], 'variant' => 'organizer', 'compact' => true])
-                                                    <button
-                                                        type="button"
-                                                        class="mt-2 w-full touch-manipulation rounded-lg border border-emerald-200/90 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-100 active:scale-[0.98] dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
-                                                        wire:click="setLogMatchWinner({{ $ri }}, 'a')"
-                                                    >
-                                                        Set as winner
-                                                    </button>
-                                                </div>
-                                                <div class="flex flex-col items-center justify-center gap-1 py-0.5 sm:self-start sm:pt-1">
-                                                    <span class="text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Score</span>
-                                                    <span class="font-mono text-sm font-semibold tabular-nums text-zinc-500 dark:text-zinc-400">{{ (int) ($m['scoreA'] ?? 0) }} – {{ (int) ($m['scoreB'] ?? 0) }}</span>
-                                                </div>
-                                                <div class="min-w-0 justify-self-end text-zinc-800 dark:text-zinc-200 sm:text-right">
-                                                    @include('components.gameq-live-court-side-lineup', ['eq' => $eq, 'playerIds' => $m['sideB'] ?? [], 'variant' => 'organizer', 'compact' => true, 'align' => 'end'])
-                                                    <button
-                                                        type="button"
-                                                        class="mt-2 w-full touch-manipulation rounded-lg border border-emerald-200/90 bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-900 shadow-sm transition hover:bg-emerald-100 active:scale-[0.98] dark:border-emerald-900/40 dark:bg-emerald-950/40 dark:text-emerald-100 dark:hover:bg-emerald-950/60"
-                                                        wire:click="setLogMatchWinner({{ $ri }}, 'b')"
-                                                    >
-                                                        Set as winner
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="mt-2 flex justify-end border-t border-zinc-100 pt-2 dark:border-zinc-800">
-                                                <button
-                                                    type="button"
-                                                    class="touch-manipulation text-xs font-semibold text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-red-600 hover:decoration-red-400 dark:text-zinc-400 dark:decoration-zinc-600 dark:hover:text-red-400"
-                                                    wire:confirm="Remove this match from the log? It will not count toward standings or head-to-head."
-                                                    wire:click="removeCompletedMatch({{ $ri }})"
-                                                >
-                                                    Cancel result (drop from tally)
-                                                </button>
-                                            </div>
-                                        </li>
-                                    @endfor
-                                </ul>
-                            </div>
                         </div>
                     @endif
                 </div>
@@ -1182,195 +1439,4 @@
         </div>
     @endif
 
-    {{-- Roster settings modal --}}
-    @if ($rosterModalOpen)
-        <div class="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4" wire:click="$set('rosterModalOpen', false)">
-            <div class="absolute inset-0 z-0 bg-zinc-900/50" aria-hidden="true"></div>
-            <div
-                class="relative z-10 flex max-h-[min(92vh,800px)] w-full max-w-5xl flex-col rounded-t-[1.75rem] border border-zinc-200 bg-white shadow-lg dark:border-zinc-700 dark:bg-zinc-900 sm:rounded-[1.75rem]"
-                wire:click.stop
-            >
-                <div class="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-                    <div>
-                        <h2 class="font-display text-lg font-extrabold text-zinc-900 dark:text-white">Roster settings</h2>
-                        <p class="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                            {{ count($state['players'] ?? []) }}/{{ OpenPlaySession::MAX_PLAYERS_PER_SESSION }} players
-                        </p>
-                    </div>
-                    <button type="button" class="rounded-2xl p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800" wire:click="$set('rosterModalOpen', false)" aria-label="Close">✕</button>
-                </div>
-                <div class="min-h-0 flex-1 overflow-y-auto p-4">
-                    <div class="space-y-6">
-                        <div class="flex flex-wrap items-end gap-3">
-                            <label class="min-w-[10rem] grow text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                Name
-                                <input
-                                    type="text"
-                                    wire:model.live="state.newName"
-                                    class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
-                                    placeholder="Name"
-                                />
-                            </label>
-                            <label class="w-20 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                Lvl
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="5"
-                                    wire:model.live="state.newLevel"
-                                    class="mt-1 w-full rounded-xl border border-zinc-200 px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
-                                />
-                            </label>
-                            <label class="min-w-[6rem] grow text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                Team
-                                <input
-                                    type="text"
-                                    wire:model.live="state.newTeamId"
-                                    class="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
-                                    placeholder="Optional"
-                                />
-                            </label>
-                            <button
-                                type="button"
-                                class="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-                                wire:click="addPlayer"
-                                @disabled(count($state['players'] ?? []) >= OpenPlaySession::MAX_PLAYERS_PER_SESSION)
-                            >
-                                Add
-                            </button>
-                        </div>
-                        <div class="rounded-2xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
-                            <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Add a list</p>
-                            <p class="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-                                One player per line. Optional skill (1–5): <span class="font-mono">Name - 3</span> (spaces around the dash). Numbered lines are cleaned. Lines without a number use the <span class="font-semibold">Lvl</span> and team fields above. Duplicates are merged.
-                            </p>
-                            <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
-                                Paste names
-                                <textarea
-                                    wire:model="state.bulkPlayerList"
-                                    rows="5"
-                                    placeholder="Sam&#10;Jordan - 5&#10;3) Casey - 4"
-                                    class="mt-1.5 w-full resize-y rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
-                                ></textarea>
-                            </label>
-                            <div class="mt-3 flex flex-wrap gap-2">
-                                <button
-                                    type="button"
-                                    class="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-                                    wire:click="cleanupBulkPlayerList"
-                                >
-                                    Clean up list
-                                </button>
-                                <button
-                                    type="button"
-                                    class="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                    wire:click="addPlayersFromBulk"
-                                    @disabled(count($state['players'] ?? []) >= OpenPlaySession::MAX_PLAYERS_PER_SESSION)
-                                >
-                                    Add from list
-                                </button>
-                            </div>
-                            @if (! empty($state['bulkAddFeedback'] ?? ''))
-                                <p class="mt-2 text-xs text-zinc-600 dark:text-zinc-400">{{ $state['bulkAddFeedback'] }}</p>
-                            @endif
-                            @if (! empty($state['importError'] ?? ''))
-                                <p class="mt-2 text-xs font-medium text-amber-800 dark:text-amber-200">{{ $state['importError'] }}</p>
-                            @endif
-                        </div>
-                        <p class="text-xs text-zinc-500 md:hidden dark:text-zinc-400">Swipe the table sideways for all columns.</p>
-                        <div class="overflow-x-auto rounded-2xl border border-zinc-200 dark:border-zinc-700">
-                            <table class="w-full min-w-[40rem] text-left text-sm">
-                                <thead class="border-b border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
-                                    <tr>
-                                        <th class="px-3 py-2">Name</th>
-                                        <th class="px-3 py-2">Lvl</th>
-                                        <th class="px-3 py-2">Team</th>
-                                        <th class="px-3 py-2">W–L</th>
-                                        <th class="min-w-[6.5rem] px-3 py-2 leading-snug" title="Same as Take a break in the queue. Skip Fill courts until cleared; can still finish a game already on court.">Take a break</th>
-                                        <th class="px-3 py-2" title="Off roster — removed from courts and queue">Active</th>
-                                        <th class="px-3 py-2"></th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                                    @foreach ($state['players'] ?? [] as $pi => $p)
-                                        <tr
-                                            class="{{ ! empty($p['disabled']) ? 'opacity-50' : (! empty($p['skipShuffle']) ? 'bg-amber-50/50 dark:bg-amber-950/15' : '') }}"
-                                            wire:key="roster-modal-{{ $p['id'] }}"
-                                        >
-                                            <td class="px-3 py-2">
-                                                <input
-                                                    type="text"
-                                                    wire:model.live="state.players.{{ $pi }}.name"
-                                                    class="w-full min-w-[6rem] rounded border border-transparent bg-transparent py-0.5 text-sm focus:border-emerald-500 dark:text-zinc-100"
-                                                />
-                                            </td>
-                                            <td class="px-3 py-2">
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    max="5"
-                                                    wire:model.live="state.players.{{ $pi }}.level"
-                                                    class="w-12 rounded border border-zinc-200 px-1 py-0.5 dark:border-zinc-600 dark:bg-zinc-950"
-                                                />
-                                            </td>
-                                            <td class="px-3 py-2">
-                                                <input
-                                                    type="text"
-                                                    wire:model.live="state.players.{{ $pi }}.teamId"
-                                                    class="w-full max-w-[6rem] rounded border border-zinc-200 px-1 py-0.5 text-xs dark:border-zinc-600 dark:bg-zinc-950"
-                                                    placeholder="—"
-                                                />
-                                            </td>
-                                            <td class="px-3 py-2 tabular-nums text-zinc-600 dark:text-zinc-400">
-                                                {{ (int) ($p['wins'] ?? 0) }}–{{ (int) ($p['losses'] ?? 0) }}
-                                            </td>
-                                            <td class="px-3 py-2">
-                                                <label class="inline-flex cursor-pointer items-center gap-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        class="h-5 w-5 rounded border-zinc-300 text-amber-600 touch-manipulation"
-                                                        @checked(! empty($p['skipShuffle']))
-                                                        @disabled(! empty($p['disabled']))
-                                                        wire:click.prevent="toggleSkipShuffle('{{ $p['id'] }}')"
-                                                        aria-label="Take a break: {{ $p['name'] }}"
-                                                    />
-                                                </label>
-                                            </td>
-                                            <td class="px-3 py-2">
-                                                <label class="inline-flex cursor-pointer items-center gap-1">
-                                                    <input
-                                                        type="checkbox"
-                                                        class="h-5 w-5 rounded border-zinc-300 text-emerald-600 touch-manipulation"
-                                                        @checked(empty($p['disabled']))
-                                                        wire:click.prevent="toggleDisabled('{{ $p['id'] }}')"
-                                                        aria-label="Active roster {{ $p['name'] }}"
-                                                    />
-                                                </label>
-                                            </td>
-                                            <td class="px-3 py-2 text-right">
-                                                <button type="button" class="touch-manipulation text-xs text-zinc-500 hover:text-red-600" wire:click="removePlayer('{{ $p['id'] }}')">Remove</button>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <button
-                                type="button"
-                                class="rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-emerald-500 active:scale-[0.99] dark:shadow-emerald-950/30"
-                                wire:click="saveRoster"
-                            >
-                                <span wire:loading.remove wire:target="saveRoster">Save roster</span>
-                                <span wire:loading wire:target="saveRoster">Saving…</span>
-                            </button>
-                        </div>
-                        @if (count($state['players'] ?? []) === 0)
-                            <p class="text-sm text-zinc-500">No players yet.</p>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
 </div>

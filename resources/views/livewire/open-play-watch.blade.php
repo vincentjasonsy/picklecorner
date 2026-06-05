@@ -80,7 +80,7 @@
                         @foreach (($game['courts'] ?? []) as $i => $court)
                             <div wire:key="court-{{ $openPlayShare->uuid }}-{{ $i }}">
                                 @if ($court)
-                                    <div class="overflow-hidden rounded-2xl border border-white/60 bg-white shadow-xl shadow-slate-900/5 ring-1 ring-slate-200/80 dark:border-slate-700/80 dark:bg-slate-900/90 dark:ring-slate-700/60">
+                                    <div class="overflow-hidden rounded-2xl border border-emerald-200/75 bg-gradient-to-br from-emerald-50/85 via-white to-teal-50/55 shadow-xl shadow-emerald-900/10 ring-1 ring-emerald-200/70 dark:border-emerald-900/50 dark:from-emerald-950/35 dark:via-slate-900/95 dark:to-teal-950/25 dark:ring-emerald-900/35">
                                         <div class="flex flex-col gap-4 bg-gradient-to-r from-emerald-600 to-teal-700 px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:px-6 sm:py-5">
                                             <span class="flex flex-wrap items-center gap-2 font-display text-base font-bold tracking-wide sm:text-lg">
                                                 {{ $eq->courtDisplayLabel((int) $i) }}

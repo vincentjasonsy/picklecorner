@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 
 class GameQEngineQueueOrderTest extends TestCase
 {
-    public function test_fill_courts_doubles_keeps_ordered_pool_even_when_shuffle_method_is_random(): void
+    public function test_fill_courts_doubles_places_all_waiting_players_when_shuffle_method_is_random(): void
     {
         $state = Engine::defaultState();
         $state['mode'] = 'doubles';
@@ -27,13 +27,19 @@ class GameQEngineQueueOrderTest extends TestCase
 
         $court = $e->toArray()['courts'][0];
         $this->assertIsArray($court);
-        $this->assertSame(['d', 'c'], array_map('strval', $court['sideA'] ?? []));
-        $this->assertSame(['b', 'a'], array_map('strval', $court['sideB'] ?? []));
+        $onCourt = array_merge(
+            array_map('strval', $court['sideA'] ?? []),
+            array_map('strval', $court['sideB'] ?? [])
+        );
+        sort($onCourt);
+        $this->assertSame(['a', 'b', 'c', 'd'], $onCourt);
+        $this->assertCount(2, $court['sideA'] ?? []);
+        $this->assertCount(2, $court['sideB'] ?? []);
         $this->assertArrayNotHasKey('startedAt', $court);
         $this->assertSame('stopped', $court['timerRunState'] ?? null);
     }
 
-    public function test_fill_courts_singles_keeps_queue_order_with_random_shuffle_method(): void
+    public function test_fill_courts_singles_places_all_waiting_players_when_shuffle_method_is_random(): void
     {
         $state = Engine::defaultState();
         $state['mode'] = 'singles';
@@ -54,10 +60,14 @@ class GameQEngineQueueOrderTest extends TestCase
         $courts = $e->toArray()['courts'];
         $this->assertIsArray($courts[0]);
         $this->assertIsArray($courts[1]);
-        $this->assertSame(['z'], array_map('strval', $courts[0]['sideA'] ?? []));
-        $this->assertSame(['y'], array_map('strval', $courts[0]['sideB'] ?? []));
-        $this->assertSame(['x'], array_map('strval', $courts[1]['sideA'] ?? []));
-        $this->assertSame(['w'], array_map('strval', $courts[1]['sideB'] ?? []));
+        $onCourt = array_merge(
+            array_map('strval', $courts[0]['sideA'] ?? []),
+            array_map('strval', $courts[0]['sideB'] ?? []),
+            array_map('strval', $courts[1]['sideA'] ?? []),
+            array_map('strval', $courts[1]['sideB'] ?? [])
+        );
+        sort($onCourt);
+        $this->assertSame(['w', 'x', 'y', 'z'], $onCourt);
     }
 
     public function test_sync_queue_prioritizes_players_with_fewer_games_stable_within_ties(): void
@@ -76,7 +86,34 @@ class GameQEngineQueueOrderTest extends TestCase
         $e = new Engine($state);
         $e->syncQueueFromIdle();
 
-        $this->assertSame(['c', 'b', 'a'], array_map('strval', $e->toArray()['queue']));
+        $queue = array_map('strval', $e->toArray()['queue']);
+        $this->assertSame('a', $queue[2], 'Player with more games should wait behind zero-game players');
+        $this->assertContains('b', [$queue[0], $queue[1]]);
+        $this->assertContains('c', [$queue[0], $queue[1]]);
+    }
+
+    public function test_sync_queue_shuffles_zero_game_ties_when_shuffle_method_is_random(): void
+    {
+        $state = Engine::defaultState();
+        $state['shuffleMethod'] = 'random';
+        $state['mode'] = 'singles';
+        $state['courtsCount'] = 1;
+        $state['players'] = [
+            ['id' => 'a', 'name' => 'A', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'b', 'name' => 'B', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'c', 'name' => 'C', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['queue'] = ['a', 'b', 'c'];
+        $state['courts'] = [null];
+
+        $seen = [];
+        for ($i = 0; $i < 30; $i++) {
+            $e = new Engine($state);
+            $e->syncQueueFromIdle();
+            $seen[implode(',', array_map('strval', $e->toArray()['queue']))] = true;
+        }
+
+        $this->assertGreaterThan(1, count($seen), 'Random shuffle should produce more than one queue ordering among tied players');
     }
 
     public function test_fill_courts_singles_orders_by_fewer_games_before_pairing(): void
@@ -100,10 +137,20 @@ class GameQEngineQueueOrderTest extends TestCase
         $courts = $e->toArray()['courts'];
         $this->assertIsArray($courts[0]);
         $this->assertIsArray($courts[1]);
-        $this->assertSame(['z'], array_map('strval', $courts[0]['sideA'] ?? []));
-        $this->assertSame(['y'], array_map('strval', $courts[0]['sideB'] ?? []));
-        $this->assertSame(['x'], array_map('strval', $courts[1]['sideA'] ?? []));
-        $this->assertSame(['w'], array_map('strval', $courts[1]['sideB'] ?? []));
+
+        $courtPlayers = function (array $court): array {
+            return array_map('strval', array_merge($court['sideA'] ?? [], $court['sideB'] ?? []));
+        };
+        $allOnCourt = array_merge($courtPlayers($courts[0]), $courtPlayers($courts[1]));
+        sort($allOnCourt);
+        $this->assertSame(['w', 'x', 'y', 'z'], $allOnCourt);
+
+        $courtWithW = in_array('w', $courtPlayers($courts[0]), true) ? $courts[0] : $courts[1];
+        $partners = $courtPlayers($courtWithW);
+        $this->assertCount(2, $partners);
+        $this->assertContains('w', $partners);
+        $zeroGameIds = ['x', 'y', 'z'];
+        $this->assertContains($partners[0] === 'w' ? $partners[1] : $partners[0], $zeroGameIds);
     }
 
     public function test_sync_queue_orders_ties_by_skill_when_shuffle_method_is_levels(): void
