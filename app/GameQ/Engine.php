@@ -771,6 +771,67 @@ class Engine
         return false;
     }
 
+    /** Custom or default court label when the player is on an active court; null if idle. */
+    public function playerActiveCourtLabel(string|int|null $playerId): ?string
+    {
+        if ($playerId === null || $playerId === '') {
+            return null;
+        }
+        foreach ($this->state['courts'] as $i => $c) {
+            if (! $c || ! is_array($c)) {
+                continue;
+            }
+            foreach (array_merge($c['sideA'] ?? [], $c['sideB'] ?? []) as $oid) {
+                if (self::idEqual($oid, $playerId)) {
+                    return $this->courtDisplayLabel((int) $i);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Roster headcount for the host UI (mutually exclusive: on, break, off).
+     *
+     * @return array{total: int, on: int, break: int, off: int, playing: int}
+     */
+    public function rosterStatusSummary(): array
+    {
+        $on = 0;
+        $break = 0;
+        $off = 0;
+        $playing = 0;
+
+        foreach ($this->state['players'] as $p) {
+            if (! is_array($p)) {
+                continue;
+            }
+            if (! empty($p['disabled'])) {
+                $off++;
+
+                continue;
+            }
+            if (! empty($p['skipShuffle'])) {
+                $break++;
+
+                continue;
+            }
+            $on++;
+            if ($this->isOnCourt($p['id'])) {
+                $playing++;
+            }
+        }
+
+        return [
+            'total' => $on + $break + $off,
+            'on' => $on,
+            'break' => $break,
+            'off' => $off,
+            'playing' => $playing,
+        ];
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

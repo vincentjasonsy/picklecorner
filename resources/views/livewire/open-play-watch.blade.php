@@ -172,12 +172,15 @@
                                         >
                                             {{ $ri + 1 }}
                                         </span>
-                                        <a
-                                            href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $r['id']]) }}"
-                                            class="truncate font-semibold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
-                                        >
-                                            {{ $r['name'] }}
-                                        </a>
+                                        <span class="flex min-w-0 flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                                            <a
+                                                href="{{ route('open-play.watch.player', ['openPlayShare' => $openPlayShare, 'playerId' => $r['id']]) }}"
+                                                class="truncate font-semibold text-emerald-800 underline decoration-emerald-300/80 underline-offset-2 transition hover:text-emerald-950 dark:text-emerald-200 dark:decoration-emerald-600/60 dark:hover:text-emerald-100"
+                                            >
+                                                {{ $r['name'] }}
+                                            </a>
+                                            <x-gameq-player-court-badge :eq="$eq" :player-id="$r['id']" />
+                                        </span>
                                     </span>
                                     <span class="shrink-0 text-right tabular-nums">
                                         <span class="block text-xs text-slate-500 dark:text-slate-400">{{ (int) ($r['wins'] ?? 0) }}W · {{ (int) ($r['losses'] ?? 0) }}L</span>
