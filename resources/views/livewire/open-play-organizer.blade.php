@@ -391,15 +391,11 @@
                                     class="mt-1.5 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
                                 />
                             </label>
-                            <label class="w-20 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                Lvl
-                                <input
-                                    type="number"
-                                    min="1"
-                                    max="5"
-                                    wire:model.live="state.newLevel"
-                                    class="mt-1.5 w-full rounded-xl border border-zinc-200 px-2 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-950"
-                                />
+                            <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Skill
+                                <div class="mt-1.5">
+                                    <x-gameq-skill-level-stars :level="(int) ($state['newLevel'] ?? 3)" />
+                                </div>
                             </label>
                             <label class="min-w-[6rem] grow text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                 Team
@@ -459,7 +455,7 @@
                         </div>
                         @if (count($state['players'] ?? []) > 0)
                             <ul class="max-h-48 space-y-1 overflow-y-auto text-sm">
-                                @foreach ($state['players'] as $p)
+                                @foreach (collect($state['players'] ?? [])->sortBy(fn ($p) => mb_strtolower(trim((string) ($p['name'] ?? '')))) as $p)
                                     <li class="flex items-center justify-between rounded-2xl bg-zinc-50 px-3 py-2 dark:bg-zinc-950/60" wire:key="setup-pl-{{ $p['id'] }}">
                                         <span>{{ $p['name'] }}</span>
                                         <button type="button" class="text-xs text-zinc-500 hover:text-red-600" wire:click="removePlayer('{{ $p['id'] }}')">Remove</button>
@@ -1173,7 +1169,7 @@
 
                             <div class="mt-5 space-y-5">
                                 <div class="space-y-4">
-                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_4.5rem_auto] sm:items-end">
+                                    <div class="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-end">
                                         <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                             Name
                                             <input
@@ -1183,16 +1179,12 @@
                                                 placeholder="Name"
                                             />
                                         </label>
-                                        <label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-                                            Lvl
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                max="5"
-                                                wire:model.live="state.newLevel"
-                                                class="mt-1 w-full rounded-xl border border-zinc-200 px-2 py-2.5 text-sm dark:border-zinc-600 dark:bg-zinc-950"
-                                            />
-                                        </label>
+                                        <div class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                            Skill
+                                            <div class="mt-1">
+                                                <x-gameq-skill-level-stars :level="(int) ($state['newLevel'] ?? 3)" />
+                                            </div>
+                                        </div>
                                         <button
                                             type="button"
                                             class="touch-manipulation min-h-11 rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-0 sm:py-2"
@@ -1206,7 +1198,7 @@
                                     <div class="rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
                                         <p class="text-sm font-medium text-zinc-800 dark:text-zinc-200">Add a list</p>
                                         <p class="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                                            One per line. Skill: <span class="font-mono">Name - 3</span>. Uses <span class="font-semibold">Lvl</span> above when omitted.
+                                            One per line. Skill: <span class="font-mono">Name - 3</span>. Uses default skill above when omitted.
                                         </p>
                                         <label class="mt-3 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
                                             Paste names
@@ -1254,7 +1246,7 @@
                                                 <thead class="border-b border-zinc-200 bg-zinc-50 text-xs font-bold uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
                                                     <tr>
                                                         <th class="px-3 py-2.5">Name</th>
-                                                        <th class="px-3 py-2.5">Lvl</th>
+                                                        <th class="px-3 py-2.5">Skill</th>
                                                         <th class="px-3 py-2.5">W–L</th>
                                                         <th class="px-3 py-2.5 leading-snug" title="Skip Fill courts until cleared">Break</th>
                                                         <th class="px-3 py-2.5" title="Active on roster">On</th>
@@ -1262,7 +1254,11 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody class="divide-y divide-zinc-100 dark:divide-zinc-800">
-                                                    @foreach ($state['players'] ?? [] as $pi => $p)
+                                                    @foreach ($this->rosterPlayersForDisplay() as $row)
+                                                        @php
+                                                            $pi = $row['index'];
+                                                            $p = $row['player'];
+                                                        @endphp
                                                         <tr
                                                             class="{{ ! empty($p['disabled']) ? 'opacity-50' : (! empty($p['skipShuffle']) ? 'bg-amber-50/50 dark:bg-amber-950/15' : '') }}"
                                                             wire:key="roster-row-{{ $p['id'] }}"
@@ -1275,12 +1271,9 @@
                                                                 />
                                                             </td>
                                                             <td class="px-3 py-2.5">
-                                                                <input
-                                                                    type="number"
-                                                                    min="1"
-                                                                    max="5"
-                                                                    wire:model.live="state.players.{{ $pi }}.level"
-                                                                    class="w-12 rounded border border-zinc-200 px-1 py-0.5 dark:border-zinc-600 dark:bg-zinc-950"
+                                                                <x-gameq-skill-level-stars
+                                                                    :level="(int) ($p['level'] ?? 3)"
+                                                                    :player-index="$pi"
                                                                 />
                                                             </td>
                                                             <td class="px-3 py-2.5 tabular-nums text-zinc-600 dark:text-zinc-400">

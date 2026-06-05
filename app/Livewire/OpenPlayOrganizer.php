@@ -72,6 +72,7 @@ class OpenPlayOrganizer extends Component
         $e = new Engine($this->state);
         $e->ensureCourtSlots();
         $this->state = $e->toArray();
+        $this->sortRosterPlayersByName();
         $this->persist();
 
         $this->refreshHistorySessions();
@@ -733,6 +734,19 @@ class OpenPlayOrganizer extends Component
         $this->persist();
     }
 
+    public function setNewPlayerLevel(int $level): void
+    {
+        $this->state['newLevel'] = Engine::clampSkillLevel($level, 3);
+    }
+
+    public function setRosterPlayerLevel(int $playerIndex, int $level): void
+    {
+        if (! isset($this->state['players'][$playerIndex]) || ! is_array($this->state['players'][$playerIndex])) {
+            return;
+        }
+        $this->state['players'][$playerIndex]['level'] = Engine::clampSkillLevel($level, 3);
+    }
+
     public function saveRoster(): void
     {
         $this->sortRosterPlayersByName();
@@ -748,12 +762,37 @@ class OpenPlayOrganizer extends Component
         }
 
         usort($players, function (array $a, array $b): int {
-            $na = (string) ($a['name'] ?? '');
-            $nb = (string) ($b['name'] ?? '');
+            $na = mb_strtolower(trim((string) ($a['name'] ?? '')));
+            $nb = mb_strtolower(trim((string) ($b['name'] ?? '')));
 
-            return strcasecmp($na, $nb);
+            return $na <=> $nb;
         });
         $this->state['players'] = array_values($players);
+    }
+
+    /**
+     * Roster rows sorted by name for display; preserves state array indices for wire:model bindings.
+     *
+     * @return list<array{index: int, player: array<string, mixed>}>
+     */
+    public function rosterPlayersForDisplay(): array
+    {
+        $rows = [];
+        foreach ($this->state['players'] ?? [] as $index => $player) {
+            if (! is_array($player)) {
+                continue;
+            }
+            $rows[] = ['index' => (int) $index, 'player' => $player];
+        }
+
+        usort($rows, function (array $a, array $b): int {
+            $na = mb_strtolower(trim((string) ($a['player']['name'] ?? '')));
+            $nb = mb_strtolower(trim((string) ($b['player']['name'] ?? '')));
+
+            return $na <=> $nb;
+        });
+
+        return $rows;
     }
 
     public function startSharing(): void
