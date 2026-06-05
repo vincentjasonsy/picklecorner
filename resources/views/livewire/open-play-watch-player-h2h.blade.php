@@ -40,6 +40,7 @@
                 <h1 class="font-display text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white">
                     {{ trim((string) ($player['name'] ?? 'Player')) }}
                 </h1>
+                <x-gameq-player-court-badge :eq="$eq" :player-id="$playerId" />
                 @if (trim((string) ($game['sessionTitle'] ?? '')) !== '')
                     <p class="text-sm font-medium text-slate-600 dark:text-slate-300">{{ trim((string) $game['sessionTitle']) }}</p>
                 @endif

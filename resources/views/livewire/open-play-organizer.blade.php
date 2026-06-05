@@ -609,6 +609,36 @@
                 </div>
             </header>
 
+            @php $rosterSummary = $eq->rosterStatusSummary(); @endphp
+            <div
+                class="flex flex-wrap items-center gap-2 rounded-xl border border-zinc-200/80 bg-white/90 px-3 py-2.5 shadow-sm ring-1 ring-zinc-950/[0.03] dark:border-zinc-700 dark:bg-zinc-900/80 dark:ring-white/[0.04]"
+                aria-label="Roster status summary"
+            >
+                <span class="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Players</span>
+                <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-900 dark:bg-emerald-950/45 dark:text-emerald-200">
+                    <span class="tabular-nums">{{ $rosterSummary['on'] }}</span>
+                    <span class="font-semibold">on</span>
+                </span>
+                @if ($rosterSummary['break'] > 0)
+                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-950 dark:bg-amber-950/40 dark:text-amber-200">
+                        <span class="tabular-nums">{{ $rosterSummary['break'] }}</span>
+                        <span class="font-semibold">break</span>
+                    </span>
+                @endif
+                @if ($rosterSummary['off'] > 0)
+                    <span class="inline-flex items-center gap-1 rounded-full bg-zinc-200/80 px-2.5 py-0.5 text-xs font-bold text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+                        <span class="tabular-nums">{{ $rosterSummary['off'] }}</span>
+                        <span class="font-semibold">off</span>
+                    </span>
+                @endif
+                @if ($rosterSummary['playing'] > 0)
+                    <span class="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
+                        <span class="font-semibold tabular-nums text-zinc-700 dark:text-zinc-300">{{ $rosterSummary['playing'] }}</span>
+                        on court
+                    </span>
+                @endif
+            </div>
+
             @if ($takeBreakNotice !== '')
                 <p
                     class="rounded-2xl border border-emerald-200/90 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/50 dark:bg-emerald-950/35 dark:text-emerald-100"
