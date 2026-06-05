@@ -61,7 +61,7 @@
                     Head-to-head
                 </h2>
                 <p class="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                    One row per opponent with win / loss / tie counts. Open <span class="font-medium text-slate-600 dark:text-slate-300">Game-by-game scores</span> to see each finished game. In doubles, each rival gets their own row.
+                    One row per opponent with win / loss / tie counts. In doubles, each rival gets their own row.
                 </p>
 
                 @if (count($h2hByPlayer) > 0)
@@ -102,62 +102,6 @@
                             </tbody>
                         </table>
                     </div>
-
-                    <details
-                        class="group mt-5 rounded-xl border border-slate-200/90 bg-slate-50/50 dark:border-slate-700 dark:bg-slate-950/30"
-                        @if ($gameLogExpanded) open @endif
-                        x-on:toggle="$wire.set('gameLogExpanded', $event.target.open)"
-                    >
-                        <summary
-                            class="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-slate-800 marker:hidden dark:text-slate-200 [&::-webkit-details-marker]:hidden"
-                        >
-                            <span class="inline-flex items-center gap-2">
-                                Game-by-game scores
-                                <span class="text-xs font-normal text-slate-500 dark:text-slate-400">(optional detail)</span>
-                            </span>
-                        </summary>
-                        <div class="border-t border-slate-200/80 px-2 pb-3 pt-1 dark:border-slate-700/80 sm:px-3">
-                            <div class="overflow-x-auto rounded-lg border border-slate-200/80 dark:border-slate-700">
-                                <table class="w-full min-w-[20rem] border-collapse text-left text-sm">
-                                    <thead>
-                                        <tr class="border-b border-slate-200 bg-white/80 dark:border-slate-700 dark:bg-slate-900/60">
-                                            <th scope="col" class="px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Opponent</th>
-                                            <th scope="col" class="px-3 py-2 font-display text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Score</th>
-                                            <th scope="col" class="px-3 py-2 text-right font-display text-[10px] font-bold uppercase tracking-wide text-slate-600 dark:text-slate-400">Result</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($h2hByPlayer as $oppIdx => $block)
-                                            @foreach ($block['lines'] as $lineIdx => $line)
-                                                <tr
-                                                    class="border-b border-slate-100 odd:bg-white/80 even:bg-slate-50/50 dark:border-slate-800 dark:odd:bg-slate-950/50 dark:even:bg-slate-900/20"
-                                                    wire:key="gq-watch-h2h-detail-{{ $oppIdx }}-{{ $lineIdx }}-{{ $line['at'] }}"
-                                                >
-                                                    <td class="max-w-[10rem] px-3 py-2 text-slate-900 dark:text-slate-100">
-                                                        {{ $block['displayName'] }}
-                                                    </td>
-                                                    <td class="whitespace-nowrap px-3 py-2 font-mono text-xs tabular-nums text-slate-800 dark:text-slate-100">
-                                                        {{ $eq->formatMatchScoreDisplay($line['scoreSelf']) }}
-                                                        <span class="mx-0.5 text-slate-400">–</span>
-                                                        {{ $eq->formatMatchScoreDisplay($line['scoreOpp']) }}
-                                                    </td>
-                                                    <td class="whitespace-nowrap px-3 py-2 text-right">
-                                                        @if ($line['won'] === true)
-                                                            <span class="text-[11px] font-bold uppercase text-emerald-700 dark:text-emerald-400">W</span>
-                                                        @elseif ($line['won'] === false)
-                                                            <span class="text-[11px] font-bold uppercase text-slate-600 dark:text-slate-400">L</span>
-                                                        @else
-                                                            <span class="text-[11px] font-bold uppercase text-amber-800 dark:text-amber-300/90">T</span>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @endforeach
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </details>
                 @elseif (count($h2hRows) > 0)
                     <div class="mt-5 overflow-x-auto rounded-xl border border-slate-200/90 dark:border-slate-700">
                         <table class="w-full min-w-[22rem] border-collapse text-left text-sm">

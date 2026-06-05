@@ -971,6 +971,33 @@ class Engine
         foreach (array_values($poolPlayers) as $i => $p) {
             $indexed[] = ['i' => $i, 'p' => $p];
         }
+
+        if ((string) $this->state['shuffleMethod'] === 'random') {
+            // Fewest games first, then shuffle within each skill band for variety.
+            $byGames = [];
+            foreach ($indexed as $x) {
+                $g = self::totalGamesPlayed($x['p']);
+                $byGames[$g][] = $x;
+            }
+            ksort($byGames, SORT_NUMERIC);
+            $out = [];
+            foreach ($byGames as $group) {
+                $byLevel = [];
+                foreach ($group as $x) {
+                    $byLevel[(int) ($x['p']['level'] ?? 0)][] = $x;
+                }
+                ksort($byLevel, SORT_NUMERIC);
+                foreach ($byLevel as $levelGroup) {
+                    self::shuffleInPlace($levelGroup);
+                    foreach ($levelGroup as $x) {
+                        $out[] = $x['p'];
+                    }
+                }
+            }
+
+            return $out;
+        }
+
         usort($indexed, function (array $a, array $b): int {
             $ga = self::totalGamesPlayed($a['p']);
             $gb = self::totalGamesPlayed($b['p']);
@@ -1086,7 +1113,7 @@ class Engine
                 [[$g[0], $g[3]], [$g[1], $g[2]]],
             ];
 
-            $best = null;
+            $bestOptions = [];
             $bestScore = PHP_INT_MAX;
 
             foreach ($options as $opt) {
@@ -1134,12 +1161,18 @@ class Engine
 
                 if ($score < $bestScore) {
                     $bestScore = $score;
-                    $best = $opt;
+                    $bestOptions = [$opt];
+                } elseif ($score === $bestScore) {
+                    $bestOptions[] = $opt;
                 }
             }
 
-            if ($best === null) {
-                $best = $options[0]; // fallback
+            if ($bestOptions === []) {
+                $best = $options[0];
+            } elseif ($method === 'random' && count($bestOptions) > 1) {
+                $best = $bestOptions[random_int(0, count($bestOptions) - 1)];
+            } else {
+                $best = $bestOptions[0];
             }
 
             [$teamA, $teamB] = $best;
@@ -1402,7 +1435,43 @@ class Engine
         }
         unset($m);
 
-        return $matches;
+        return $this->shuffleMatchFillTies($matches);
+    }
+
+    /**
+     * @param  list<array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>  $matches
+     * @return list<array{teams: array{0: list<string|int>, 1: list<string|int>}, bucket: string}>
+     */
+    private function shuffleMatchFillTies(array $matches): array
+    {
+        if ((string) $this->state['shuffleMethod'] !== 'random' || $matches === []) {
+            return $matches;
+        }
+
+        $bucketRank = ['low' => 0, 'mid' => 1, 'high' => 2];
+        $out = [];
+        $i = 0;
+        while ($i < count($matches)) {
+            $j = $i + 1;
+            $ma = $this->minGamesAmongTeams($matches[$i]['teams'][0] ?? [], $matches[$i]['teams'][1] ?? []);
+            $ba = $bucketRank[$matches[$i]['bucket'] ?? 'mid'] ?? 1;
+            while ($j < count($matches)) {
+                $mb = $this->minGamesAmongTeams($matches[$j]['teams'][0] ?? [], $matches[$j]['teams'][1] ?? []);
+                $bb = $bucketRank[$matches[$j]['bucket'] ?? 'mid'] ?? 1;
+                if ($ma !== $mb || $ba !== $bb) {
+                    break;
+                }
+                $j++;
+            }
+            $chunk = array_slice($matches, $i, $j - $i);
+            self::shuffleInPlace($chunk);
+            foreach ($chunk as $m) {
+                $out[] = $m;
+            }
+            $i = $j;
+        }
+
+        return $out;
     }
 
     /**
@@ -1582,6 +1651,196 @@ class Engine
             'b' => $pad($c['sideB'] ?? []),
         ];
         $this->state['lineupEditError'] = '';
+    }
+
+    /**
+     * Suggest the fairest active player for a lineup draft slot (fewest games, then session shuffle rules).
+     */
+    public function suggestLineupDraftPick(int $courtIndex, string $side, int $slot): ?string
+    {
+        $side = strtolower($side);
+        if ($side !== 'a' && $side !== 'b') {
+            return null;
+        }
+
+        if (empty($this->state['courtLineupDraft'][$courtIndex]) || ! is_array($this->state['courtLineupDraft'][$courtIndex])) {
+            $this->initCourtLineupDraft($courtIndex);
+        }
+        $draft = $this->state['courtLineupDraft'][$courtIndex] ?? null;
+        if (! is_array($draft)) {
+            return null;
+        }
+
+        $need = $this->state['mode'] === 'singles' ? 1 : 2;
+        if ($slot < 0 || $slot >= $need) {
+            return null;
+        }
+
+        $usedInDraft = $this->lineupDraftUsedPlayerIds($draft, $side, $slot);
+        $reqLevel = $this->courtSkillLock($courtIndex);
+        $idle = [];
+        $onOtherCourt = [];
+        foreach ($this->state['players'] as $p) {
+            if (! is_array($p) || ! empty($p['disabled'])) {
+                continue;
+            }
+            $id = (string) ($p['id'] ?? '');
+            if ($id === '' || isset($usedInDraft[$id])) {
+                continue;
+            }
+            if ($reqLevel > 0 && (int) ($p['level'] ?? 0) !== $reqLevel) {
+                continue;
+            }
+            if ($this->isOnCourt($p['id'])) {
+                $onOtherCourt[] = $p;
+            } else {
+                $idle[] = $p;
+            }
+        }
+
+        foreach ([$idle, $onOtherCourt] as $group) {
+            $pick = $this->pickBestLineupCandidate($group, $draft, $side, $slot);
+            if ($pick !== null && $pick !== '') {
+                return $pick;
+            }
+        }
+
+        return null;
+    }
+
+    public function randomizeLineupDraftSlot(int $courtIndex, string $side, int $slot): void
+    {
+        $pick = $this->suggestLineupDraftPick($courtIndex, $side, $slot);
+        if ($pick === null || $pick === '') {
+            return;
+        }
+        if (! isset($this->state['courtLineupDraft'][$courtIndex]) || ! is_array($this->state['courtLineupDraft'][$courtIndex])) {
+            $this->initCourtLineupDraft($courtIndex);
+        }
+        if (! is_array($this->state['courtLineupDraft'][$courtIndex] ?? null)) {
+            return;
+        }
+        if (! isset($this->state['courtLineupDraft'][$courtIndex][$side]) || ! is_array($this->state['courtLineupDraft'][$courtIndex][$side])) {
+            $this->state['courtLineupDraft'][$courtIndex][$side] = [];
+        }
+        $this->state['courtLineupDraft'][$courtIndex][$side][$slot] = $pick;
+        $this->state['lineupEditError'] = '';
+    }
+
+    /**
+     * @param  array{a?: list<string>, b?: list<string>}  $draft
+     * @return array<string, true>
+     */
+    private function lineupDraftUsedPlayerIds(array $draft, string $exceptSide, int $exceptSlot): array
+    {
+        $used = [];
+        foreach (['a', 'b'] as $s) {
+            foreach ($draft[$s] ?? [] as $idx => $pid) {
+                if ($pid === '' || $pid === null) {
+                    continue;
+                }
+                if ($s === $exceptSide && $idx === $exceptSlot) {
+                    continue;
+                }
+                $used[(string) $pid] = true;
+            }
+        }
+
+        return $used;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $candidates
+     * @param  array{a?: list<string>, b?: list<string>}  $draft
+     */
+    private function pickBestLineupCandidate(array $candidates, array $draft, string $side, int $slot): ?string
+    {
+        if ($candidates === []) {
+            return null;
+        }
+
+        $minGames = min(array_map(fn (array $p) => self::totalGamesPlayed($p), $candidates));
+        $tier = array_values(array_filter(
+            $candidates,
+            fn (array $p) => self::totalGamesPlayed($p) === $minGames
+        ));
+
+        if ($this->state['mode'] === 'doubles') {
+            $partnerLevel = $this->lineupDraftPartnerLevel($draft, $side, $slot);
+            if ($partnerLevel !== null) {
+                usort($tier, function (array $a, array $b) use ($partnerLevel): int {
+                    $da = abs((int) ($a['level'] ?? 0) - $partnerLevel);
+                    $db = abs((int) ($b['level'] ?? 0) - $partnerLevel);
+                    if ($da !== $db) {
+                        return $da <=> $db;
+                    }
+
+                    return strcmp((string) ($a['name'] ?? ''), (string) ($b['name'] ?? ''));
+                });
+                $bestDist = abs((int) ($tier[0]['level'] ?? 0) - $partnerLevel);
+                $tier = array_values(array_filter(
+                    $tier,
+                    fn (array $p) => abs((int) ($p['level'] ?? 0) - $partnerLevel) === $bestDist
+                ));
+            }
+        }
+
+        $method = (string) $this->state['shuffleMethod'];
+        $sorted = $this->sortPlayersForMethod($tier, $method);
+        if ($sorted === []) {
+            return null;
+        }
+
+        $ties = [$sorted[0]];
+        foreach (array_slice($sorted, 1) as $p) {
+            if ($this->lineupCandidatesTiedForMethod($sorted[0], $p, $method)) {
+                $ties[] = $p;
+            } else {
+                break;
+            }
+        }
+        self::shuffleInPlace($ties);
+
+        return (string) ($ties[0]['id'] ?? '');
+    }
+
+    /**
+     * @param  array{a?: list<string>, b?: list<string>}  $draft
+     */
+    private function lineupDraftPartnerLevel(array $draft, string $side, int $slot): ?int
+    {
+        foreach ($draft[$side] ?? [] as $idx => $pid) {
+            if ($idx === $slot || $pid === '' || $pid === null) {
+                continue;
+            }
+            $pl = $this->playerById($pid);
+            if ($pl) {
+                return (int) ($pl['level'] ?? 0);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $a
+     * @param  array<string, mixed>  $b
+     */
+    private function lineupCandidatesTiedForMethod(array $a, array $b, string $method): bool
+    {
+        if ($method === 'wins') {
+            return (int) ($a['wins'] ?? 0) === (int) ($b['wins'] ?? 0)
+                && (int) ($a['losses'] ?? 0) === (int) ($b['losses'] ?? 0);
+        }
+        if ($method === 'levels' || $method === 'levels_rotate') {
+            return (int) ($a['level'] ?? 0) === (int) ($b['level'] ?? 0);
+        }
+        if ($method === 'teams') {
+            return trim((string) ($a['teamId'] ?? '')) === trim((string) ($b['teamId'] ?? ''))
+                && (int) ($a['level'] ?? 0) === (int) ($b['level'] ?? 0);
+        }
+
+        return true;
     }
 
     /**
@@ -1835,10 +2094,6 @@ class Engine
 
             return $pl && empty($pl['disabled']) && empty($pl['skipShuffle']);
         }));
-        $prio = [];
-        foreach ($filtered as $i => $id) {
-            $prio[(string) $id] = $i;
-        }
         $method = (string) $this->state['shuffleMethod'];
         $buckets = [];
         foreach ($filtered as $id) {
@@ -1858,16 +2113,7 @@ class Engine
                     $players[] = $pl;
                 }
             }
-            if ($method === 'random') {
-                usort($players, function ($a, $b) use ($prio) {
-                    $aid = (string) ($a['id'] ?? '');
-                    $bid = (string) ($b['id'] ?? '');
-
-                    return ($prio[$aid] ?? 0) <=> ($prio[$bid] ?? 0);
-                });
-            } else {
-                $players = $this->sortPlayersForMethod($players, $method);
-            }
+            $players = $this->sortPlayersForMethod($players, $method);
             foreach ($players as $p) {
                 $ordered[] = $p['id'];
             }
@@ -2077,6 +2323,80 @@ class Engine
             $this->state['completedMatches'][$index]['scoreB'] = 11.0;
         }
         $this->rebuildStatsFromCompletedMatches();
+    }
+
+    public function completedMatchSideAWon(array $match): bool
+    {
+        $scoreA = isset($match['scoreA']) && is_numeric($match['scoreA']) ? (float) $match['scoreA'] : 0.0;
+        $scoreB = isset($match['scoreB']) && is_numeric($match['scoreB']) ? (float) $match['scoreB'] : 0.0;
+
+        return $scoreA > $scoreB;
+    }
+
+    public function canRestoreCompletedMatchToCourt(int $index): bool
+    {
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log) || ! isset($log[$index]) || ! is_array($log[$index])) {
+            return false;
+        }
+        $preferred = isset($log[$index]['courtIndex']) ? (int) $log[$index]['courtIndex'] : null;
+
+        return $this->resolveEmptyCourtIndexForRestore($preferred) !== null;
+    }
+
+    /**
+     * Undo a finished game: drop it from the tally and put the same lineup back on an open court.
+     */
+    public function restoreCompletedMatchToCourt(int $index, ?int $nowMs = null): void
+    {
+        unset($nowMs);
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log) || ! isset($log[$index]) || ! is_array($log[$index])) {
+            return;
+        }
+        $match = $log[$index];
+        $sideA = array_values($match['sideA'] ?? []);
+        $sideB = array_values($match['sideB'] ?? []);
+        if ($sideA === [] || $sideB === []) {
+            return;
+        }
+        $preferred = isset($match['courtIndex']) ? (int) $match['courtIndex'] : null;
+        $courtIndex = $this->resolveEmptyCourtIndexForRestore($preferred);
+        if ($courtIndex === null) {
+            return;
+        }
+
+        array_splice($this->state['completedMatches'], $index, 1);
+        $this->state['completedMatches'] = array_values($this->state['completedMatches']);
+        $this->rebuildStatsFromCompletedMatches();
+
+        $this->state['courts'][$courtIndex] = [
+            'courtIndex' => $courtIndex,
+            'sideA' => $sideA,
+            'sideB' => $sideB,
+            'timerRunState' => 'stopped',
+            'totalPausedMs' => 0,
+            'pausedAt' => null,
+        ];
+        $this->state['scoreDraft'][$courtIndex] = ['a' => 0, 'b' => 0];
+        $this->syncQueueFromIdle();
+    }
+
+    private function resolveEmptyCourtIndexForRestore(?int $preferred): ?int
+    {
+        $this->ensureCourtSlots();
+        if ($preferred !== null && $preferred >= 0 && $preferred < count($this->state['courts'])) {
+            if (($this->state['courts'][$preferred] ?? null) === null) {
+                return $preferred;
+            }
+        }
+        foreach ($this->state['courts'] as $ci => $court) {
+            if ($court === null) {
+                return (int) $ci;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -2674,43 +2994,54 @@ class Engine
 
     public function toggleDisabled(string|int $id): void
     {
+        $p = $this->playerById($id);
+        if (! $p) {
+            return;
+        }
+        $this->setDisabledForPlayer($id, ! (bool) ($p['disabled'] ?? false));
+    }
+
+    public function setDisabledForPlayer(string|int $id, bool $disabled): void
+    {
         $idx = $this->playerIndexById($id);
         if ($idx === null) {
             return;
         }
-        $p = $this->state['players'][$idx];
-        $p['disabled'] = ! (bool) ($p['disabled'] ?? false);
-        $this->state['players'][$idx] = $p;
-        if (! empty($p['disabled'])) {
-            $this->state['players'][$idx]['skipShuffle'] = false;
-            $this->state['queue'] = array_values(array_filter(
-                $this->state['queue'],
-                fn ($x) => ! self::idEqual($x, $id)
-            ));
-            $courts = $this->state['courts'];
-            foreach ($courts as $ci => $c) {
-                if (! $c) {
-                    continue;
-                }
-                $on = array_merge($c['sideA'] ?? [], $c['sideB'] ?? []);
-                $hit = false;
-                foreach ($on as $oid) {
-                    if (self::idEqual($oid, $id)) {
-                        $hit = true;
-                        break;
-                    }
-                }
-                if ($hit) {
-                    foreach ($on as $x) {
-                        if (! $this->queueHas($x)) {
-                            $this->state['queue'][] = $x;
-                        }
-                    }
-                    $courts[$ci] = null;
+        if ((bool) ($this->state['players'][$idx]['disabled'] ?? false) === $disabled) {
+            return;
+        }
+        $this->state['players'][$idx]['disabled'] = $disabled;
+        if (! $disabled) {
+            return;
+        }
+        $this->state['players'][$idx]['skipShuffle'] = false;
+        $this->state['queue'] = array_values(array_filter(
+            $this->state['queue'],
+            fn ($x) => ! self::idEqual($x, $id)
+        ));
+        $courts = $this->state['courts'];
+        foreach ($courts as $ci => $c) {
+            if (! $c) {
+                continue;
+            }
+            $on = array_merge($c['sideA'] ?? [], $c['sideB'] ?? []);
+            $hit = false;
+            foreach ($on as $oid) {
+                if (self::idEqual($oid, $id)) {
+                    $hit = true;
+                    break;
                 }
             }
-            $this->state['courts'] = $courts;
+            if ($hit) {
+                foreach ($on as $x) {
+                    if (! $this->queueHas($x)) {
+                        $this->state['queue'][] = $x;
+                    }
+                }
+                $courts[$ci] = null;
+            }
         }
+        $this->state['courts'] = $courts;
     }
 
     /**
@@ -2754,6 +3085,9 @@ class Engine
         }
         $idx = $this->playerIndexById($id);
         if ($idx === null) {
+            return;
+        }
+        if ((bool) ($this->state['players'][$idx]['skipShuffle'] ?? false) === $skip) {
             return;
         }
         $this->state['players'][$idx]['skipShuffle'] = $skip;

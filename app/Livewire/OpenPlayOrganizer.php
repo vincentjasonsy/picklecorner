@@ -41,14 +41,17 @@ class OpenPlayOrganizer extends Component
 
     public bool $shareCopied = false;
 
-    /** Roster add/edit modal (same pattern as Standings & log). */
-    public bool $rosterModalOpen = false;
-
     /** Which court’s “Edit lineup” panel is open (keeps open across Livewire updates; raw details/ summary alone does not). */
     public ?int $courtLineupEditorOpen = null;
 
     /** Shown after take-a-break changes from the roster or queue (cleared on next toggle). */
     public string $takeBreakNotice = '';
+
+    /** Inline roster card on the session screen (hidden = full-width courts grid). */
+    public bool $rosterPanelOpen = true;
+
+    /** Filter finished games log by player name (session UI only). */
+    public string $finishedGamesSearch = '';
 
     public function mount(): void
     {
@@ -343,7 +346,6 @@ class OpenPlayOrganizer extends Component
     public function goToSessionList(): void
     {
         $this->peopleModalOpen = false;
-        $this->rosterModalOpen = false;
         $this->modalTab = 'standings';
         $this->withEngine(fn (Engine $e) => $e->goToSessionListState());
         $this->refreshHistorySessions();
@@ -364,6 +366,7 @@ class OpenPlayOrganizer extends Component
     public function finishSetup(): void
     {
         $this->withEngine(fn (Engine $e) => $e->finishSetup());
+        $this->sortRosterPlayersByName();
     }
 
     public function fillCourts(): void
@@ -436,6 +439,27 @@ class OpenPlayOrganizer extends Component
         }
     }
 
+    public function randomizeLineupSlot(int $courtIndex, string $side, int $slot): void
+    {
+        $side = strtolower($side);
+        if ($side !== 'a' && $side !== 'b') {
+            return;
+        }
+        $this->withEngine(fn (Engine $e) => $e->randomizeLineupDraftSlot($courtIndex, $side, $slot));
+    }
+
+    public function suggestAllLineupSlots(int $courtIndex): void
+    {
+        $need = ($this->state['mode'] ?? '') === 'singles' ? 1 : 2;
+        $this->withEngine(function (Engine $e) use ($courtIndex, $need): void {
+            foreach (['a', 'b'] as $side) {
+                for ($slot = 0; $slot < $need; $slot++) {
+                    $e->randomizeLineupDraftSlot($courtIndex, $side, $slot);
+                }
+            }
+        });
+    }
+
     public function completeMatchWithWinner(int $i, string $side): void
     {
         $side = strtolower($side);
@@ -467,6 +491,12 @@ class OpenPlayOrganizer extends Component
         $this->withEngine(fn (Engine $e) => $e->removeCompletedMatchAtIndex($index));
     }
 
+    /** Undo a finished game and put the lineup back on an open court. */
+    public function restoreCompletedMatchToCourt(int $index): void
+    {
+        $this->withEngine(fn (Engine $e) => $e->restoreCompletedMatchToCourt($index));
+    }
+
     public function clearCourt(int $i): void
     {
         $this->withEngine(fn (Engine $e) => $e->clearCourt($i));
@@ -475,6 +505,7 @@ class OpenPlayOrganizer extends Component
     public function addPlayer(): void
     {
         $this->withEngine(fn (Engine $e) => $e->addPlayer());
+        $this->sortRosterPlayersByName();
     }
 
     public function cleanupBulkPlayerList(): void
@@ -485,6 +516,7 @@ class OpenPlayOrganizer extends Component
     public function addPlayersFromBulk(): void
     {
         $this->withEngine(fn (Engine $e) => $e->addPlayersFromBulk());
+        $this->sortRosterPlayersByName();
     }
 
     public function removePlayer(string $id): void
@@ -513,6 +545,11 @@ class OpenPlayOrganizer extends Component
         $this->withEngine(fn (Engine $e) => $e->toggleSkipShuffle($id));
         $nowSkipping = ! $wasSkipping;
         $this->takeBreakNotice = $this->takeBreakNoticeMessage($playerName, $nowSkipping);
+    }
+
+    public function setDisabledFromInput(string $id, bool $active): void
+    {
+        $this->withEngine(fn (Engine $e) => $e->setDisabledForPlayer($id, ! $active));
     }
 
     public function setSkipShuffleFromInput(string $id, bool $checked): void
@@ -587,13 +624,11 @@ class OpenPlayOrganizer extends Component
     {
         $this->withEngine(fn (Engine $e) => $e->fullResetState());
         $this->peopleModalOpen = false;
-        $this->rosterModalOpen = false;
     }
 
     public function endHostingSession(): void
     {
         $this->peopleModalOpen = false;
-        $this->rosterModalOpen = false;
         $this->modalTab = 'standings';
         $this->performShareRevoke();
         $this->withEngine(function (Engine $e) {
@@ -700,8 +735,25 @@ class OpenPlayOrganizer extends Component
 
     public function saveRoster(): void
     {
+        $this->sortRosterPlayersByName();
         $this->persist();
         $this->dispatch('gameq-roster-saved');
+    }
+
+    private function sortRosterPlayersByName(): void
+    {
+        $players = $this->state['players'] ?? [];
+        if (! is_array($players) || $players === []) {
+            return;
+        }
+
+        usort($players, function (array $a, array $b): int {
+            $na = (string) ($a['name'] ?? '');
+            $nb = (string) ($b['name'] ?? '');
+
+            return strcasecmp($na, $nb);
+        });
+        $this->state['players'] = array_values($players);
     }
 
     public function startSharing(): void
@@ -861,6 +913,7 @@ class OpenPlayOrganizer extends Component
             }
             $this->activeTab = 'play';
             $this->state['uiPhase'] = 'session';
+            $this->sortRosterPlayersByName();
             $this->persist();
         } catch (\Throwable) {
             $this->historyError = 'Could not load that session.';
@@ -942,6 +995,50 @@ class OpenPlayOrganizer extends Component
         $this->takeBreakNotice = 'Take a break and queue were updated from the live page.';
         $this->persist();
         $this->rememberSentSharePayloadHash();
+    }
+
+    /**
+     * Completed match indices newest-first, optionally filtered by player name.
+     *
+     * @return list<int>
+     */
+    public function filteredCompletedMatchIndices(): array
+    {
+        $log = $this->state['completedMatches'] ?? [];
+        if (! is_array($log) || $log === []) {
+            return [];
+        }
+
+        $needle = mb_strtolower(trim($this->finishedGamesSearch));
+        $eq = new Engine($this->state);
+        $indices = [];
+
+        for ($ri = count($log) - 1; $ri >= 0; $ri--) {
+            if (! isset($log[$ri]) || ! is_array($log[$ri])) {
+                continue;
+            }
+            if ($needle === '') {
+                $indices[] = $ri;
+
+                continue;
+            }
+            $matched = false;
+            foreach (array_merge($log[$ri]['sideA'] ?? [], $log[$ri]['sideB'] ?? []) as $playerId) {
+                $player = $eq->playerById($playerId);
+                if ($player === null) {
+                    continue;
+                }
+                if (str_contains(mb_strtolower((string) ($player['name'] ?? '')), $needle)) {
+                    $matched = true;
+                    break;
+                }
+            }
+            if ($matched) {
+                $indices[] = $ri;
+            }
+        }
+
+        return $indices;
     }
 
     public function render(): View

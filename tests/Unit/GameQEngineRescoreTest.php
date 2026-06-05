@@ -133,4 +133,35 @@ class GameQEngineRescoreTest extends TestCase
         $this->assertSame(1, (int) $flipped['players'][1]['wins']);
         $this->assertSame(0, (int) $flipped['players'][1]['losses']);
     }
+
+    public function test_restore_completed_match_puts_lineup_back_on_court_and_clears_standings(): void
+    {
+        $state = Engine::defaultState();
+        $state['players'] = [
+            ['id' => 'a', 'name' => 'A', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+            ['id' => 'b', 'name' => 'B', 'level' => 3, 'wins' => 0, 'losses' => 0, 'disabled' => false, 'skipShuffle' => false, 'teamId' => ''],
+        ];
+        $state['courts'] = [['sideA' => ['a'], 'sideB' => ['b'], 'startedAt' => 1, 'timerRunState' => 'stopped'], null];
+        $state['scoreDraft'] = [['a' => 0, 'b' => 0], ['a' => 0, 'b' => 0]];
+
+        $e = new Engine($state);
+        $e->completeMatchWithWinner(0, true, 1_700_000_000_000);
+        $after = $e->toArray();
+        $this->assertSame(1, (int) $after['players'][0]['wins']);
+        $this->assertNull($after['courts'][0]);
+        $this->assertContains('a', $after['queue']);
+        $this->assertContains('b', $after['queue']);
+
+        $e2 = new Engine($after);
+        $this->assertTrue($e2->canRestoreCompletedMatchToCourt(0));
+        $e2->restoreCompletedMatchToCourt(0);
+        $restored = $e2->toArray();
+
+        $this->assertSame([], $restored['completedMatches']);
+        $this->assertSame(0, (int) $restored['players'][0]['wins']);
+        $this->assertSame(['a'], $restored['courts'][0]['sideA']);
+        $this->assertSame(['b'], $restored['courts'][0]['sideB']);
+        $this->assertNotContains('a', $restored['queue']);
+        $this->assertNotContains('b', $restored['queue']);
+    }
 }
